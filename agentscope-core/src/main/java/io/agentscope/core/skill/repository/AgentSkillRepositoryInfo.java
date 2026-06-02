@@ -16,27 +16,29 @@
 package io.agentscope.core.skill.repository;
 
 /**
- * Metadata about a skill repository.
+ * 技能仓库的元数据信息，描述仓库的类型、位置和写入能力。
  *
- * <p>Contains essential information about a skill repository including its type,
- * location, and write capability.
+ * <p>每个 {@link AgentSkillRepository} 实现都应通过 {@code getRepositoryInfo()} 方法
+ * 返回一个该类的实例，以便外部代码了解仓库的底层存储特性和访问能力。
  *
- * <p><b>Repository types:</b>
+ * <p><b>仓库类型示例：</b>
  * <ul>
- *   <li>filesystem - Local file system storage
- *   <li>github - GitHub repository
- *   <li>mysql - MySQL database
- *   <li>redis - Redis cache
- *   <li>Custom implementations
+ *   <li>{@code filesystem} —— 本地文件系统存储</li>
+ *   <li>{@code classpath} —— Java 类路径/JAR 包资源</li>
+ *   <li>{@code github} —— GitHub 仓库</li>
+ *   <li>{@code mysql} —— MySQL 数据库</li>
+ *   <li>{@code redis} —— Redis 缓存</li>
+ *   <li>自定义实现类型</li>
  * </ul>
  *
- * <p><b>Usage example:</b>
+ * <p><b>使用示例：</b>
  * <pre>{@code
  * AgentSkillRepositoryInfo info = new AgentSkillRepositoryInfo(
  *     "filesystem",
  *     "/path/to/skills",
  *     true
  * );
+ * System.out.println(info.getType()); // "filesystem"
  * }</pre>
  */
 public class AgentSkillRepositoryInfo {
@@ -45,11 +47,11 @@ public class AgentSkillRepositoryInfo {
     private final boolean writable;
 
     /**
-     * Creates a new AgentSkillRepositoryInfo instance.
+     * 创建一个新的仓库元数据实例。
      *
-     * @param type The repository type (never null)
-     * @param location The repository location (never null)
-     * @param writable Whether the repository supports write operations
+     * @param type 仓库类型标识，如 "filesystem"、"classpath" 等（不可为 null）
+     * @param location 仓库位置路径（不可为 null），如文件系统路径或资源路径
+     * @param writable 仓库是否支持写入操作（保存、删除技能）
      */
     public AgentSkillRepositoryInfo(String type, String location, boolean writable) {
         this.type = type;
@@ -58,36 +60,38 @@ public class AgentSkillRepositoryInfo {
     }
 
     /**
-     * Gets the repository type.
+     * 获取仓库类型标识。
      *
-     * @return The repository type (never null)
+     * @return 仓库类型，如 "filesystem"、"classpath" 等（不可为 null）
      */
     public String getType() {
         return type;
     }
 
     /**
-     * Gets the repository location.
+     * 获取仓库位置。
      *
-     * @return The repository location (never null)
+     * @return 仓库位置路径（不可为 null），文件系统仓库返回目录路径，类路径仓库返回资源路径
      */
     public String getLocation() {
         return location;
     }
 
     /**
-     * Checks if the repository supports write operations.
+     * 检查仓库是否支持写入操作。
      *
-     * @return {@code true} if writable, {@code false} otherwise
+     * <p>只读仓库（如从类路径加载的仓库）不支持保存或删除技能。
+     *
+     * @return {@code true} 表示支持写入操作；{@code false} 表示只读
      */
     public boolean isWritable() {
         return writable;
     }
 
     /**
-     * Returns a string representation of this repository info.
+     * 返回该仓库元数据的字符串表示形式。
      *
-     * @return String in format "AgentSkillRepositoryInfo{type='...', location='...', writable=...}"
+     * @return 格式为 {@code "AgentSkillRepositoryInfo{type='...', location='...', writable=...}"}
      */
     @Override
     public String toString() {

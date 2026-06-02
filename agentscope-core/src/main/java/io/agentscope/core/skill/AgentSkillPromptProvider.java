@@ -22,15 +22,34 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
- * 生成技能系统提示词，让智能体了解可用技能。
+ * 技能提示词提供器，负责为 LLM 生成可用技能的系统提示词。
  *
- * <p>该提供者创建包含可用技能信息的系统提示词，LLM 可以动态加载和使用这些技能。
+ * <p>核心功能是将已注册的技能元数据渲染为结构化的 XML 格式提示词，使 LLM
+ * 了解可以动态加载和使用的技能。提示词生成遵循以下流程：
+ * <ol>
+ *   <li>从 {@link SkillRegistry} 获取所有已注册的技能</li>
+ *   <li>将每个技能的元数据（名称、描述、自定义字段等）渲染为 {@code <skill>} XML 元素</li>
+ *   <li>可选地追加代码执行指令（包括技能根目录路径和脚本执行工作流）</li>
+ * </ol>
+ *
+ * <p><b>元数据暴露控制：</b><br>
+ * 通过 {@link #setExposeAllMetadata(boolean)} 可控制提示词中暴露的元数据范围。
+ * 完整模式暴露所有元数据字段；精简模式仅暴露 {@code name}、{@code description}
+ * 和 {@code skill-id} 三个核心字段。
+ *
+ * <p><b>代码执行集成：</b><br>
+ * 当启用代码执行时（通过 {@link #setCodeExecutionEnable(boolean)}），提示词末尾会追加
+ * 代码执行指令模板，其中的 {@code %s} 占位符会被替换为技能文件上传目录的绝对路径，
+ * 指导 LLM 如何发现和执行预部署的技能脚本。
  *
  * <p><b>使用示例：</b>
  * <pre>{@code
  * AgentSkillPromptProvider provider = new AgentSkillPromptProvider(registry);
  * String prompt = provider.getSkillSystemPrompt();
  * }</pre>
+ *
+ * @see SkillRegistry
+ * @see SkillBox
  */
 public class AgentSkillPromptProvider {
     private static final String INDENT = "  ";
@@ -107,19 +126,19 @@ public class AgentSkillPromptProvider {
             """;
 
     /**
-     * Creates a skill prompt provider.
+     * 创建技能提示词提供器，使用默认的指令模板。
      *
-     * @param registry The skill registry containing registered skills
+     * @param registry 技能注册表，包含所有已注册的技能（不可为 null）
      */
     public AgentSkillPromptProvider(SkillRegistry registry) {
         this(registry, null);
     }
 
     /**
-     * Creates a skill prompt provider with custom instruction.
+     * 创建技能提示词提供器，并允许自定义指令头部内容。
      *
-     * @param registry The skill registry containing registered skills
-     * @param instruction Custom instruction header (null or blank uses default)
+     * @param registry    技能注册表，包含所有已注册的技能（不可为 null）
+     * @param instruction 自定义指令头部内容（null 或空白则使用默认指令模板）
      */
     public AgentSkillPromptProvider(SkillRegistry registry, String instruction) {
         this.skillRegistry = registry;
@@ -130,11 +149,15 @@ public class AgentSkillPromptProvider {
     }
 
     /**
-     * Gets the skill system prompt for the agent.
+     * 获取面向智能体的技能系统提示词。
      *
-     * <p>Generates a system prompt containing all registered skills.
+     * <p>生成包含所有已注册技能信息的系统提示词，格式为 XML 结构化的技能目录。
+     * 提示词中包含每个技能的名称、描述、元数据以及技能 ID。
      *
-     * @return The skill system prompt, or empty string if no skills exist
+     * <p>如果启用了代码执行且已设置上传目录，还会在提示词末尾追加代码执行指令，
+     * 指导 LLM 如何发现和执行技能目录中的脚本。
+     *
+     * @return 技能系统提示词字符串，如果没有已注册的技能则返回空字符串
      */
     public String getSkillSystemPrompt() {
         if (skillRegistry.getAllRegisteredSkills().isEmpty()) {
@@ -163,32 +186,36 @@ public class AgentSkillPromptProvider {
     }
 
     /**
-     * Sets whether code execution instructions are included in the skill system prompt.
+     * 设置是否在技能系统提示词中包含代码执行指令。
      *
-     * @param codeExecutionEnabled {@code true} to append code execution instructions
+     * <p>启用后，提示词末尾会追加代码执行说明，指导 LLM 如何发现和执行
+     * 技能上传目录中的预部署脚本。
+     *
+     * @param codeExecutionEnabled {@code true} 追加代码执行指令，{@code false} 不追加
      */
     public void setCodeExecutionEnable(boolean codeExecutionEnabled) {
         this.codeExecutionEnabled = codeExecutionEnabled;
     }
 
     /**
-     * Sets the upload directory whose absolute path replaces every {@code %s}
-     * placeholder in the code execution instruction template.
+     * 设置上传目录路径，其绝对路径将替换代码执行指令模板中的所有 {@code %s} 占位符。
      *
-     * @param uploadDir the upload directory path, or {@code null} to disable path substitution
+     * <p>当调用 {@link #getSkillSystemPrompt()} 时，代码执行指令模板中的每个 {@code %s}
+     * 都会被替换为该路径的绝对路径形式。
+     *
+     * @param uploadDir 上传目录的路径，或 {@code null} 禁用路径替换
      */
     public void setUploadDir(Path uploadDir) {
         this.uploadDir = uploadDir != null ? uploadDir.toAbsolutePath().toString() : null;
     }
 
     /**
-     * Sets a custom code execution instruction template.
+     * 设置自定义的代码执行指令模板。
      *
-     * <p>Every {@code %s} placeholder in the template will be replaced with
-     * the {@code uploadDir} absolute path. Pass {@code null} or blank to
-     * fall back to {@link #DEFAULT_CODE_EXECUTION_INSTRUCTION}.
+     * <p>模板中的每个 {@code %s} 占位符将被替换为 {@code uploadDir} 的绝对路径。
+     * 传入 {@code null} 或空白字符串将回退到 {@link #DEFAULT_CODE_EXECUTION_INSTRUCTION}。
      *
-     * @param codeExecutionInstruction the custom template, or {@code null}/blank for default
+     * @param codeExecutionInstruction 自定义模板字符串，或 {@code null}/空白以使用默认模板
      */
     public void setCodeExecutionInstruction(String codeExecutionInstruction) {
         this.codeExecutionInstruction =
@@ -198,13 +225,13 @@ public class AgentSkillPromptProvider {
     }
 
     /**
-     * Sets whether all metadata fields are exposed to the LLM.
+     * 设置是否向 LLM 暴露技能的所有元数据字段。
      *
-     * <p>When disabled, only {@code name}, {@code description}, and {@code skill-id}
-     * are rendered into the skill prompt.
+     * <p>当禁用时，技能提示词中仅包含 {@code name}、{@code description}
+     * 和 {@code skill-id} 三个核心字段。当启用时，技能元数据中的所有键值对
+     * 都会被渲染为 XML 元素。
      *
-     * @param exposeAllMetadata {@code true} to expose all metadata, {@code false} to expose only
-     *                          the core fields
+     * @param exposeAllMetadata {@code true} 暴露所有元数据字段，{@code false} 仅暴露核心字段
      */
     public void setExposeAllMetadata(boolean exposeAllMetadata) {
         this.exposeAllMetadata = exposeAllMetadata;

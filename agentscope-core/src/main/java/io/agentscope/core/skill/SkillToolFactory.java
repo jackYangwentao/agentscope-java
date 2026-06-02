@@ -27,7 +27,23 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 /**
- * 技能访问工具工厂，用于创建允许智能体动态加载和访问技能的工具。
+ * 技能访问工具工厂，用于创建 {@code load_skill_through_path} 工具，
+ * 使 LLM 能够动态加载和激活技能资源。
+ *
+ * <p>该工厂创建的工具有以下关键行为：
+ * <ul>
+ *   <li>根据技能 ID 和资源路径加载技能资源内容</li>
+ *   <li>加载 SKILL.md 时自动激活技能，使其关联的工具组对 LLM 可用</li>
+ *   <li>支持加载技能包内的任意资源文件（脚本、配置、模板等）</li>
+ *   <li>当请求的资源不存在时，返回可用资源列表引导 LLM 修正请求</li>
+ * </ul>
+ *
+ * <p><b>生命周期：</b>工厂内部持有 {@link Toolkit} 引用，由于 {@code ReActAgent}
+ * 使用 {@code Toolkit} 的深拷贝，因此提供 {@link #bindToolkit(Toolkit)} 方法
+ * 在代理拷贝后重新绑定正确的工具包实例。
+ *
+ * @see SkillBox
+ * @see AgentSkill
  */
 class SkillToolFactory {
 
@@ -42,29 +58,32 @@ class SkillToolFactory {
     }
 
     /**
-     * Binds a toolkit to the skill tool factory.
+     * 将工具包绑定到技能工具工厂。
      *
-     * <p>
-     * This method binds the toolkit to skill tool factory.
-     * Since ReActAgent uses a deep copy of the Toolkit, rebinding is necessary to
-     * ensure the
-     * skill tool factory references the correct toolkit instance.
+     * <p>由于 {@code ReActAgent} 使用 {@code Toolkit} 的深拷贝，在代理创建后
+     * 需要调用此方法重新绑定，确保技能工具工厂引用的是正确的工具包实例，
+     * 从而能够正确管理技能关联的工具组。
      *
-     * @param toolkit The toolkit to bind to the skill tool factory
-     * @throws IllegalArgumentException if the toolkit is null
+     * @param toolkit 要绑定的工具包实例（不可为 null）
+     * @throws IllegalArgumentException 如果 toolkit 为 null
      */
     void bindToolkit(Toolkit toolkit) {
         this.toolkit = toolkit;
     }
 
     /**
-     * Creates the load_skill_through_path agent tool.
+     * 创建 {@code load_skill_through_path} 智能体工具。
      *
-     * <p>This tool allows agents to load and activate skills by their ID and resource path.
-     * It supports loading SKILL.md for skill documentation or other resources like scripts,
-     * configs, and templates.
+     * <p>该工具允许智能体按技能 ID 和资源路径加载并激活技能资源。
+     * 支持加载 SKILL.md 获取技能文档，或加载其他资源如脚本、配置和模板。
      *
-     * @return AgentTool for loading skill resources (including SKILL.md)
+     * <p><b>工具参数：</b>
+     * <ul>
+     *   <li>{@code skillId}（必填）—— 技能的唯一标识符，通过枚举值限定可选范围</li>
+     *   <li>{@code path}（必填）—— 资源路径，使用 "SKILL.md" 加载技能文档，或使用技能中列出的具体路径</li>
+     * </ul>
+     *
+     * @return 用于加载技能资源的 {@link AgentTool} 实例
      */
     AgentTool createSkillAccessToolAgentTool() {
         return new AgentTool() {
@@ -152,12 +171,19 @@ class SkillToolFactory {
     }
 
     /**
-     * Implementation of skill resource loading logic.
+     * 技能资源加载的核心实现。
      *
-     * @param skillId The unique identifier of the skill
-     * @param path The path to the resource file
-     * @return The formatted resource content or error message with available resources
-     * @throws IllegalArgumentException if skill doesn't exist or resource not found
+     * <p>处理以下场景：
+     * <ul>
+     *   <li>路径为 "SKILL.md" —— 自动激活技能并返回技能文档（名称、描述、使用说明）</li>
+     *   <li>路径为资源文件 —— 返回对应资源内容并在首次加载时激活技能</li>
+     *   <li>路径不存在 —— 抛出 {@link IllegalArgumentException}，附上可用资源列表引导 LLM</li>
+     * </ul>
+     *
+     * @param skillId 技能的唯一标识符
+     * @param path    资源文件路径
+     * @return 格式化后的资源内容
+     * @throws IllegalArgumentException 如果技能不存在或资源未找到
      */
     private String loadSkillResourceImpl(String skillId, String path) {
         AgentSkill skill = validateSkillExists(skillId);
@@ -182,11 +208,11 @@ class SkillToolFactory {
     }
 
     /**
-     * Build response for SKILL.md content.
+     * 构建 SKILL.md 内容的响应，包含技能激活确认和完整文档。
      *
-     * @param skillId The skill ID
-     * @param skill The skill instance
-     * @return Formatted skill markdown response
+     * @param skillId 技能 ID
+     * @param skill   技能实例
+     * @return 格式化后的技能 Markdown 响应
      */
     private String buildSkillMarkdownResponse(String skillId, AgentSkill skill) {
         StringBuilder result = new StringBuilder();
@@ -202,12 +228,12 @@ class SkillToolFactory {
     }
 
     /**
-     * Build response for regular resource content.
+     * 构建普通资源内容的响应，包含加载确认和资源原文。
      *
-     * @param skillId The skill ID
-     * @param path The resource path
-     * @param resourceContent The resource content
-     * @return Formatted resource response
+     * @param skillId         技能 ID
+     * @param path            资源路径
+     * @param resourceContent 资源内容
+     * @return 格式化后的资源响应
      */
     private String buildResourceResponse(String skillId, String path, String resourceContent) {
         StringBuilder result = new StringBuilder();
@@ -221,12 +247,14 @@ class SkillToolFactory {
     }
 
     /**
-     * Build error message with available resource paths when resource is not found.
+     * 构建资源未找到时的错误消息，包含 SKILL.md 和所有可用资源路径的列表。
      *
-     * @param skillId The skill ID
-     * @param path The requested path that was not found
-     * @param resources The available resources map
-     * @return Formatted error message with available resources
+     * <p>返回的消息始终将 "SKILL.md" 列为第一个可用资源，引导 LLM 优先加载技能文档。
+     *
+     * @param skillId  技能 ID
+     * @param path     请求的未找到的路径
+     * @param resources 当前技能的所有资源映射
+     * @return 包含可用资源列表的格式化错误消息
      */
     private String buildResourceNotFoundMessage(
             String skillId, String path, Map<String, String> resources) {
@@ -254,12 +282,15 @@ class SkillToolFactory {
     }
 
     /**
-     * Validates that a skill is registered and returns its instance.
+     * 验证技能是否已注册，并返回技能实例。
      *
-     * @param skillId The unique identifier of the skill
-     * @return The registered skill instance
-     * @throws IllegalArgumentException if the skill is not registered
-     * @throws IllegalStateException if the skill cannot be loaded after validation
+     * <p>执行双重检查：首先确认注册表中存在该技能 ID，然后验证对应的技能实例不为 null。
+     * 如果验证通过，返回技能实例供后续资源加载使用。
+     *
+     * @param skillId 技能的唯一标识符
+     * @return 已注册的技能实例
+     * @throws IllegalArgumentException 如果技能未注册
+     * @throws IllegalStateException 如果技能在验证后无法加载（内部错误）
      */
     private AgentSkill validateSkillExists(String skillId) {
         if (!skillRegistry.exists(skillId)) {

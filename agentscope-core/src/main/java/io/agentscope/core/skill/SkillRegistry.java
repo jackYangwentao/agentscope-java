@@ -21,47 +21,62 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 管理技能注册和激活状态的注册表。
+ * 技能注册表，管理技能实例的注册、检索、激活状态和移除操作。
  *
- * <p>该类提供技能的基本存储和检索操作。
- *
- * <p><b>职责：</b>
+ * <p>该类是技能管理系统的纯存储层，内部维护两个并发的映射：
  * <ul>
- *   <li>存储和检索技能</li>
- *   <li>追踪技能元数据和激活状态</li>
+ *   <li>{@code skills} —— 技能 ID 到 {@link AgentSkill} 实例的映射</li>
+ *   <li>{@code registeredSkills} —— 技能 ID 到 {@link RegisteredSkill} 元数据包装的映射</li>
+ * </ul>
+ *
+ * <p><b>核心职责：</b>
+ * <ul>
+ *   <li>注册和注销技能（替换已存在的技能）</li>
+ *   <li>按技能 ID 检索技能实例和注册元数据</li>
+ *   <li>管理单个或全部技能的激活/停用状态</li>
+ *   <li>提供技能存在性检查</li>
  * </ul>
  *
  * <p><b>设计原则：</b>
- * 这是一个纯存储层。除非明确说明，所有参数均假定为非 null。
- * 参数验证应在 Toolkit 层执行。
+ * <ul>
+ *   <li>这是一个纯存储层，不涉及业务逻辑验证</li>
+ *   <li>使用 {@link ConcurrentHashMap} 保证线程安全</li>
+ *   <li>除非明确说明，所有参数均假定为非 null，参数验证由调用方（如 {@link SkillBox}）负责</li>
+ * </ul>
+ *
+ * @see SkillBox
+ * @see RegisteredSkill
  */
 class SkillRegistry {
     private final Map<String, AgentSkill> skills = new ConcurrentHashMap<>();
     private final Map<String, RegisteredSkill> registeredSkills = new ConcurrentHashMap<>();
 
-    // ==================== Registration ====================
+    // ==================== 注册操作 ====================
 
     /**
-     * Registers a skill with its metadata.
+     * 注册一个技能及其关联的注册元数据。
      *
-     * <p>If the skill is already registered, it will be replaced.
+     * <p>如果指定的 {@code skillId} 已经注册过，对应的技能和元数据将被新值替换。
+     * 此方法不执行任何校验，调用方应确保参数有效。
      *
-     * @param skillId The unique skill identifier (must not be null)
-     * @param skill The skill implementation (must not be null)
-     * @param registered The registered skill wrapper containing metadata (must not be null)
+     * @param skillId   技能的唯一标识符（不可为 null）
+     * @param skill     技能实例（不可为 null）
+     * @param registered 技能的注册元数据包装（不可为 null）
      */
     void registerSkill(String skillId, AgentSkill skill, RegisteredSkill registered) {
         skills.put(skillId, skill);
         registeredSkills.put(skillId, registered);
     }
 
-    // ==================== Activation Management ====================
+    // ==================== 激活状态管理 ====================
 
     /**
-     * Sets the activation state of a skill.
+     * 设置指定技能的激活状态。
      *
-     * @param skillId The skill ID (must not be null)
-     * @param active Whether to activate the skill
+     * <p>激活状态控制该技能关联的工具组是否对 LLM 可见。
+     *
+     * @param skillId 技能 ID（不可为 null）
+     * @param active  true 表示激活该技能，false 表示停用
      */
     void setSkillActive(String skillId, boolean active) {
         RegisteredSkill registered = registeredSkills.get(skillId);
@@ -71,70 +86,72 @@ class SkillRegistry {
     }
 
     /**
-     * Sets the activation state of all skills.
+     * 设置所有注册技能的激活状态。
      *
-     * @param active Whether to activate all skills
+     * <p>用于在智能体每次调用开始时统一重置状态，确保干净的执行环境。
+     *
+     * @param active true 表示激活所有技能，false 表示停用所有技能
      */
     void setAllSkillsActive(boolean active) {
         registeredSkills.values().forEach(r -> r.setActive(active));
     }
 
-    // ==================== Query Operations ====================
+    // ==================== 查询操作 ====================
 
     /**
-     * Gets a skill by ID.
+     * 根据技能 ID 获取技能实例。
      *
-     * @param skillId The skill ID (must not be null)
-     * @return The skill instance, or null if not found
+     * @param skillId 技能 ID（不可为 null）
+     * @return 技能实例，如果未找到则返回 null
      */
     AgentSkill getSkill(String skillId) {
         return skills.get(skillId);
     }
 
     /**
-     * Gets a registered skill by ID.
+     * 根据技能 ID 获取已注册技能的元数据包装。
      *
-     * @param skillId The skill ID (must not be null)
-     * @return The registered skill, or null if not found
+     * @param skillId 技能 ID（不可为 null）
+     * @return 已注册技能的元数据包装，如果未找到则返回 null
      */
     RegisteredSkill getRegisteredSkill(String skillId) {
         return registeredSkills.get(skillId);
     }
 
     /**
-     * Gets all skill IDs.
+     * 获取所有已注册技能的 ID 集合。
      *
-     * @return Set of skill IDs (never null, may be empty)
+     * @return 技能 ID 的集合副本（不可为 null，可能为空）
      */
     Set<String> getSkillIds() {
         return new HashSet<>(skills.keySet());
     }
 
     /**
-     * Checks if a skill exists.
+     * 检查指定技能 ID 是否已注册。
      *
-     * @param skillId The skill ID (must not be null)
-     * @return true if the skill exists, false otherwise
+     * @param skillId 技能 ID（不可为 null）
+     * @return true 表示技能已注册，false 表示未注册
      */
     boolean exists(String skillId) {
         return skills.containsKey(skillId);
     }
 
     /**
-     * Gets all registered skills.
+     * 获取所有已注册技能的元数据映射。
      *
-     * @return Map of skill IDs to registered skills (never null, may be empty)
+     * @return 技能 ID 到注册元数据的映射副本（不可为 null，可能为空）
      */
     Map<String, RegisteredSkill> getAllRegisteredSkills() {
         return new ConcurrentHashMap<>(registeredSkills);
     }
 
-    // ==================== Removal Operations ====================
+    // ==================== 移除操作 ====================
 
     /**
-     * Removes a skill completely.
+     * 完全移除一个技能，包括技能实例和注册元数据。
      *
-     * @param skillId The skill ID (must not be null)
+     * @param skillId 要移除的技能 ID（不可为 null）
      */
     void removeSkill(String skillId) {
         skills.remove(skillId);

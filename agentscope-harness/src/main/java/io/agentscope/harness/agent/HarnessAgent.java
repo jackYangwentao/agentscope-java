@@ -237,6 +237,7 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
      * null} when the default session is not a {@link WorkspaceSession}; callers must fall back to
      * {@link #defaultSession}.
      */
+    private final java.util.function.Function<String, Session> sessionFactory;
     /**
      * 按 userId 的 {@link WorkspaceSession} 视图的工厂。用于将调用方的 userId 烘焙到
      * {@link io.agentscope.harness.agent.store.NamespaceFactory} 中，使得
@@ -244,7 +245,6 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
      * {@link RuntimeContext}）仍然生成按用户的路径。当默认会话不是 {@link WorkspaceSession}
      * 时返回 {@code null}；调用方必须回退到 {@link #defaultSession}。
      */
-    private final java.util.function.Function<String, Session> sessionFactory;
 
     private volatile RuntimeContext runtimeContext;
 
@@ -319,17 +319,20 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
     }
 
     /** Streams the agent response with a runtime context. */
+    /** 使用运行时上下文流式传输代理响应。 */
     public Flux<Event> stream(List<Msg> msgs, StreamOptions options, RuntimeContext ctx) {
         bindRuntimeContext(ctx);
         return delegate.stream(msgs, options, coreForDelegate());
     }
 
     /** Streams with default {@link StreamOptions} and a runtime context. */
+    /** 使用默认 {@link StreamOptions} 和运行时上下文进行流式传输。 */
     public Flux<Event> stream(List<Msg> msgs, RuntimeContext ctx) {
         return stream(msgs, StreamOptions.defaults(), ctx);
     }
 
     /** Streams a single message with default {@link StreamOptions} and a runtime context. */
+    /** 使用默认 {@link StreamOptions} 和运行时上下文流式传输单条消息。 */
     public Flux<Event> stream(Msg msg, RuntimeContext ctx) {
         return stream(List.of(msg), ctx);
     }
@@ -364,6 +367,7 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
                 ctx != null && ctx.getSessionId() != null ? ctx.getSessionId() : "default";
 
         // Force trigger by using a config with threshold=1 (always compact)
+        // 通过使用阈值为 1 的配置强制触发（始终压缩）
         CompactionConfig forceConfig = CompactionConfig.builder().triggerMessages(1).build();
         MemoryFlushManager fm = new MemoryFlushManager(workspaceManager, delegate.getModel());
         ConversationCompactor compactor = new ConversationCompactor(delegate.getModel(), fm);
@@ -429,11 +433,21 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
      * SessionKey defaults to {@code SimpleSessionKey.of(sessionId)} when sessionId is
      * available, or {@code SimpleSessionKey.of(agentName)} as a last resort.
      */
+    /**
+     * 当调用方未提供默认 Session 和 SessionKey 时填充它们。
+     * Session 默认为代理级别的 {@link #defaultSession} (JsonSession)。
+     * 当 sessionId 可用时，SessionKey 默认为 {@code SimpleSessionKey.of(sessionId)}，
+     * 否则最后回退到 {@code SimpleSessionKey.of(agentName)}。
+     */
     private RuntimeContext ensureSessionDefaults(RuntimeContext ctx) {
         Session session = ctx.getSession();
         if (session == null) {
             // When the agent's default session is a WorkspaceSession (single-tenant local store),
             // produce a per-call view with the caller's userId baked into its NamespaceFactory so
+            // 当代理的默认会话是 WorkspaceSession（单租户本地存储）时，
+            // 生成一个每次调用的视图，将调用方的 userId 烘焙到其 NamespaceFactory 中，
+            // 使得会话状态落在 <workspace>/<userId>/agents/.../context/ 下，
+            // 而不是共享的工作区根目录。
             // session state lands under <workspace>/<userId>/agents/.../context/ instead of the
             // shared workspace root.
             String uid = ctx.getUserId();
@@ -454,6 +468,7 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
             }
         }
         // Inject default sandbox context if the call doesn't provide one
+        // 如果调用未提供默认沙箱上下文，则注入
         SandboxContext sandboxCtx =
                 ctx.get(SandboxContext.class) != null
                         ? ctx.get(SandboxContext.class)
@@ -475,6 +490,7 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
     }
 
     // ==================== Agent interface delegation ====================
+    // ==================== 代理接口委托 ====================
 
     @Override
     public Mono<Msg> call(List<Msg> msgs) {
@@ -573,6 +589,28 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
      * <p>Pass {@code null} for either parameter to opt out of that dimension. The returned view
      * is lightweight and may be created per request; callers should not cache it across requests
      * with different users.
+    /**
+     * 返回一个 {@link WorkspaceManager} 视图，其文件系统和命名空间在返回视图的
+     * I/O 生命周期内绑定到指定的 {@code (userId, sessionId)}。与
+     * {@link #getWorkspaceManager()} 不同，这<strong>不会</strong>改变聊道路径
+     * （{@link #call} / {@link #stream}）使用的共享 {@link RuntimeContext} 状态——
+     * 因此从按请求的控制器并发调用是安全的，不会与同一代理上的活动聊天或其他
+     * 请求产生竞争。
+     *
+     * <p>按文件系统模式的语义：
+     *
+     * <ul>
+     *   <li><b>远程（复合）</b>——构建一个新的复合文件系统，其每个路由的
+     *       {@link io.agentscope.harness.agent.filesystem.remote.RemoteFilesystem}
+     *       直接使用提供的 {@code userId} / {@code sessionId}（无可变引用）。
+     *       I/O 根据配置的 {@link io.agentscope.harness.agent.IsolationScope}
+     *       落在 {@code [agents, <agentId>, users, <userId>, <route>, ...]} 下。
+     *   <li><b>本地/沙箱/自定义</b>——重用现有的共享文件系统（这些模式的后端
+     *       没有按用户竞争）；仅为磁盘回退子树重新绑定工作区相对命名空间工厂。
+     * </ul>
+     *
+     * <p>为任一参数传递 {@code null} 以退出该维度。返回的视图是轻量级的，
+     * 可以按请求创建；调用方不应在不同用户的请求之间缓存它。
      */
     public WorkspaceManager workspaceFor(String userId, String sessionId) {
         if (workspaceFactory == null) {
@@ -584,6 +622,10 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
     /**
      * Returns the {@link CompactionHook} instance if compaction was configured, or {@code null}.
      * Exposed for testing to verify compaction mirroring in child agents.
+     */
+    /**
+     * 如果配置了压缩，则返回 {@link CompactionHook} 实例，否则返回 {@code null}。
+     * 暴露给测试以验证子代理中的压缩镜像。
      */
     public CompactionHook getCompactionHook() {
         return compactionHook;
@@ -599,11 +641,17 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
      * shared → per-user namespace) computed at build time, in priority order from lowest to
      * highest. The returned list is immutable.
      */
+    /**
+     * 返回绑定到此代理的有序 {@link AgentSkillRepository} 实例列表。
+     * 该列表反映了构建时计算的四层组合（项目全局 → 市场 → 工作区共享 → 按用户命名空间），
+     * 按优先级从最低到最高排列。返回的列表是不可变的。
+     */
     public List<AgentSkillRepository> getSkillRepositories() {
         return skillRepositories;
     }
 
     // ==================== StateModule delegation ====================
+    // ==================== StateModule 委托 ====================
 
     @Override
     public void saveTo(Session session, SessionKey sessionKey) {
@@ -669,6 +717,49 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
      * @param agent the existing {@link ReActAgent} to migrate; must not be null
      * @return a new {@link Builder} pre-populated with the agent's observable configuration
      */
+    /**
+     * 创建一个预填充了现有 {@link ReActAgent} 可观察属性的 {@link Builder}，
+     * 使得以最小更改迁移到 {@link HarnessAgent} 变得容易。
+     *
+     * <p>以下属性从 {@code agent} 复制：
+     * <ul>
+     *   <li>{@code name}、{@code description}、{@code sysPrompt}
+     *   <li>{@code model}、{@code maxIters}、{@code generateOptions}
+     *   <li>{@code planNotebook}
+     *   <li>{@code toolkit} — 防御性副本；所有自定义工具都被保留，
+     *       除非通过 {@link HarnessAgent.Builder#disableFilesystemTools()} 和相关
+     *       {@code disable*} 方法禁用，否则 HarnessAgent 的内置工具（文件系统、
+     *       记忆搜索等）会在其基础上添加
+     * </ul>
+     *
+     * <p>有意<strong>不</strong>复制的属性：
+     * <ul>
+     *   <li>{@code memory} — HarnessAgent 始终管理自己的内存会话存储，
+     *       由工作区持久化支持
+     *   <li>hooks — 已编译到现有代理中，无法通过公共 API 访问；
+     *       如果需要，通过 {@link Builder#hook(Hook)} 添加新的 harness 钩子
+     *   <li>长期记忆、RAG、statePersistence、structuredOutputReminder —
+     *       无法通过已构建代理的公共 API 访问；通过返回的构建器重新配置
+     * </ul>
+     *
+     * <p>迁移示例：
+     * <pre>{@code
+     * // 之前
+     * ReActAgent agent = ReActAgent.builder()
+     *     .name("my-agent")
+     *     .model(model)
+     *     .toolkit(myToolkit)
+     *     .build();
+     *
+     * // 之后 — 最小更改
+     * HarnessAgent agent = HarnessAgent.from(existingReActAgent)
+     *     .workspace("/my/workspace")
+     *     .build();
+     * }</pre>
+     *
+     * @param agent 要迁移的现有 {@link ReActAgent}；不能为 null
+     * @return 预填充了代理可观察配置的新 {@link Builder}
+     */
     public static Builder from(ReActAgent agent) {
         Builder b = new Builder();
         b.name = agent.getName();
@@ -679,6 +770,7 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
         b.generateOptions = agent.getGenerateOptions();
         b.planNotebook = agent.getPlanNotebook();
         // Defensive copy so HarnessAgent's build() does not mutate the original agent's toolkit
+        // 防御性副本，以便 HarnessAgent 的 build() 不会改变原始代理的工具包
         b.toolkit = agent.getToolkit().copy();
         return b;
     }
@@ -686,6 +778,7 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
     public static class Builder {
 
         // Core ReActAgent params
+        // 核心 ReActAgent 参数
         private String name;
         private String agentId;
         private String description;
@@ -704,30 +797,42 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * #skillRepository(AgentSkillRepository)} appends to this list.
          */
         private final List<AgentSkillRepository> skillRepositories = new ArrayList<>();
+        /**
+         * 市场/外部技能存储库，位于项目全局目录和工作区代理共享目录之间。
+         * 默认为空。{@link #skillRepository(AgentSkillRepository)} 追加到此列表。
+         */
 
         /**
          * Optional project-global skills directory (lowest precedence in the composition).
          * When {@code null}, no project-global layer is added.
          */
         private Path projectGlobalSkillsDir;
+        /**
+         * 可选的项目全局技能目录（组合中优先级最低）。
+         * 当为 {@code null} 时，不添加项目全局层。
+         */
 
         private ToolExecutionContext toolExecutionContext;
 
         // Long-term memory configuration
+        // 长期记忆配置
         private LongTermMemory longTermMemory;
         private LongTermMemoryMode longTermMemoryMode = LongTermMemoryMode.BOTH;
         private boolean longTermMemoryAsyncRecord = false;
 
         // Plan configuration
+        // 计划配置
         private PlanNotebook planNotebook;
 
         // RAG configuration
+        // RAG 配置
         private final List<Knowledge> knowledgeBases = new ArrayList<>();
         private RAGMode ragMode = RAGMode.GENERIC;
         private RetrieveConfig retrieveConfig =
                 RetrieveConfig.builder().limit(5).scoreThreshold(0.5).build();
 
         // Additional delegate params
+        // 额外的委托参数
         private StatePersistence statePersistence;
         private StructuredOutputReminder structuredOutputReminder;
         private boolean enableMetaTool = false;
@@ -735,6 +840,7 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
         private boolean checkRunning = true;
 
         // Harness-specific params
+        // Harness 特定参数
         private Path workspace;
         private String environmentMemory;
         private AbstractFilesystem abstractFilesystem;
@@ -747,6 +853,10 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * false}.
          */
         private boolean leafSubagent = false;
+        /**
+         * 当为 {@code true} 时，此代理是叶子工作节点（派生的子代理）：它不注册
+         * {@link SubagentsHook}，防止递归委托。主代理保持此值为 {@code false}。
+         */
 
         /**
          * When {@code true} (default), registers {@link AgentTraceHook} to log reasoning and tool
@@ -754,18 +864,31 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * DEBUG for full args and results. When {@code false}, no trace hook is added.
          */
         private boolean agentTracingLogEnabled = true;
+        /**
+         * 当为 {@code true}（默认值）时，注册 {@link AgentTraceHook} 在 INFO 级别记录
+         * 推理和工具执行；将日志记录器 {@code io.agentscope.harness.agent.hook.AgentTraceHook}
+         * 设置为 DEBUG 以获取完整参数和结果。当为 {@code false} 时，不添加跟踪钩子。
+         */
 
         /**
          * When non-null, enables {@link CompactionHook} with this configuration.
          * Set via {@link #compaction(CompactionConfig)}.
          */
         private CompactionConfig compactionConfig = null;
+        /**
+         * 当非 null 时，使用此配置启用 {@link CompactionHook}。
+         * 通过 {@link #compaction(CompactionConfig)} 设置。
+         */
 
         /**
          * When non-null, enables {@link ToolResultEvictionHook} with this configuration.
          * Set via {@link #toolResultEviction(ToolResultEvictionConfig)}.
          */
         private ToolResultEvictionConfig toolResultEvictionConfig = null;
+        /**
+         * 当非 null 时，使用此配置启用 {@link ToolResultEvictionHook}。
+         * 通过 {@link #toolResultEviction(ToolResultEvictionConfig)} 设置。
+         */
 
         private final List<SubagentDeclaration> subagentDeclarations = new ArrayList<>();
         private final List<SubagentFactoryEntry> customSubagentFactories = new ArrayList<>();
@@ -777,9 +900,11 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
         private boolean useLegacyXmlWorkspaceContext = false;
 
         /** When {@code true}, {@link FilesystemTool} is not registered. */
+        /** 当为 {@code true} 时，不注册 {@link FilesystemTool}。 */
         private boolean disableFilesystemTools = false;
 
         /** When {@code true}, {@link ShellExecuteTool} is not registered (sandbox / local-shell modes only). */
+        /** 当为 {@code true} 时，不注册 {@link ShellExecuteTool}（仅沙箱/本地 shell 模式）。 */
         private boolean disableShellTool = false;
 
         /**
@@ -787,16 +912,25 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * are not registered.
          */
         private boolean disableMemoryTools = false;
+        /**
+         * 当为 {@code true} 时，不注册 {@link MemorySearchTool}、{@link MemoryGetTool}
+         * 和 {@link SessionSearchTool}。
+         */
 
         /**
          * When {@code true}, {@link MemoryFlushHook} and {@link MemoryMaintenanceHook} are not registered.
          */
         private boolean disableMemoryHooks = false;
+        /**
+         * 当为 {@code true} 时，不注册 {@link MemoryFlushHook} 和 {@link MemoryMaintenanceHook}。
+         */
 
         /** When {@code true}, {@link SessionPersistenceHook} is not registered. */
+        /** 当为 {@code true} 时，不注册 {@link SessionPersistenceHook}。 */
         private boolean disableSessionPersistence = false;
 
         /** When {@code true}, {@link WorkspaceContextHook} is not registered. */
+        /** 当为 {@code true} 时，不注册 {@link WorkspaceContextHook}。 */
         private boolean disableWorkspaceContext = false;
 
         /**
@@ -804,6 +938,10 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * subagents omit this hook regardless.
          */
         private boolean disableSubagents = false;
+        /**
+         * 当为 {@code true} 时，此代理上不注册 {@link SubagentsHook}。
+         * 派生的叶子子代理无论何值都省略此钩子。
+         */
 
         /**
          * When {@code true}, the dynamic skill hook ({@code DynamicSkillHook}) is not registered
@@ -811,6 +949,11 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * {@code SkillHook} path via {@code resolveSkillBox()}.
          */
         private boolean disableDynamicSkills = false;
+        /**
+         * 当为 {@code true} 时，即使配置了工作区文件系统，也不注册动态技能钩子
+         * ({@code DynamicSkillHook})。构建回退到通过 {@code resolveSkillBox()} 的
+         * 旧版 {@code SkillHook} 路径。
+         */
 
         /**
          * When {@code true}, the dynamic subagents hook ({@code DynamicSubagentsHook}) is not
@@ -818,6 +961,11 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * legacy {@link SubagentsHook} which scans subagent declarations once at build time.
          */
         private boolean disableDynamicSubagents = false;
+        /**
+         * 当为 {@code true} 时，即使配置了工作区文件系统，也不注册动态子代理钩子
+         * ({@code DynamicSubagentsHook})。构建回退到旧版 {@link SubagentsHook}，
+         * 后者在构建时扫描一次子代理声明。
+         */
 
         /**
          * When {@code true}, {@code workspace/tools.json} is not consulted at build time. MCP
@@ -825,14 +973,24 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * exactly the built-ins registered programmatically.
          */
         private boolean disableToolsConfig = false;
+        /**
+         * 当为 {@code true} 时，构建时不查阅 {@code workspace/tools.json}。
+         * 完全跳过该文件中的 MCP 服务器和允许/拒绝列表；
+         * 工具包仅保留通过编程方式注册的内置工具。
+         */
 
         /**
          * Programmatic override for {@code workspace/tools.json}. When non-null, {@link
          * ToolsConfigLoader} is bypassed and this value is used directly. Useful for tests.
          */
         private ToolsConfig toolsConfigOverride;
+        /**
+         * 对 {@code workspace/tools.json} 的编程覆盖。当非 null 时，绕过
+         * {@link ToolsConfigLoader} 并直接使用此值。对测试有用。
+         */
 
         // Filesystem mode configuration (at most one of these three is set)
+        // 文件系统模式配置（最多设置这三个中的一个）
         private SandboxFilesystemSpec sandboxFilesystemSpec;
         private RemoteFilesystemSpec remoteFilesystemSpec;
         private LocalFilesystemSpec localFilesystemSpec;
@@ -852,6 +1010,16 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * preserving prior behavior. Callers that need rename-safe storage (e.g. multi-tenant
          * platforms whose agents have a stable catalog/URL id distinct from the display name)
          * should set this explicitly.
+         */
+        /**
+         * 设置在复合文件系统中用作代理命名空间键的稳定标识符
+         * （例如 {@code [agents, <agentId>, users, <userId>, ...]}）。
+         * 这与 {@link #name(String)} 不同，后者是人面向的显示名称，
+         * 可以在不重写任何键的情况下更改。
+         *
+         * <p>当未设置时，{@code build()} 回退到使用 {@link #name(String)} 作为命名空间键，
+         * 保持先前行为。需要重命名安全存储的调用方（例如多租户平台，
+         * 其代理具有与显示名称不同的稳定目录/URL ID）应显式设置此值。
          */
         public Builder agentId(String agentId) {
             this.agentId = agentId;
@@ -884,6 +1052,18 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * @param modelId registry id or {@code provider:model} string
          * @return this builder
          * @throws IllegalArgumentException if the id cannot be resolved
+         */
+        /**
+         * 通过 {@link ModelRegistry} 解析的字符串 ID 配置模型：已命名的注册
+         * ({@link ModelRegistry#register(String, Model)}) 或内置模式，
+         * 例如 {@code openai:gpt-5.5}、{@code dashscope:qwen-max}、
+         * {@code anthropic:claude-sonnet-4-5}、{@code gemini:gemini-2.0-flash}
+         * 或 {@code ollama:llama3}。自动创建的模型的 API 密钥来自标准环境变量
+         * ({@code OPENAI_API_KEY}、{@code DASHSCOPE_API_KEY} 等)。
+         *
+         * @param modelId 注册表 ID 或 {@code provider:model} 字符串
+         * @return 此构建器
+         * @throws IllegalArgumentException 如果 ID 无法解析
          */
         public Builder model(String modelId) {
             this.model = ModelRegistry.resolve(modelId);
@@ -933,6 +1113,12 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * overriding earlier ones on name collisions. Call this method multiple times to add
          * multiple sources.
          */
+        /**
+         * 添加一个市场/外部技能存储库（例如 {@code GitSkillRepository}、Nacos、HTTP）。
+         * 存储库与工作区技能<em>相加</em>组合：默认优先级为项目全局 → 市场存储库
+         * （按注册顺序）→ 工作区代理共享 → 按用户命名空间文件系统，
+         * 后一层在名称冲突时覆盖前一层。多次调用此方法以添加多个来源。
+         */
         public Builder skillRepository(AgentSkillRepository skillRepository) {
             if (skillRepository != null) {
                 this.skillRepositories.add(skillRepository);
@@ -944,6 +1130,10 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * Replaces the current marketplace repository list with the given collection. Useful
          * for bulk configuration from an external config; equivalent to clearing the list and
          * calling {@link #skillRepository(AgentSkillRepository)} for each entry.
+         */
+        /**
+         * 用给定集合替换当前市场存储库列表。对于从外部配置批量配置很有用；
+         * 等同于清空列表并为每个条目调用 {@link #skillRepository(AgentSkillRepository)}。
          */
         public Builder skillRepositories(List<AgentSkillRepository> repositories) {
             this.skillRepositories.clear();
@@ -962,6 +1152,11 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * workspace skills (lowest precedence). Used to ship default skills shared across all
          * agents started from a project. Pass {@code null} to clear.
          */
+        /**
+         * 配置一个项目全局技能目录，层级<em>低于</em>市场和工作区技能
+         * （最低优先级）。用于提供从项目启动的所有代理共享的默认技能。
+         * 传递 {@code null} 以清除。
+         */
         public Builder projectGlobalSkillsDir(Path projectGlobalSkillsDir) {
             this.projectGlobalSkillsDir = projectGlobalSkillsDir;
             return this;
@@ -979,6 +1174,12 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * @param knowledge the knowledge base to add
          * @return this builder instance
          */
+        /**
+         * 在委托 {@link ReActAgent} 上添加用于 RAG（检索增强生成）的知识库。
+         *
+         * @param knowledge 要添加的知识库
+         * @return 此构建器实例
+         */
         public Builder knowledge(Knowledge knowledge) {
             if (knowledge != null) {
                 this.knowledgeBases.add(knowledge);
@@ -994,6 +1195,12 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * @return this builder instance
          */
         public Builder knowledges(List<Knowledge> knowledges) {
+        /**
+         * 在委托 {@link ReActAgent} 上添加多个用于 RAG（检索增强生成）的知识库。
+         *
+         * @param knowledges 要添加的知识库列表
+         * @return 此构建器实例
+         */
             if (knowledges != null) {
                 this.knowledgeBases.addAll(knowledges);
             }
@@ -1007,6 +1214,12 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * @return this builder instance
          */
         public Builder ragMode(RAGMode mode) {
+        /**
+         * 在委托 {@link ReActAgent} 上设置 RAG 模式。
+         *
+         * @param mode RAG 模式（GENERIC、AGENTIC 或 NONE）
+         * @return 此构建器实例
+         */
             if (mode != null) {
                 this.ragMode = mode;
             }
@@ -1020,6 +1233,12 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * @return this builder instance
          */
         public Builder retrieveConfig(RetrieveConfig config) {
+        /**
+         * 在委托 {@link ReActAgent} 上设置 RAG 的检索配置。
+         *
+         * @param config 检索配置
+         * @return 此构建器实例
+         */
             if (config != null) {
                 this.retrieveConfig = config;
             }
@@ -1037,6 +1256,15 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * @return this builder instance
          */
         public Builder planNotebook(PlanNotebook planNotebook) {
+        /**
+         * 在委托 {@link ReActAgent} 上设置基于计划的任务执行的 {@link PlanNotebook}。
+         *
+         * <p>计划管理工具将自动注册到工具包，并将添加一个钩子以在每个推理步骤之前
+         * 注入计划提示。
+         *
+         * @param planNotebook 配置的 PlanNotebook 实例
+         * @return 此构建器实例
+         */
             this.planNotebook = planNotebook;
             return this;
         }
@@ -1048,6 +1276,12 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * @return this builder instance
          */
         public Builder enablePlan() {
+        /**
+         * 在委托 {@link ReActAgent} 上使用默认配置启用计划功能。
+         * 等同于 {@code planNotebook(PlanNotebook.builder().build())}。
+         *
+         * @return 此构建器实例
+         */
             this.planNotebook = PlanNotebook.builder().build();
             return this;
         }
@@ -1059,6 +1293,12 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * @return this builder instance
          */
         public Builder longTermMemory(LongTermMemory longTermMemory) {
+        /**
+         * 在委托 {@link ReActAgent} 上设置长期记忆。
+         *
+         * @param longTermMemory 长期记忆实现
+         * @return 此构建器实例
+         */
             this.longTermMemory = longTermMemory;
             return this;
         }
@@ -1070,6 +1310,12 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * @return this builder instance
          */
         public Builder longTermMemoryMode(LongTermMemoryMode mode) {
+        /**
+         * 在委托 {@link ReActAgent} 上设置长期记忆模式。
+         *
+         * @param mode 长期记忆模式
+         * @return 此构建器实例
+         */
             if (mode != null) {
                 this.longTermMemoryMode = mode;
             }
@@ -1084,6 +1330,12 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * @return this builder instance
          */
         public Builder longTermMemoryAsyncRecord(boolean asyncRecord) {
+        /**
+         * 设置是否应在委托 {@link ReActAgent} 上异步执行长期记忆记录。
+         *
+         * @param asyncRecord 是否异步记录记忆
+         * @return 此构建器实例
+         */
             this.longTermMemoryAsyncRecord = asyncRecord;
             return this;
         }
@@ -1095,6 +1347,12 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * @return this builder instance
          */
         public Builder statePersistence(StatePersistence statePersistence) {
+        /**
+         * 在委托 {@link ReActAgent} 上设置状态持久化配置。
+         *
+         * @param statePersistence 状态持久化配置
+         * @return 此构建器实例
+         */
             this.statePersistence = statePersistence;
             return this;
         }
@@ -1106,6 +1364,12 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * @return this builder instance
          */
         public Builder structuredOutputReminder(StructuredOutputReminder reminder) {
+        /**
+         * 在委托 {@link ReActAgent} 上设置结构化输出强制模式。
+         *
+         * @param reminder 结构化输出提醒模式
+         * @return 此构建器实例
+         */
             this.structuredOutputReminder = reminder;
             return this;
         }
@@ -1117,6 +1381,12 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * @return this builder instance
          */
         public Builder enableMetaTool(boolean enableMetaTool) {
+        /**
+         * 启用或禁用委托 {@link ReActAgent} 的元工具功能。
+         *
+         * @param enableMetaTool true 启用元工具
+         * @return 此构建器实例
+         */
             this.enableMetaTool = enableMetaTool;
             return this;
         }
@@ -1129,6 +1399,12 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * @return this builder instance
          */
         public Builder enablePendingToolRecovery(boolean enable) {
+        /**
+         * 启用或禁用委托 {@link ReActAgent} 上从孤立待处理工具调用的自动恢复。
+         *
+         * @param enable true 启用自动恢复
+         * @return 此构建器实例
+         */
             this.enablePendingToolRecovery = enable;
             return this;
         }
@@ -1141,6 +1417,12 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * @return this builder instance
          */
         public Builder checkRunning(boolean checkRunning) {
+        /**
+         * 启用或禁用委托 {@link ReActAgent} 上的并发执行保护。默认为 {@code true}。
+         *
+         * @param checkRunning true 启用保护
+         * @return 此构建器实例
+         */
             this.checkRunning = checkRunning;
             return this;
         }
@@ -1152,6 +1434,12 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * @see #workspace(String)
          */
         public Builder workspace(Path workspace) {
+        /**
+         * 设置工作区目录。传递 {@code null} 以使用默认值
+         * {@code ${cwd}/.agentscope/workspace}。
+         *
+         * @see #workspace(String)
+         */
             this.workspace = workspace;
             return this;
         }
@@ -1167,6 +1455,16 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * @param path absolute or relative path string, or {@code null} for the default workspace
          */
         public Builder workspace(String path) {
+        /**
+         * 通过文件系统路径字符串设置工作区目录（使用 {@link Path#of(String, String...)}
+         * 解析）。等同于使用 {@code Path.of(path.strip())} 调用
+         * {@link #workspace(Path)}。
+         *
+         * <p>传递 {@code null} 与使用 {@code null} 参数调用 {@link #workspace(Path)}
+         * 具有相同的默认效果。空白或仅含空格的字符串将被拒绝。
+         *
+         * @param path 绝对或相对路径字符串，或 {@code null} 使用默认工作区
+         */
             if (path == null) {
                 this.workspace = null;
                 return this;
@@ -1192,6 +1490,14 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * not expressible via any of the declarative specs.
          */
         public Builder abstractFilesystem(AbstractFilesystem backend) {
+        /**
+         * 后门：直接设置自定义 {@link AbstractFilesystem} 实现。
+         *
+         * <p>除非您有无法通过任何声明性规范表达的定制后端，
+         * 否则建议使用 {@link #filesystem(LocalFilesystemSpec)}、
+         * {@link #filesystem(RemoteFilesystemSpec)} 或
+         * {@link #filesystem(SandboxFilesystemSpec)}。
+         */
             this.abstractFilesystem = backend;
             return this;
         }
@@ -1206,6 +1512,14 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * @return this builder
          */
         public Builder filesystem(SandboxFilesystemSpec spec) {
+        /**
+         * 配置<b>模式 2 — 沙箱文件系统</b>模式：在沙箱（例如 Docker）中运行的
+         * 完全隔离的工作区。长期记忆提取/读取和 shell 执行都通过沙箱会话路由。
+         * 状态可以通过快照持久化，并由配置的隔离范围恢复。
+         *
+         * @param spec 沙箱文件系统规范（例如 Docker 沙箱规范）
+         * @return 此构建器
+         */
             this.sandboxFilesystemSpec = spec;
             return this;
         }
@@ -1219,6 +1533,13 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * replicas.
          */
         public Builder filesystem(RemoteFilesystemSpec spec) {
+        /**
+         * 配置<b>模式 1 — 复合（非沙箱）文件系统</b>模式：统一的工作区视图，
+         * 将本地 {@code LocalFilesystem} 后端与共享的 {@code RemoteFilesystem}
+         * 混合使用，用于分布式长期记忆。此模式下不提供 Shell 执行——
+         * 选定的前缀（{@code MEMORY.md}、{@code memory/}、{@code agents/.../sessions/}）
+         * 被路由到存储以保持副本间的记忆一致性。
+         */
             this.remoteFilesystemSpec = spec;
             return this;
         }
@@ -1229,6 +1550,11 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * on the same local disk. Use for single-process / single-replica deployments.
          */
         public Builder filesystem(LocalFilesystemSpec spec) {
+        /**
+         * 配置<b>模式 3 — 带 Shell 的本地文件系统</b>模式：代理工作区是一个
+         * 普通的本地目录，shell 命令在主机上执行。长期记忆保存在同一本地磁盘上。
+         * 用于单进程/单副本部署。
+         */
             this.localFilesystemSpec = spec;
             return this;
         }
@@ -1238,6 +1564,10 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * Default is {@code true}.
          */
         public Builder enableAgentTracingLog(boolean enabled) {
+        /**
+         * 启用或禁通过 {@link AgentTraceHook} 的代理执行跟踪日志记录。
+         * 默认为 {@code true}。
+         */
             this.agentTracingLogEnabled = enabled;
             return this;
         }
@@ -1247,6 +1577,10 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * Use when supplying a custom filesystem tool or a stricter wrapper on the {@link Toolkit}.
          */
         public Builder disableFilesystemTools() {
+        /**
+         * 跳过 {@link FilesystemTool}（{@code read_file}、{@code write_file} 等）的注册。
+         * 在提供自定义文件系统工具或 {@link Toolkit} 上更严格的包装器时使用。
+         */
             this.disableFilesystemTools = true;
             return this;
         }
@@ -1256,6 +1590,10 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * {@link AbstractSandboxFilesystem} (sandbox mode or default local workspace with shell).
          */
         public Builder disableShellTool() {
+        /**
+         * 跳过 {@link ShellExecuteTool} 的注册。仅在解析的文件系统是
+         * {@link AbstractSandboxFilesystem}（沙箱模式或带 Shell 的默认本地工作区）时适用。
+         */
             this.disableShellTool = true;
             return this;
         }
@@ -1266,6 +1604,10 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * configured.
          */
         public Builder disableDynamicSkills() {
+        /**
+         * 禁用从工作区文件系统动态加载每次调用的技能。强制构建使用旧版
+         * {@code resolveSkillBox()} 路径，即使配置了工作区文件系统。
+         */
             this.disableDynamicSkills = true;
             return this;
         }
@@ -1276,6 +1618,10 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * build time.
          */
         public Builder disableDynamicSubagents() {
+        /**
+         * 禁用从工作区文件系统动态重新加载每次调用的子代理。强制构建使用旧版
+         * {@link SubagentsHook}，后者在构建时一次性地物化条目列表。
+         */
             this.disableDynamicSubagents = true;
             return this;
         }
@@ -1284,6 +1630,9 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * Skips registration of {@link MemorySearchTool}, {@link MemoryGetTool}, and {@link SessionSearchTool}.
          */
         public Builder disableMemoryTools() {
+        /**
+         * 跳过 {@link MemorySearchTool}、{@link MemoryGetTool} 和 {@link SessionSearchTool} 的注册。
+         */
             this.disableMemoryTools = true;
             return this;
         }
@@ -1293,6 +1642,10 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * memory maintenance around model calls).
          */
         public Builder disableMemoryHooks() {
+        /**
+         * 跳过 {@link MemoryFlushHook} 和 {@link MemoryMaintenanceHook} 的注册
+         * （模型调用前后的工作区支持的记忆维护）。
+         */
             this.disableMemoryHooks = true;
             return this;
         }
@@ -1302,6 +1655,9 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * through another mechanism.
          */
         public Builder disableSessionPersistence() {
+        /**
+         * 跳过 {@link SessionPersistenceHook} 的注册。仅当您通过其他机制持久化代理状态时使用。
+         */
             this.disableSessionPersistence = true;
             return this;
         }
@@ -1311,6 +1667,10 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * injected into the system message.
          */
         public Builder disableWorkspaceContext() {
+        /**
+         * 跳过 {@link WorkspaceContextHook} 的注册，使得 AGENTS.md / 工作区上下文
+         * 不会注入到系统消息中。
+         */
             this.disableWorkspaceContext = true;
             return this;
         }
@@ -1320,6 +1680,10 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * from harness subagent orchestration).
          */
         public Builder disableSubagents() {
+        /**
+         * 跳过此代理上的 {@link SubagentsHook} 注册（不提供 harness 子代理编排的
+         * {@code agent_spawn} / task 工具）。
+         */
             this.disableSubagents = true;
             return this;
         }
@@ -1330,6 +1694,10 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * switches still take effect.
          */
         public Builder disableToolsConfig() {
+        /**
+         * 跳过读取 {@code workspace/tools.json}。该文件中的 MCP 服务器不注册，
+         * 允许/拒绝过滤不应用。编程的 {@code disable*} 开关仍然生效。
+         */
             this.disableToolsConfig = true;
             return this;
         }
@@ -1340,6 +1708,11 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * allow/deny filtering steps as if this object were parsed from the workspace.
          */
         public Builder toolsConfig(ToolsConfig toolsConfig) {
+        /**
+         * 提供内存中的 {@link ToolsConfig}，绕过 {@code workspace/tools.json} 文件查找。
+         * 设置非 null 值意味着与从工作区解析此对象时相同的 MCP 服务器注册和
+         * 允许/拒绝过滤步骤。
+         */
             this.toolsConfigOverride = toolsConfig;
             return this;
         }
@@ -1352,6 +1725,12 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * policy, and whether to flush/offload before summarisation.
          */
         public Builder compaction(CompactionConfig config) {
+        /**
+         * 使用给定配置启用 {@link CompactionHook} 作为会话压缩策略。
+         *
+         * <p>使用 {@link CompactionConfig#builder()} 配置触发阈值、
+         * 保留策略以及是否在摘要化前刷新/卸载。
+         */
             this.compactionConfig = config;
             return this;
         }
@@ -1369,6 +1748,17 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * conversation length (context depth).
          */
         public Builder toolResultEviction(ToolResultEvictionConfig config) {
+        /**
+         * 使用给定配置启用 {@link ToolResultEvictionHook}。
+         *
+         * <p>当激活时，任何文本内容超过
+         * {@link ToolResultEvictionConfig#getMaxResultChars()} 的工具结果
+         * 被写入 {@link AbstractFilesystem} 并在上下文中替换为紧凑占位符。
+         * 使用 {@link ToolResultEvictionConfig#defaults()} 获取开箱即用的设置。
+         *
+         * <p>此机制与会话压缩无关：驱逐解决单个过大结果（上下文宽度），
+         * 压缩解决累积的会话长度（上下文深度）。
+         */
             this.toolResultEvictionConfig = config;
             return this;
         }
@@ -1379,6 +1769,10 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * {@link JsonSession} stored under {@code <workspace>/../sessions/}.
          */
         public Builder session(Session session) {
+        /**
+         * 设置 {@link RuntimeContext} 未提供时用于状态持久化的默认 {@link Session}。
+         * 未设置时，默认为存储在 {@code <workspace>/../sessions/} 下的 {@link JsonSession}。
+         */
             this.session = session;
             return this;
         }
@@ -1400,6 +1794,22 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * <p>Requires sandbox mode (i.e. {@link #filesystem(SandboxFilesystemSpec)}).
          */
         public Builder sandboxDistributed(SandboxDistributedOptions options) {
+        /**
+         * 启用高级分布式沙箱配置。
+         *
+         * <p>捆绑与 {@link #filesystem(SandboxFilesystemSpec)} 配对的分布式关注点：
+         *
+         * <ul>
+         *   <li>分布式 {@link Session} 用于沙箱状态槽位
+         *   <li>可选 {@link io.agentscope.harness.agent.sandbox.snapshot.SandboxSnapshotSpec}
+         *       覆盖用于工作区归档持久化
+         *   <li>{@code requireDistributed} 门用于快速失败验证
+         * </ul>
+         *
+         * <p>仅在 {@code SandboxFilesystemSpec} 上配置 {@link IsolationScope}。
+         *
+         * <p>需要沙箱模式（即 {@link #filesystem(SandboxFilesystemSpec)}）。
+         */
             this.sandboxDistributedOptions = options;
             return this;
         }
@@ -1439,6 +1849,14 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * @return this builder instance
          */
         public Builder additionalContextFile(String relativePath) {
+        /**
+         * 添加相对于工作区的自定义上下文文件，将加载到系统提示中，
+         * 与 AGENTS.md、MEMORY.md 和 KNOWLEDGE.md 并列。
+         * 适用于 SOUL.md、PREFERENCE.md 等文件。
+         *
+         * @param relativePath 工作区相对路径（例如 "SOUL.md"）
+         * @return 此构建器实例
+         */
             if (relativePath != null && !relativePath.isBlank()) {
                 this.additionalContextFiles.add(relativePath);
             }
@@ -1452,6 +1870,12 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * @return this builder instance
          */
         public Builder maxContextTokens(int maxTokens) {
+        /**
+         * 设置注入到系统提示中的工作区上下文的最大 token 预算。
+         *
+         * @param maxTokens 最大 token 数（默认：8000）
+         * @return 此构建器实例
+         */
             this.maxContextTokens = maxTokens;
             return this;
         }
@@ -1904,6 +2328,11 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * Establishes identity, rules, output format, and prohibited behaviours for a leaf worker.
          * The task itself is delivered as the first user message, not duplicated here.
          */
+        /**
+         * 注入到每个子代理系统提示中的子代理上下文部分。
+         * 建立叶子工作者的身份、规则、输出格式和禁止行为。
+         * 任务本身作为第一条用户消息传递，不在此处重复。
+         */
         private static final String SUBAGENT_CONTEXT_SECTION =
                 """
                 # Subagent Context
@@ -1943,6 +2372,10 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * Builds a system prompt for a subagent by appending {@link #SUBAGENT_CONTEXT_SECTION} to
          * the given base prompt. If the base is blank, only the context section is used.
          */
+        /**
+         * 通过将 {@link #SUBAGENT_CONTEXT_SECTION} 追加到给定的基础提示来构建子代理的系统提示。
+         * 如果基础为空，则仅使用上下文部分。
+         */
         private static String buildSubagentSysPrompt(String basePrompt) {
             String base =
                     (basePrompt != null && !basePrompt.isBlank()) ? basePrompt.stripTrailing() : "";
@@ -1973,6 +2406,7 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
                 return localFilesystemSpec.toFilesystem(workspace, nsFactory);
             }
             // Default to Mode 3 with out-of-the-box LocalFilesystemWithShell settings.
+            // 默认使用 Mode 3 的开箱即用 LocalFilesystemWithShell 设置。
             return new LocalFilesystemWithShell(workspace, nsFactory);
         }
 
@@ -2008,6 +2442,11 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * {@link HarnessAgent#workspaceFor(String, String)}. Used together with
          * {@link BakedContextFilesystem} so the underlying namespace factories see this
          * identity regardless of what the caller passes downstream.
+         */
+        /**
+         * 构建一个 {@link RuntimeContext}，将提供的 {@code userId} 和 {@code sessionId}
+         * 烘焙到其中，用于通过 {@link HarnessAgent#workspaceFor(String, String)}
+         * 执行的带外 IO。
          */
         private static RuntimeContext buildBakedRuntimeContext(String userId, String sessionId) {
             if ((userId == null || userId.isBlank())
@@ -2202,12 +2641,8 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
                 if (capturedProjectGlobalSkillsDir != null) {
                     sub.projectGlobalSkillsDir(capturedProjectGlobalSkillsDir);
                 }
-                if (capturedBackend != null) {
-                    sub.abstractFilesystem(capturedBackend);
-                }
-                if (capturedModelExec != null) {
-                    sub.modelExecutionConfig(capturedModelExec);
-                }
+                if (capturedBackend != null) sub.abstractFilesystem(capturedBackend);
+                if (capturedModelExec != null) sub.modelExecutionConfig(capturedModelExec);
                 if (capturedToolExec != null) sub.toolExecutionConfig(capturedToolExec);
                 if (capturedGenOpts != null) sub.generateOptions(capturedGenOpts);
                 if (capturedCompactionConfig != null) sub.compaction(capturedCompactionConfig);
@@ -2285,21 +2720,11 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
 
                 // Propagate disable flags so the declared subagent respects the same capability
                 // restrictions as the main agent.
-                if (capturedDisableFilesystemTools) {
-                    sub.disableFilesystemTools();
-                }
-                if (capturedDisableShellTool) {
-                    sub.disableShellTool();
-                }
-                if (capturedDisableMemoryTools) {
-                    sub.disableMemoryTools();
-                }
-                if (capturedDisableMemoryHooks) {
-                    sub.disableMemoryHooks();
-                }
-                if (capturedDisableSessionPersistence) {
-                    sub.disableSessionPersistence();
-                }
+                if (capturedDisableFilesystemTools) sub.disableFilesystemTools();
+                if (capturedDisableShellTool) sub.disableShellTool();
+                if (capturedDisableMemoryTools) sub.disableMemoryTools();
+                if (capturedDisableMemoryHooks) sub.disableMemoryHooks();
+                if (capturedDisableSessionPersistence) sub.disableSessionPersistence();
 
                 return sub.build();
             };

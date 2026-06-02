@@ -43,7 +43,34 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * 技能箱，管理智能体技能的注册、加载和工具化。
+ * 技能箱，作为技能管理系统的核心入口，负责管理智能体技能的注册、加载、激活、
+ * 工具化以及代码执行环境的配置。
+ *
+ * <p><b>核心职责：</b>
+ * <ul>
+ *   <li><b>技能注册与管理</b>——注册、查询、移除技能，管理技能的激活/停用状态</li>
+ *   <li><b>技能工具化</b>——将技能注册为工具组，使 LLM 可以通过工具调用加载和使用技能</li>
+ *   <li><b>提示词生成</b>——通过 {@link AgentSkillPromptProvider} 为 LLM 生成可用技能目录</li>
+ *   <li><b>代码执行</b>——通过 {@link CodeExecutionBuilder} 配置 shell/read/write 等代码执行工具</li>
+ *   <li><b>资源上传</b>——将技能引用的资源文件写入磁盘供脚本执行使用</li>
+ *   <li><b>状态管理</b>——实现 {@link StateModule} 接口，支持状态快照和恢复</li>
+ * </ul>
+ *
+ * <p><b>工作流程：</b>
+ * <ol>
+ *   <li>通过 {@link #registerSkill(AgentSkill)} 或 {@link #registration()} 注册技能</li>
+ *   <li>通过 {@link #registerSkillLoadTool()} 注册技能访问工具（load_skill_through_path）</li>
+ *   <li>每次智能体调用开始时调用 {@link #deactivateAllSkills()} 重置状态</li>
+ *   <li>LLM 通过 {@code load_skill_through_path} 加载技能时自动激活并启用其工具组</li>
+ *   <li>通过 {@link #syncToolGroupStates()} 同步技能激活状态与工具组状态</li>
+ * </ol>
+ *
+ * <p><b>线程安全：</b>该类的所有公开方法均为线程安全的，内部使用并发集合和同步机制。
+ *
+ * @see AgentSkill
+ * @see SkillRegistry
+ * @see SkillToolFactory
+ * @see AgentSkillPromptProvider
  */
 public class SkillBox implements StateModule {
     private static final Logger logger = LoggerFactory.getLogger(SkillBox.class);
@@ -65,10 +92,10 @@ public class SkillBox implements StateModule {
     }
 
     /**
-     * Creates a SkillBox with a toolkit and custom skill prompt instruction.
+     * 创建一个 SkillBox 实例，绑定指定的工具包和自定义技能提示指令。
      *
-     * @param toolkit The toolkit to bind
-     * @param instruction Custom instruction header (null or blank uses default)
+     * @param toolkit     要绑定的工具包（不可为 null）
+     * @param instruction 自定义指令头部内容（null 或空白使用默认指令模板）
      */
     public SkillBox(Toolkit toolkit, String instruction) {
         this.skillPromptProvider = new AgentSkillPromptProvider(skillRegistry, instruction);
@@ -77,65 +104,74 @@ public class SkillBox implements StateModule {
     }
 
     /**
-     * Gets the skill system prompt for registered skills.
+     * 获取已注册技能的系统提示词。
      *
-     * <p>This prompt provides information about available skills that the agent
-     * can dynamically load and use during execution.
+     * <p>该提示词提供了当前可用技能的目录信息，智能体可以在执行过程中
+     * 动态加载和使用这些技能。
      *
-     * @return The skill system prompt, or empty string if no skills exist
+     * @return 技能系统提示词字符串，如果没有已注册技能则返回空字符串
      */
     public String getSkillPrompt() {
         return skillPromptProvider.getSkillSystemPrompt();
     }
 
     /**
-     * Controls whether the skill prompt exposes all metadata fields or only the core fields.
+     * 控制技能提示词中暴露所有元数据字段还是仅暴露核心字段。
      *
-     * <p>When disabled, only {@code name}, {@code description}, and {@code skill-id}
-     * are included in the skill prompt.
+     * <p>当禁用时，技能提示词中仅包含 {@code name}、{@code description}
+     * 和 {@code skill-id} 三个核心字段。这可以减少提示词长度，降低 LLM 的 Token 消耗。
      *
-     * @param exposeAllMetadata {@code true} to expose all metadata, {@code false} to expose only
-     *                          the core fields
+     * @param exposeAllMetadata {@code true} 暴露所有元数据字段，
+     *                          {@code false} 仅暴露三个核心字段
      */
     public void setExposeAllSkillMetadata(boolean exposeAllMetadata) {
         skillPromptProvider.setExposeAllMetadata(exposeAllMetadata);
     }
 
     /**
-     * Create a fluent builder for registering skills with optional configuration.
+     * 创建一个流式的技能注册构建器，支持可选配置（关联工具、MCP 客户端、子智能体等）。
      *
-     * <p>Example usage:
+     * <p>使用示例：
      * <pre>{@code
-     * // Register skill
+     * // 只注册技能
      * skillBox.registration()
      *     .skill(skill)
      *     .apply();
      *
-     * // Register skill with tool
+     * // 注册技能并绑定工具对象
      * skillBox.registration()
-     *     .skill(skill) // same reference skill will not be registered again
+     *     .skill(skill)
      *     .tool(toolObject)
+     *     .apply();
+     *
+     * // 注册技能并绑定 MCP 客户端
+     * skillBox.registration()
+     *     .skill(skill)
+     *     .mcpClient(client)
+     *     .apply();
+     *
+     * // 注册技能并绑定子智能体
+     * skillBox.registration()
+     *     .skill(skill)
+     *     .subAgent(provider)
      *     .apply();
      * }</pre>
      *
-     * @return A new ToolRegistration builder
+     * @return 新的 {@link SkillRegistration} 构建器实例
      */
     public SkillRegistration registration() {
         return new SkillRegistration(this);
     }
 
     /**
-     * Binds a toolkit to the skill box.
+     * 将工具包绑定到技能箱及其内部的技能工具工厂。
      *
-     * <p>
-     * This method binds the toolkit to both the skill box and its internal skill
-     * tool factory.
-     * Since ReActAgent uses a deep copy of the Toolkit, rebinding is necessary to
-     * ensure the
-     * skill tool factory references the correct toolkit instance.
+     * <p>由于 {@code ReActAgent} 使用 {@code Toolkit} 的深拷贝，智能体创建后
+     * 需要调用此方法重新绑定，以确保技能工具工厂中的工具包引用指向正确的实例。
+     * 同时也会触发工具组状态的同步。
      *
-     * @param toolkit The toolkit to bind to the skill box
-     * @throws IllegalArgumentException if the toolkit is null
+     * @param toolkit 要绑定的工具包实例（不可为 null）
+     * @throws IllegalArgumentException 如果 toolkit 为 null
      */
     public void bindToolkit(Toolkit toolkit) {
         if (toolkit == null) {
@@ -147,11 +183,11 @@ public class SkillBox implements StateModule {
     }
 
     /**
-     * Synchronize tool group states based on skill activation status with a specific toolkit.
+     * 根据技能的激活状态同步工具组的状态。
      *
-     * <p>Updates the toolkit's tool groups to reflect the current activation state of skills.
-     * Active skills will have their tool groups enabled, inactive skills will have their
-     * tool groups disabled.
+     * <p>遍历所有已注册技能，将已激活技能对应的工具组启用，已停用技能对应的工具组禁用。
+     * 此方法确保 {@code Toolkit} 中的工具组状态与 {@code SkillRegistry} 中的技能激活状态保持一致。
+     * 对于尚未在工具包中创建工具组的技能，会自动跳过。
      */
     public void syncToolGroupStates() {
         if (toolkit == null) {
@@ -180,10 +216,13 @@ public class SkillBox implements StateModule {
     }
 
     /**
-     * Where the skill is active. If a skill is active, this means skill is being using by LLM.
-     * LLM use load tool activate the skill.
-     * @param skillId
-     * @return true if the skill is active
+     * 检查指定技能是否处于激活状态。
+     *
+     * <p>激活状态表示该技能当前正在被 LLM 使用。当 LLM 通过 {@code load_skill_through_path}
+     * 工具加载技能时，技能会被自动激活。
+     *
+     * @param skillId 技能 ID
+     * @return true 表示技能已激活（被 LLM 使用中），false 表示未激活
      */
     public boolean isSkillActive(String skillId) {
         RegisteredSkill registeredSkill = skillRegistry.getRegisteredSkill(skillId);
@@ -196,28 +235,28 @@ public class SkillBox implements StateModule {
     // ==================== Skill Management ====================
 
     /**
-     * Registers an agent skill.
+     * 注册一个智能体技能。
      *
-     * <p>Skills can be dynamically loaded by agents using skill access tools.
-     * When a skill is loaded, its associated tools become available to the agent.
+     * <p>技能注册后可以通过技能访问工具被 LLM 动态加载。当技能被加载时，
+     * 其关联的工具组会被启用，LLM 方可调用其中的工具。
      *
-     * <p><b>Version Management:</b>
+     * <p><b>版本管理：</b>
      * <ul>
-     *   <li>First registration: Creates initial version of the skill</li>
-     *   <li>Subsequent registrations with same skill object (by reference): No new version created</li>
-     *   <li>Registrations with different skill object: Creates new version (snapshot)</li>
+     *   <li>首次注册：创建技能的初始版本</li>
+     *   <li>同一技能对象再次注册（按引用比较）：不创建新版本，幂等操作</li>
+     *   <li>不同的技能对象注册到同一 ID：替换为新版本</li>
      * </ul>
      *
-     * <p><b>Usage example:</b>
+     * <p><b>使用示例：</b>
      * <pre>{@code
      * AgentSkill mySkill = new AgentSkill("my_skill", "Description", "Content", null);
      *
      * skillBox.registerSkill(mySkill);
-     * skillBox.registerSkill(my_skill); // do nothing
+     * skillBox.registerSkill(mySkill); // 不执行任何操作（同一引用）
      * }</pre>
      *
-     * @param skill The agent skill to register
-     * @throws IllegalArgumentException if skill is null
+     * @param skill 要注册的智能体技能（不可为 null）
+     * @throws IllegalArgumentException 如果 skill 为 null
      */
     public void registerSkill(AgentSkill skill) {
         if (skill == null) {
@@ -236,19 +275,20 @@ public class SkillBox implements StateModule {
     }
 
     /**
-     * Gets all skill IDs.
-     * @return All skill IDs
+     * 获取所有已注册技能的 ID 集合。
+     *
+     * @return 所有技能 ID 的集合
      */
     public Set<String> getAllSkillIds() {
         return skillRegistry.getSkillIds();
     }
 
     /**
-     * Gets a skill by ID (latest version).
+     * 根据技能 ID 获取技能实例。
      *
-     * @param skillId The skill ID
-     * @return The skill instance, or null if not found
-     * @throws IllegalArgumentException if skillId is null
+     * @param skillId 技能 ID
+     * @return 技能实例，如果未找到则返回 null
+     * @throws IllegalArgumentException 如果 skillId 为 null
      */
     public AgentSkill getSkill(String skillId) {
         if (skillId == null) {
@@ -258,10 +298,10 @@ public class SkillBox implements StateModule {
     }
 
     /**
-     * Removes a skill completely.
+     * 完全移除一个技能及其所有关联的注册信息。
      *
-     * @param skillId The skill ID
-     * @throws IllegalArgumentException if skillId is null
+     * @param skillId 要移除的技能 ID
+     * @throws IllegalArgumentException 如果 skillId 为 null
      */
     public void removeSkill(String skillId) {
         if (skillId == null) {
@@ -272,11 +312,11 @@ public class SkillBox implements StateModule {
     }
 
     /**
-     * Checks if a skill exists.
+     * 检查指定技能 ID 是否已注册。
      *
-     * @param skillId The skill ID
-     * @return true if the skill exists, false otherwise
-     * @throws IllegalArgumentException if skillId is null
+     * @param skillId 技能 ID
+     * @return true 表示技能已注册，false 表示未注册
+     * @throws IllegalArgumentException 如果 skillId 为 null
      */
     public boolean exists(String skillId) {
         if (skillId == null) {
@@ -286,24 +326,20 @@ public class SkillBox implements StateModule {
     }
 
     /**
-     * Sets the activation state of a specific skill.
+     * 设置指定技能的激活状态。
      *
-     * <p>When a skill is set to inactive, its associated tool group will be disabled
-     * in the underlying toolkit, preventing the agent from accessing its tools until
-     * it is activated again.
+     * <p>当技能被设置为非激活时，其关联的工具组将被禁用，LLM 在重新激活前无法访问其工具。
+     * 此方法会自动将状态变更同步到绑定的工具包。
      *
-     * <p>This method automatically synchronizes the state change with the bound toolkit.
+     * <p><b>停用警告：</b>
+     * 将技能设置为非激活仅会解绑其关联的工具组，不会自动从智能体的记忆（{@code Memory}）
+     * 中清除技能的上下文或提示指令。这可能是有风险的操作，因为智能体可能根据其保留的
+     * 记忆上下文尝试调用已停用的工具，导致执行失败。要实现完整的理想停用方案，
+     * 建议实现自定义钩子以同时解绑工具组和从记忆中清除相关上下文。
      *
-     * <p><b>Warning on Deactivation:</b> Setting a skill to inactive only unbinds its associated
-     * tool group. It does not automatically remove the skill's context or prompt instructions
-     * from the agent's memory. This is a risky operation, as the agent might still attempt to
-     * invoke the inactive tool based on its retained memory context, leading to execution failures.
-     * For a complete and ideal deactivation, it is recommended to implement custom hooks to unbind
-     * both the tool group and its associated context from memory.
-     *
-     * @param skillId The ID of the skill to modify
-     * @param active  true to activate the skill, false to deactivate
-     * @throws IllegalArgumentException if skillId is null or the skill does not exist
+     * @param skillId 要修改的技能 ID
+     * @param active  true 激活技能，false 停用技能
+     * @throws IllegalArgumentException 如果 skillId 为 null 或技能不存在
      */
     public void setSkillActive(String skillId, boolean active) {
         if (skillId == null) {
@@ -329,13 +365,13 @@ public class SkillBox implements StateModule {
     }
 
     /**
-     * Deactivates all skills.
+     * 停用所有已注册的技能。
      *
-     * <p>This method sets all registered skills to inactive state, which means their associated
-     * tool groups will not be available to the agent until the skills are accessed again
-     * via skill access tools.
+     * <p>将所有技能的激活状态设置为 false，使其关联的工具组对智能体不可用，
+     * 直到 LLM 通过技能访问工具再次加载这些技能。
      *
-     * <p>This is typically called at the start of each agent call to ensure a clean state.
+     * <p>此方法通常在每次智能体调用开始时调用，以确保干净的初始状态，
+     * 防止上次调用的技能激活状态影响本次执行。
      */
     public void deactivateAllSkills() {
         skillRegistry.setAllSkillsActive(false);
@@ -343,10 +379,20 @@ public class SkillBox implements StateModule {
     }
 
     /**
-     * Fluent builder for registering skills with optional configuration.
+     * 技能注册的流式构建器，支持将技能与工具、MCP 客户端、子智能体等关联注册。
      *
-     * <p>This builder provides a clear, type-safe way to register skills with various options
-     * without method proliferation.
+     * <p>该构建器提供了一种清晰、类型安全的方式来注册技能及其可选配置，
+     * 避免了方法数量膨胀。通过链式调用可以组合多个配置选项。
+     *
+     * <p><b>支持的可选配置：</b>
+     * <ul>
+     *   <li>{@link #tool(Object)} —— 注册包含 {@code @Tool} 注解方法的工具对象</li>
+     *   <li>{@link #agentTool(AgentTool)} —— 注册 AgentTool 实例</li>
+     *   <li>{@link #mcpClient(McpClientWrapper)} —— 注册 MCP 客户端</li>
+     *   <li>{@link #subAgent(SubAgentProvider, SubAgentConfig)} —— 注册子智能体</li>
+     *   <li>{@link #presetParameters(Map)} —— 预设参数自动注入</li>
+     *   <li>{@link #extendedModel(ExtendedModel)} —— 动态 schema 扩展</li>
+     * </ul>
      */
     public static class SkillRegistration {
         private final SkillBox skillBox;
@@ -367,10 +413,10 @@ public class SkillBox implements StateModule {
         }
 
         /**
-         * Set the skill to register.
+         * 设置要注册的技能。
          *
-         * @param skill The skill to register
-         * @return This builder for chaining
+         * @param skill 要注册的技能（不可为 null）
+         * @return 当前构建器实例（用于链式调用）
          */
         public SkillRegistration skill(AgentSkill skill) {
             this.skill = skill;
@@ -383,10 +429,10 @@ public class SkillBox implements StateModule {
         }
 
         /**
-         * Set the tool object to register (scans for @Tool methods).
+         * 设置要注册的工具对象（自动扫描 {@code @Tool} 注解方法）。
          *
-         * @param toolObject Object containing @Tool annotated methods
-         * @return This builder for chaining
+         * @param toolObject 包含 {@code @Tool} 注解方法的对象
+         * @return 当前构建器实例（用于链式调用）
          */
         public SkillRegistration tool(Object toolObject) {
             this.toolObject = toolObject;
@@ -394,10 +440,10 @@ public class SkillBox implements StateModule {
         }
 
         /**
-         * Set the AgentTool instance to register.
+         * 设置要注册的 AgentTool 实例。
          *
-         * @param agentTool The AgentTool instance
-         * @return This builder for chaining
+         * @param agentTool AgentTool 实例
+         * @return 当前构建器实例（用于链式调用）
          */
         public SkillRegistration agentTool(AgentTool agentTool) {
             this.agentTool = agentTool;
@@ -405,10 +451,10 @@ public class SkillBox implements StateModule {
         }
 
         /**
-         * Set the MCP client to register.
+         * 设置要注册的 MCP 客户端。
          *
-         * @param mcpClientWrapper The MCP client wrapper
-         * @return This builder for chaining
+         * @param mcpClientWrapper MCP 客户端包装器
+         * @return 当前构建器实例（用于链式调用）
          */
         public SkillRegistration mcpClient(McpClientWrapper mcpClientWrapper) {
             this.mcpClientWrapper = mcpClientWrapper;
@@ -416,13 +462,11 @@ public class SkillBox implements StateModule {
         }
 
         /**
-         * Register a sub-agent as a tool with default configuration.
+         * 使用默认配置注册子智能体作为工具。
          *
-         * <p>The tool name and description are derived from the agent's properties. Uses a single
-         * "task" string parameter by default.
+         * <p>工具名称和描述从智能体的属性派生。默认使用单个字符串参数 "task"。
          *
-         * <p>Example:
-         *
+         * <p>示例：
          * <pre>{@code
          * toolkit.registration()
          *     .subAgent(() -> ReActAgent.builder()
@@ -432,8 +476,8 @@ public class SkillBox implements StateModule {
          *     .apply();
          * }</pre>
          *
-         * @param provider Factory for creating agent instances (called for each invocation)
-         * @return This builder for chaining
+         * @param provider 智能体实例工厂（每次调用时创建新实例）
+         * @return 当前构建器实例（用于链式调用）
          */
         public SkillRegistration subAgent(SubAgentProvider<?> provider) {
             return subAgent(provider, null);
@@ -472,10 +516,10 @@ public class SkillBox implements StateModule {
          *     .apply();
          * }</pre>
          *
-         * @param provider Factory for creating agent instances (called for each session)
-         * @param config Configuration for the sub-agent tool, or null to use defaults (tool name
-         *     derived from agent name, InMemorySession for state, events forwarded)
-         * @return This builder for chaining
+         * @param provider 智能体实例工厂（每次调用时创建新实例）
+         * @param config 子智能体工具配置，为 null 时使用默认配置
+         *     （工具名称从智能体名称派生，使用 InMemorySession 管理状态，事件自动转发）
+         * @return 当前构建器实例（用于链式调用）
          * @see SubAgentConfig
          * @see SubAgentConfig#defaults()
          */
@@ -493,12 +537,13 @@ public class SkillBox implements StateModule {
         }
 
         /**
-         * Set the list of tools to enable from the MCP client.
+         * 设置 MCP 客户端中要启用的工具列表。
          *
-         * <p>Only applicable when using mcpClient(). If not specified, all tools are enabled.
+         * <p>仅在使用 {@link #mcpClient(McpClientWrapper)} 时生效。
+         * 如果未指定，默认启用所有工具。
          *
-         * @param enableTools List of tool names to enable
-         * @return This builder for chaining
+         * @param enableTools 要启用的工具名称列表
+         * @return 当前构建器实例（用于链式调用）
          */
         public SkillRegistration enableTools(List<String> enableTools) {
             this.enableTools = enableTools;
@@ -506,12 +551,12 @@ public class SkillBox implements StateModule {
         }
 
         /**
-         * Set the list of tools to disable from the MCP client.
+         * 设置 MCP 客户端中要禁用的工具列表。
          *
-         * <p>Only applicable when using mcpClient().
+         * <p>仅在使用 {@link #mcpClient(McpClientWrapper)} 时生效。
          *
-         * @param disableTools List of tool names to disable
-         * @return This builder for chaining
+         * @param disableTools 要禁用的工具名称列表
+         * @return 当前构建器实例（用于链式调用）
          */
         public SkillRegistration disableTools(List<String> disableTools) {
             this.disableTools = disableTools;
@@ -519,11 +564,11 @@ public class SkillBox implements StateModule {
         }
 
         /**
-         * Set preset parameters that will be automatically injected during tool execution.
+         * 设置预设参数，这些参数将在工具执行时自动注入。
          *
-         * <p>These parameters are not exposed in the JSON schema.
+         * <p>预设参数不会暴露在 JSON schema 中，适用于固定值的内部参数。
          *
-         * <p>The map should have tool names as keys and parameter maps as values:
+         * <p>映射结构：工具名称为键，参数映射为值。
          * <pre>{@code
          * Map.of(
          *     "toolName1", Map.of("param1", "value1", "param2", "value2"),
@@ -531,8 +576,8 @@ public class SkillBox implements StateModule {
          * )
          * }</pre>
          *
-         * @param presetParameters Map from tool name to its preset parameters
-         * @return This builder for chaining
+         * @param presetParameters 工具名称到其预设参数的映射
+         * @return 当前构建器实例（用于链式调用）
          */
         public SkillRegistration presetParameters(
                 Map<String, Map<String, Object>> presetParameters) {
@@ -541,10 +586,13 @@ public class SkillBox implements StateModule {
         }
 
         /**
-         * Set the extended model for dynamic schema extension.
+         * 设置扩展模型用于动态 schema 扩展。
          *
-         * @param extendedModel The extended model
-         * @return This builder for chaining
+         * <p>扩展模型允许在运行时动态添加或修改工具参数的 JSON schema，
+         * 适用于需要根据上下文动态调整参数结构的场景。
+         *
+         * @param extendedModel 扩展模型实例
+         * @return 当前构建器实例（用于链式调用）
          */
         public SkillRegistration extendedModel(ExtendedModel extendedModel) {
             this.extendedModel = extendedModel;
@@ -552,9 +600,17 @@ public class SkillBox implements StateModule {
         }
 
         /**
-         * Apply the registration with all configured options.
+         * 应用所有已配置的选项，完成技能注册。
          *
-         * @throws IllegalStateException if none of skill() was set, or toolkit() is required but not set
+         * <p>此方法将执行以下操作：
+         * <ul>
+         *   <li>将技能注册到 {@code SkillBox} 中</li>
+         *   <li>如果配置了工具对象、AgentTool、MCP 客户端或子智能体，创建一个工具组并注册相应工具</li>
+         *   <li>应用预设参数和扩展模型配置</li>
+         * </ul>
+         *
+         * @throws IllegalStateException 如果未调用 {@code skill()} 设置技能，
+         *     或者需要 toolkit() 但未设置
          */
         public void apply() {
             if (skill == null) {
@@ -592,16 +648,15 @@ public class SkillBox implements StateModule {
     // ==================== Skill Build-In Tools ====================
 
     /**
-     * Registers skill access tools to the provided toolkit.
+     * 向绑定的 toolkit 注册技能访问工具。
      *
-     * <p>This method registers the following tool:
+     * <p>此方法注册以下工具：
      * <ul>
-     *   <li>load_skill_through_path - Load skill resources or SKILL.md content. When a resource
-     *       is not found, it automatically returns a list of available resources with SKILL.md
-     *       as the first item.</li>
+     *   <li>{@code load_skill_through_path} —— 加载技能资源或 SKILL.md 内容。
+     *       当资源未找到时，自动返回可用资源列表，其中 SKILL.md 为首项。</li>
      * </ul>
      *
-     * @throws IllegalArgumentException if toolkit is null
+     * @throws IllegalArgumentException 如果 toolkit 为 null
      */
     public void registerSkillLoadTool() {
         if (toolkit == null) {
@@ -625,51 +680,51 @@ public class SkillBox implements StateModule {
     // ==================== Code Execution ====================
 
     /**
-     * Create a fluent builder for configuring code execution with custom options.
+     * 创建用于配置代码执行的流式构建器。
      *
-     * <p>This is the recommended way to enable code execution capabilities for skills.
-     * The builder allows selective enabling of tools and customization of ShellCommandTool.
+     * <p>这是为技能启用代码执行能力的推荐方式。
+     * 构建器允许选择性地启用不同工具并对 ShellCommandTool 进行自定义。
      *
-     * <p>Example usage:
+     * <p>使用示例：
      * <pre>{@code
-     * // Simple - enable all tools with default configuration
+     * // 简单用法——使用默认配置启用所有工具
      * skillBox.codeExecution()
      *     .withShell()
      *     .withRead()
      *     .withWrite()
      *     .enable();
      *
-     * // Custom shell tool with approval callback
+     * // 自定义 shell 工具并添加审批回调
      * ShellCommandTool customShell = new ShellCommandTool(
-     *     null,  // baseDir will be overridden
+     *     null,  // baseDir 将被覆盖
      *     Set.of("python3", "node", "npm"),
      *     command -> askUserApproval(command)
      * );
      *
      * skillBox.codeExecution()
      *     .workDir("/path/to/workdir")
-     *     .withShell(customShell)  // Clone with workDir
+     *     .withShell(customShell)  // 克隆并设置 workDir
      *     .withRead()
      *     .withWrite()
      *     .enable();
      *
-     * // Only enable read and write tools
+     * // 仅启用读取和写入工具
      * skillBox.codeExecution()
      *     .withRead()
      *     .withWrite()
      *     .enable();
      * }</pre>
      *
-     * @return A new CodeExecutionBuilder for configuration
+     * @return 一个新的用于配置的 CodeExecutionBuilder 实例
      */
     public CodeExecutionBuilder codeExecution() {
         return new CodeExecutionBuilder(this);
     }
 
     /**
-     * Sets whether skill files are automatically uploaded.
+     * 设置是否自动上传技能文件。
      *
-     * @param autoUploadSkill true to automatically upload skill files
+     * @param autoUploadSkill {@code true} 表示自动上传技能文件
      */
     public void setAutoUploadSkill(boolean autoUploadSkill) {
         this.autoUploadSkill = autoUploadSkill;
@@ -685,28 +740,30 @@ public class SkillBox implements StateModule {
     }
 
     /**
-     * Gets the working directory for code execution.
+     * 获取代码执行的工作目录。
      *
-     * @return The working directory path, or null if using temporary directory
+     * @return 工作目录路径，如果使用临时目录则返回 null
      */
     public Path getCodeExecutionWorkDir() {
         return workDir;
     }
 
     /**
-     * Gets the upload directory for skill files.
+     * 获取技能文件的上传目录。
      *
-     * @return The upload directory path, or null if not configured
+     * @return 上传目录路径，如果未配置则返回 null
      */
     public Path getUploadDir() {
         return uploadDir;
     }
 
     /**
-     * Ensures the working directory exists, creating it if necessary.
+     * 确保工作目录存在，如果不存在则创建。
      *
-     * @return The working directory path
-     * @throws RuntimeException if failed to create the directory
+     * <p>如果当前未设置工作目录，将创建一个临时目录并注册 JVM 关闭钩子进行清理。
+     *
+     * @return 工作目录路径
+     * @throws RuntimeException 如果目录创建失败
      */
     private Path ensureWorkDirExists() {
         if (this.workDir == null) {
@@ -736,9 +793,11 @@ public class SkillBox implements StateModule {
     }
 
     /**
-     * Ensures the upload directory exists, creating it if necessary.
+     * 确保上传目录存在，如果不存在则创建。
      *
-     * @return The upload directory path
+     * <p>如果未配置上传目录但工作目录存在，默认使用 {@code workDir/skills} 作为上传目录。
+     *
+     * @return 上传目录路径
      */
     private Path ensureUploadDirExists() {
         if (uploadDir == null) {
@@ -760,15 +819,15 @@ public class SkillBox implements StateModule {
     }
 
     /**
-     * Uploads skill files to the upload directory with the configured filter.
+     * 使用配置的文件过滤器将技能文件上传到上传目录。
      *
-     * <p>Upload directory resolution:
+     * <p>上传目录解析顺序：
      * <ul>
-     *   <li>If uploadDir is configured, use it.</li>
-     *   <li>Otherwise, use workDir/skills (workDir may be a temporary directory).</li>
+     *   <li>如果配置了 {@code uploadDir}，直接使用该路径。</li>
+     *   <li>否则，使用 {@code workDir/skills}（{@code workDir} 可能是临时目录）。</li>
      * </ul>
      *
-     * <p>If a file already exists, it will be overwritten.
+     * <p>如果目标文件已存在，将被覆盖写入。
      *
      */
     public void uploadSkillFiles() {
@@ -907,13 +966,13 @@ public class SkillBox implements StateModule {
         }
 
         /**
-         * Set the working directory for code execution.
+         * 设置代码执行的工作目录。
          *
-         * <p>All code execution tools (shell, read, write) will use this directory.
-         * If not set, a temporary directory will be created when files are uploaded.
+         * <p>所有代码执行工具（shell、read、write）都将使用此目录作为基础路径。
+         * 如果未设置，当文件上传时将创建一个临时目录。
          *
-         * @param workDir The working directory path (null or empty for temporary directory)
-         * @return This builder for chaining
+         * @param workDir 工作目录路径（null 或空字符串表示使用临时目录）
+         * @return 当前构建器实例（用于链式调用）
          */
         public CodeExecutionBuilder workDir(String workDir) {
             this.workDir = workDir;
@@ -921,12 +980,12 @@ public class SkillBox implements StateModule {
         }
 
         /**
-         * Set the upload directory for skill files.
+         * 设置技能文件的上传目录。
          *
-         * <p>If not set, the upload directory defaults to workDir/skills.
+         * <p>如果未设置，上传目录默认为 {@code workDir/skills}。
          *
-         * @param uploadDir The upload directory path
-         * @return This builder for chaining
+         * @param uploadDir 上传目录路径
+         * @return 当前构建器实例（用于链式调用）
          */
         public CodeExecutionBuilder uploadDir(String uploadDir) {
             this.uploadDir = uploadDir;
@@ -934,11 +993,14 @@ public class SkillBox implements StateModule {
         }
 
         /**
-         * Set a custom file filter for skill file uploads.
+         * 设置技能文件上传的自定义文件过滤器。
          *
-         * @param filter The custom filter to use
-         * @return This builder for chaining
-         * @throws IllegalArgumentException if filter is null
+         * <p>注意：{@code fileFilter()} 与 {@code includeFolders()}/{@code includeExtensions()}
+         * 互斥，同时使用将导致 {@link #enable()} 抛出异常。
+         *
+         * @param filter 自定义文件过滤器
+         * @return 当前构建器实例（用于链式调用）
+         * @throws IllegalArgumentException 如果 filter 为 null
          */
         public CodeExecutionBuilder fileFilter(SkillFileFilter filter) {
             if (filter == null) {
@@ -949,10 +1011,12 @@ public class SkillBox implements StateModule {
         }
 
         /**
-         * Set the folders to include for uploads.
+         * 设置上传时要包含的文件夹。
          *
-         * @param folders Folder paths to include
-         * @return This builder for chaining
+         * <p>仅匹配指定文件夹中的文件，与 {@link #includeExtensions(Set)} 组合使用。
+         *
+         * @param folders 要包含的文件夹路径集合
+         * @return 当前构建器实例（用于链式调用）
          */
         public CodeExecutionBuilder includeFolders(Set<String> folders) {
             this.includeFolders = folders;
@@ -960,10 +1024,12 @@ public class SkillBox implements StateModule {
         }
 
         /**
-         * Set the file extensions to include for uploads.
+         * 设置上传时要包含的文件扩展名。
          *
-         * @param extensions File extensions to include
-         * @return This builder for chaining
+         * <p>例如 {@code Set.of(".py", ".js", ".txt")}，与 {@link #includeFolders(Set)} 组合使用。
+         *
+         * @param extensions 要包含的文件扩展名集合
+         * @return 当前构建器实例（用于链式调用）
          */
         public CodeExecutionBuilder includeExtensions(Set<String> extensions) {
             this.includeExtensions = extensions;
@@ -971,16 +1037,16 @@ public class SkillBox implements StateModule {
         }
 
         /**
-         * Enable shell command execution with default configuration.
+         * 使用默认配置启用 shell 命令执行。
          *
-         * <p>Default configuration:
+         * <p>默认配置：
          * <ul>
-         *   <li>Allowed commands: python, python3, node, nodejs</li>
-         *   <li>No approval callback</li>
-         *   <li>Platform-specific validator (Unix or Windows)</li>
+         *   <li>允许的命令：python, python3, node, nodejs</li>
+         *   <li>无审批回调（不拦截任何命令执行）</li>
+         *   <li>平台相关的命令验证器（Unix 或 Windows）</li>
          * </ul>
          *
-         * @return This builder for chaining
+         * @return 当前构建器实例（用于链式调用）
          */
         public CodeExecutionBuilder withShell() {
             this.withShellCalled = true;
@@ -989,22 +1055,22 @@ public class SkillBox implements StateModule {
         }
 
         /**
-         * Enable shell command execution with a custom ShellCommandTool.
+         * 使用自定义的 ShellCommandTool 启用 shell 命令执行。
          *
-         * <p>The provided tool will be cloned with the following behavior:
+         * <p>提供的工具将被克隆，行为如下：
          * <ul>
-         *   <li>allowedCommands: copied from the source tool</li>
-         *   <li>approvalCallback: copied from the source tool</li>
-         *   <li>commandValidator: copied from the source tool</li>
-         *   <li>baseDir: OVERRIDDEN with the builder's workDir</li>
+         *   <li>{@code allowedCommands}：从源工具复制</li>
+         *   <li>{@code approvalCallback}：从源工具复制</li>
+         *   <li>{@code commandValidator}：从源工具复制</li>
+         *   <li>{@code baseDir}：<b>被覆盖</b>为构建器的 {@code workDir}</li>
          * </ul>
          *
-         * <p>This ensures all code execution tools use the same working directory
-         * while preserving your custom security policies.
+         * <p>这确保所有代码执行工具使用相同的工作目录，
+         * 同时保留您的自定义安全策略。
          *
-         * @param shellTool The custom ShellCommandTool to clone (must not be null)
-         * @return This builder for chaining
-         * @throws IllegalArgumentException if shellTool is null
+         * @param shellTool 要克隆的自定义 ShellCommandTool（不能为 null）
+         * @return 当前构建器实例（用于链式调用）
+         * @throws IllegalArgumentException 如果 shellTool 为 null
          */
         public CodeExecutionBuilder withShell(ShellCommandTool shellTool) {
             if (shellTool == null) {
@@ -1016,11 +1082,11 @@ public class SkillBox implements StateModule {
         }
 
         /**
-         * Enable file reading capabilities.
+         * 启用文件读取能力。
          *
-         * <p>Registers ReadFileTool with the builder's workDir as base directory.
+         * <p>使用构建器的 {@code workDir} 作为基础目录注册 {@code ReadFileTool}。
          *
-         * @return This builder for chaining
+         * @return 当前构建器实例（用于链式调用）
          */
         public CodeExecutionBuilder withRead() {
             this.enableRead = true;
@@ -1028,11 +1094,11 @@ public class SkillBox implements StateModule {
         }
 
         /**
-         * Enable file writing capabilities.
+         * 启用文件写入能力。
          *
-         * <p>Registers WriteFileTool with the builder's workDir as base directory.
+         * <p>使用构建器的 {@code workDir} 作为基础目录注册 {@code WriteFileTool}。
          *
-         * @return This builder for chaining
+         * @return 当前构建器实例（用于链式调用）
          */
         public CodeExecutionBuilder withWrite() {
             this.enableWrite = true;
@@ -1040,16 +1106,16 @@ public class SkillBox implements StateModule {
         }
 
         /**
-         * Set a custom code execution instruction for the system prompt.
+         * 设置自定义的代码执行指令模板，用于系统提示词。
          *
-         * <p>The instruction is appended to the skill system prompt when code execution is enabled.
-         * Use {@code %s} as a placeholder for the upload directory absolute path — every
-         * occurrence will be replaced with the actual path.
+         * <p>当启用代码执行时，该指令将追加到技能系统提示词中。
+         * 使用 {@code %s} 作为上传目录绝对路径的占位符——每个 {@code %s}
+         * 都将被替换为实际的上传目录路径。
          *
-         * <p>Pass {@code null} or blank to use the default instruction.
+         * <p>传入 {@code null} 或空字符串将使用默认指令。
          *
-         * @param instruction Custom code execution instruction template
-         * @return This builder for chaining
+         * @param instruction 自定义代码执行指令模板
+         * @return 当前构建器实例（用于链式调用）
          */
         public CodeExecutionBuilder codeExecutionInstruction(String instruction) {
             this.codeExecutionInstruction = instruction;
@@ -1057,17 +1123,19 @@ public class SkillBox implements StateModule {
         }
 
         /**
-         * Apply the configuration and enable code execution.
+         * 应用配置并启用代码执行能力。
          *
-         * <p>This method:
+         * <p>此方法按顺序执行以下操作：
          * <ul>
-         *   <li>Validates toolkit is bound</li>
-         *   <li>Removes existing code execution configuration if present</li>
-         *   <li>Creates the code execution tool group</li>
-         *   <li>Registers selected tools (shell, read, write)</li>
+         *   <li>验证 {@code toolkit} 已绑定</li>
+         *   <li>如果已存在代码执行配置，先移除旧的工具组（支持热替换）</li>
+         *   <li>创建工作目录和上传目录</li>
+         *   <li>创建代码执行工具组 {@code skill_code_execution_tool_group}</li>
+         *   <li>注册选中的工具（shell、read、write）</li>
+         *   <li>设置技能提示词提供器的代码执行标志和指令</li>
          * </ul>
          *
-         * @throws IllegalStateException if toolkit is not bound
+         * @throws IllegalStateException 如果 toolkit 尚未绑定
          */
         public void enable() {
             if (skillBox.toolkit == null) {
@@ -1176,14 +1244,14 @@ public class SkillBox implements StateModule {
         }
 
         /**
-         * Clone a ShellCommandTool with a new base directory.
+         * 克隆 ShellCommandTool 并设置新的基础目录。
          *
-         * <p>This ensures all code execution tools use the same working directory
-         * while preserving the custom security policies from the source tool.
+         * <p>这确保所有代码执行工具使用相同的工作目录，
+         * 同时保留源工具中的自定义安全策略（允许命令、审批回调和命令验证器）。
          *
-         * @param source The source ShellCommandTool to clone
-         * @param workDir The new working directory (can be null for temporary)
-         * @return A new ShellCommandTool with the same configuration but different baseDir
+         * @param source 要克隆的源 ShellCommandTool
+         * @param workDir 新的工作目录（可以为 null，表示使用临时目录）
+         * @return 具有相同配置但不同 baseDir 的新 ShellCommandTool 实例
          */
         private ShellCommandTool cloneShellToolWithWorkDir(
                 ShellCommandTool source, String workDir) {

@@ -69,16 +69,15 @@ public class AgentSkill {
     private final String source;
 
     /**
-     * Creates an AgentSkill with explicit parameters.
+     * 创建一个包含显式参数的技能实例，使用默认来源标识 "custom"。
      *
-     * <p>Use this constructor when you want to create a skill directly without parsing
-     * markdown. Uses "custom" as the default source.
+     * <p>当你希望直接通过参数创建技能而无需解析 Markdown 时使用此构造器。
      *
-     * @param name Skill name (must not be null or empty)
-     * @param description Skill description (must not be null or empty)
-     * @param skillContent The skill implementation or instructions (must not be null or empty)
-     * @param resources Supporting resources referenced by the skill (can be null)
-     * @throws IllegalArgumentException if name, description, or skillContent is null or empty
+     * @param name         技能名称（不可为 null 或空字符串）
+     * @param description  技能描述（不可为 null 或空字符串）
+     * @param skillContent 技能实现内容或指令（不可为 null 或空字符串）
+     * @param resources    技能引用的支持资源（可以为 null）
+     * @throws IllegalArgumentException 如果 name、description 或 skillContent 为 null 或空
      */
     public AgentSkill(
             String name, String description, String skillContent, Map<String, String> resources) {
@@ -86,17 +85,16 @@ public class AgentSkill {
     }
 
     /**
-     * Creates an AgentSkill with explicit parameters and custom source.
+     * 创建一个包含显式参数和自定义来源标识的技能实例。
      *
-     * <p>Use this constructor when you want to create a skill directly without parsing
-     * markdown. The source parameter indicates where the skill originated from.
+     * <p>来源标识指示技能的出处，可用于区分来自不同仓库或位置的同一名称技能。
      *
-     * @param name Skill name (must not be null or empty)
-     * @param description Skill description (must not be null or empty)
-     * @param skillContent The skill implementation or instructions (must not be null or empty)
-     * @param resources Supporting resources referenced by the skill (can be null)
-     * @param source Source identifier for the skill (null defaults to "custom")
-     * @throws IllegalArgumentException if name, description, or skillContent is null or empty
+     * @param name         技能名称（不可为 null 或空字符串）
+     * @param description  技能描述（不可为 null 或空字符串）
+     * @param skillContent 技能实现内容或指令（不可为 null 或空字符串）
+     * @param resources    技能引用的支持资源（可以为 null）
+     * @param source       技能来源标识（null 默认使用 "custom"）
+     * @throws IllegalArgumentException 如果 name、description 或 skillContent 为 null 或空
      */
     public AgentSkill(
             String name,
@@ -108,16 +106,16 @@ public class AgentSkill {
     }
 
     /**
-     * Creates an AgentSkill with explicit metadata.
+     * 使用显式元数据映射创建技能实例。
      *
-     * <p>The metadata must include non-empty string values for {@code name} and
-     * {@code description}. The metadata map is copied and stored as immutable.
+     * <p>元数据映射必须包含非空字符串类型的 {@code name} 和 {@code description} 字段。
+     * 传入的元数据映射会被复制并存储为不可修改的副本。资源映射同样会被复制。
      *
-     * @param metadata Skill metadata including required {@code name} and {@code description}
-     * @param skillContent The skill implementation or instructions (must not be null or empty)
-     * @param resources Supporting resources referenced by the skill (can be null)
-     * @param source Source identifier for the skill (null defaults to "custom")
-     * @throws IllegalArgumentException if metadata is invalid or skillContent is null or empty
+     * @param metadata     技能元数据，必须包含 {@code name} 和 {@code description} 键
+     * @param skillContent 技能实现内容或指令（不可为 null 或空字符串）
+     * @param resources    技能引用的支持资源（可以为 null）
+     * @param source       技能来源标识（null 默认使用 "custom"）
+     * @throws IllegalArgumentException 如果 metadata 无效或 skillContent 为 null 或空
      */
     public AgentSkill(
             Map<String, Object> metadata,
@@ -141,125 +139,130 @@ public class AgentSkill {
     }
 
     /**
-     * Gets the skill name.
+     * 获取技能名称。
      *
-     * @return The skill name (never null)
+     * @return 技能名称（不可为 null）
      */
     public String getName() {
         return (String) metadata.get("name");
     }
 
     /**
-     * Gets the skill description.
+     * 获取技能描述。
      *
-     * @return The skill description (never null)
+     * @return 技能描述（不可为 null）
      */
     public String getDescription() {
         return (String) metadata.get("description");
     }
 
     /**
-     * Gets the skill metadata.
+     * 获取技能的不可修改元数据映射。
      *
-     * @return The immutable metadata map (never null, may be empty except required fields)
+     * <p>元数据包含创建时传入的所有键值对，至少包含 {@code name} 和 {@code description} 字段。
+     *
+     * @return 不可修改的元数据映射（不可为 null，除必需字段外可能为空）
      */
     public Map<String, Object> getMetadata() {
         return metadata;
     }
 
     /**
-     * Gets a metadata value by key.
+     * 根据键获取元数据中的某个值。
      *
-     * @param key The metadata key
-     * @return The metadata value, or null if not found
+     * @param key 元数据键名
+     * @return 元数据值，如果未找到则返回 null
      */
     public Object getMetadataValue(String key) {
         return metadata.get(key);
     }
 
     /**
-     * Gets the skill content.
+     * 获取技能内容。
      *
-     * <p>This contains the actual skill implementation or instructions.
+     * <p>技能内容是技能的核心实现或指令文本，描述了智能体应如何执行该技能。
      *
-     * @return The skill content (never null)
+     * @return 技能内容（不可为 null）
      */
     public String getSkillContent() {
         return skillContent;
     }
 
     /**
-     * Gets the skill source identifier.
+     * 获取技能的来源标识符。
      *
-     * @return The source identifier (never null)
+     * @return 来源标识符（不可为 null）
      */
     public String getSource() {
         return source;
     }
 
     /**
-     * Gets the skill resources.
+     * 获取技能引用的所有支持资源。
      *
-     * @return The resources map (never null, may be empty)
+     * <p>返回的资源映射是原映射的副本，调用方对其的修改不会影响技能实例。
+     *
+     * @return 资源映射副本（不可为 null，可能为空）
      */
     public Map<String, String> getResources() {
         return new HashMap<>(resources);
     }
 
     /**
-     * Gets the resource content by path.
+     * 根据路径获取指定资源的内容。
      *
-     * @param resourcePath The resource path
-     * @return The resource content, or null if not found
+     * @param resourcePath 资源路径
+     * @return 资源内容，如果未找到则返回 null
      */
     public String getResource(String resourcePath) {
         return resources.get(resourcePath);
     }
 
     /**
-     * Gets all resource paths for this skill.
+     * 获取技能所有资源的路径集合。
      *
-     * @return Unmodifiable set of resource paths
+     * @return 不可修改的资源路径集合
      */
     public Set<String> getResourcePaths() {
         return Collections.unmodifiableSet(new HashSet<>(resources.keySet()));
     }
 
     /**
-     * Gets a unique identifier for this skill.
+     * 获取技能的唯一标识符。
      *
-     * <p>The ID is composed of name and source: "name_source".
+     * <p>标识符由技能名称和来源组成，格式为 {@code name_source}，用于在注册表中
+     * 区分来自不同来源的同名技能。
      *
-     * @return Unique skill identifier (never null)
+     * @return 技能唯一标识符（不可为 null）
      */
     public String getSkillId() {
         return getName() + "_" + source;
     }
 
     /**
-     * Creates a builder initialized with this skill's values.
+     * 基于当前技能创建一个 Builder，用于生成当前技能的修改版本。
      *
-     * <p>This is useful for creating modified versions of existing skills.
+     * <p>Builder 会预填充当前技能的所有字段值，调用方只需设置需要修改的字段即可。
      *
-     * @return A new builder instance
+     * @return 新的 Builder 实例，已用当前技能的值初始化
      */
     public Builder toBuilder() {
         return new Builder(this);
     }
 
     /**
-     * Creates a new builder for creating a skill from scratch.
+     * 创建一个空的 Builder，用于从零开始构建技能。
      *
-     * @return A new builder instance with empty fields
+     * @return 新的空 Builder 实例
      */
     public static Builder builder() {
         return new Builder();
     }
 
     /**
-     * Returns a string representation of this skill.
+     * 返回技能的字符串表示形式。
      *
-     * @return String representation including name, description, and source
+     * @return 包含名称、描述和来源的字符串
      */
     @Override
     public String toString() {
@@ -273,14 +276,14 @@ public class AgentSkill {
     }
 
     /**
-     * Builder for creating AgentSkill instances.
+     * 用于创建 {@link AgentSkill} 实例的构建器。
      *
-     * <p>This builder allows selective modification of skill fields to create
-     * new skill instances based on existing ones, or to create new skills from scratch.
+     * <p>该构建器支持选择性修改技能字段，既可以基于现有技能创建修改版本，
+     * 也可以从零开始创建新技能。通过链式调用（fluent API）提供流畅的构建体验。
      *
-     * <p><b>Usage examples:</b>
+     * <p><b>使用示例：</b>
      * <pre>{@code
-     * // Create from scratch
+     * // 从零创建
      * AgentSkill skill = AgentSkill.builder()
      *     .name("my_skill")
      *     .description("Does something")
@@ -288,7 +291,7 @@ public class AgentSkill {
      *     .addResource("file.txt", "content")
      *     .build();
      *
-     * // Modify existing skill
+     * // 修改现有技能
      * AgentSkill modified = existingSkill.toBuilder()
      *     .description("Updated description")
      *     .addResource("new_file.txt", "new content")
@@ -302,7 +305,7 @@ public class AgentSkill {
         private String source;
 
         /**
-         * Creates an empty builder.
+         * 创建一个空的构建器，所有字段均为默认值。
          */
         private Builder() {
             this.metadata = new LinkedHashMap<>();
@@ -310,9 +313,11 @@ public class AgentSkill {
         }
 
         /**
-         * Creates a builder initialized with values from an existing skill.
+         * 创建一个使用现有技能值初始化的构建器。
          *
-         * @param baseSkill The skill to copy values from
+         * <p>元数据、技能内容、资源和来源均从基础技能复制。
+         *
+         * @param baseSkill 要复制值的基础技能
          */
         private Builder(AgentSkill baseSkill) {
             this.metadata = new LinkedHashMap<>(baseSkill.metadata);
@@ -322,10 +327,10 @@ public class AgentSkill {
         }
 
         /**
-         * Sets the skill name.
+         * 设置技能名称。
          *
-         * @param name The skill name
-         * @return This builder
+         * @param name 技能名称
+         * @return 当前构建器实例（用于链式调用）
          */
         public Builder name(String name) {
             this.metadata.put("name", name);
@@ -333,10 +338,10 @@ public class AgentSkill {
         }
 
         /**
-         * Sets the skill description.
+         * 设置技能描述。
          *
-         * @param description The skill description
-         * @return This builder
+         * @param description 技能描述
+         * @return 当前构建器实例（用于链式调用）
          */
         public Builder description(String description) {
             this.metadata.put("description", description);
@@ -344,10 +349,10 @@ public class AgentSkill {
         }
 
         /**
-         * Replaces all metadata with a new map.
+         * 用新的映射替换所有元数据。
          *
-         * @param metadata The new metadata map
-         * @return This builder
+         * @param metadata 新的元数据映射
+         * @return 当前构建器实例（用于链式调用）
          */
         public Builder metadata(Map<String, Object> metadata) {
             this.metadata =
@@ -356,11 +361,11 @@ public class AgentSkill {
         }
 
         /**
-         * Adds or updates a single metadata entry.
+         * 添加或更新单条元数据条目。
          *
-         * @param key The metadata key
-         * @param value The metadata value
-         * @return This builder
+         * @param key   元数据键名
+         * @param value 元数据值
+         * @return 当前构建器实例（用于链式调用）
          */
         public Builder putMetadata(String key, Object value) {
             this.metadata.put(key, value);
@@ -368,10 +373,10 @@ public class AgentSkill {
         }
 
         /**
-         * Removes a metadata entry.
+         * 移除指定键的元数据条目。
          *
-         * @param key The metadata key to remove
-         * @return This builder
+         * @param key 要移除的元数据键名
+         * @return 当前构建器实例（用于链式调用）
          */
         public Builder removeMetadata(String key) {
             this.metadata.remove(key);
@@ -379,10 +384,10 @@ public class AgentSkill {
         }
 
         /**
-         * Sets the skill content.
+         * 设置技能内容。
          *
-         * @param skillContent The skill content/instructions
-         * @return This builder
+         * @param skillContent 技能内容/指令文本
+         * @return 当前构建器实例（用于链式调用）
          */
         public Builder skillContent(String skillContent) {
             this.skillContent = skillContent;
@@ -390,10 +395,10 @@ public class AgentSkill {
         }
 
         /**
-         * Replaces all resources with a new map.
+         * 用新的映射替换所有资源。
          *
-         * @param resources The new resources map
-         * @return This builder
+         * @param resources 新的资源映射
+         * @return 当前构建器实例（用于链式调用）
          */
         public Builder resources(Map<String, String> resources) {
             this.resources = new HashMap<>(resources);
@@ -401,11 +406,11 @@ public class AgentSkill {
         }
 
         /**
-         * Adds or updates a single resource.
+         * 添加或更新单条资源。
          *
-         * @param path The resource path
-         * @param content The resource content
-         * @return This builder
+         * @param path    资源路径
+         * @param content 资源内容
+         * @return 当前构建器实例（用于链式调用）
          */
         public Builder addResource(String path, String content) {
             this.resources.put(path, content);
@@ -413,10 +418,10 @@ public class AgentSkill {
         }
 
         /**
-         * Removes a resource.
+         * 移除指定路径的资源。
          *
-         * @param path The resource path to remove
-         * @return This builder
+         * @param path 要移除的资源路径
+         * @return 当前构建器实例（用于链式调用）
          */
         public Builder removeResource(String path) {
             this.resources.remove(path);
@@ -424,9 +429,9 @@ public class AgentSkill {
         }
 
         /**
-         * Clears all resources.
+         * 清空所有资源。
          *
-         * @return This builder
+         * @return 当前构建器实例（用于链式调用）
          */
         public Builder clearResources() {
             this.resources.clear();
@@ -434,10 +439,10 @@ public class AgentSkill {
         }
 
         /**
-         * Sets the source identifier.
+         * 设置来源标识符。
          *
-         * @param source The source identifier
-         * @return This builder
+         * @param source 来源标识符
+         * @return 当前构建器实例（用于链式调用）
          */
         public Builder source(String source) {
             this.source = source;
@@ -445,10 +450,13 @@ public class AgentSkill {
         }
 
         /**
-         * Builds the AgentSkill instance.
+         * 构建 {@link AgentSkill} 实例。
          *
-         * @return A new AgentSkill instance
-         * @throws IllegalArgumentException if required fields are missing
+         * <p>构建时会校验元数据中是否包含有效的 {@code name} 和 {@code description}，
+         * 以及技能内容是否非空。
+         *
+         * @return 新的 {@link AgentSkill} 实例
+         * @throws IllegalArgumentException 如果缺少必填字段
          */
         public AgentSkill build() {
             return new AgentSkill(metadata, skillContent, resources, source);
