@@ -26,10 +26,9 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Generates JSON Schema for tool parameters.
- * This class handles the conversion of Java method signatures to JSON Schema
- * format
- * compatible with OpenAI's function calling API.
+ * 生成工具参数的 JSON Schema。
+ * 该类处理 Java 方法签名到 JSON Schema 格式的转换，
+ * 生成的 Schema 兼容 OpenAI 的函数调用 API。
  */
 class ToolSchemaGenerator {
 

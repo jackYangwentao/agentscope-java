@@ -16,6 +16,8 @@
 package io.agentscope.harness.agent.sandbox.layout;
 
 /**
+ * 使用内联文本内容创建文件的布局条目。
+ * <p>
  * Layout entry that creates a file with inline text content.
  */
 public class FileEntry extends WorkspaceEntry {
@@ -23,23 +25,27 @@ public class FileEntry extends WorkspaceEntry {
     private String content = "";
     private String encoding = "UTF-8";
 
-    /** Creates an empty file entry. */
+    /** 创建空文件条目。Creates an empty file entry. */
     public FileEntry() {}
 
     /**
+     * 创建包含给定内容的文件条目。
+     * <p>
      * Creates a file entry with the given content.
      *
-     * @param content the file content as a string
+     * @param content 文件内容字符串
      */
     public FileEntry(String content) {
         this.content = content;
     }
 
     /**
+     * 创建包含给定内容和编码的文件条目。
+     * <p>
      * Creates a file entry with the given content and encoding.
      *
-     * @param content the file content as a string
-     * @param encoding the character encoding to use when writing the file
+     * @param content  文件内容字符串
+     * @param encoding 写入文件时使用的字符编码
      */
     public FileEntry(String content, String encoding) {
         this.content = content;
@@ -47,36 +53,44 @@ public class FileEntry extends WorkspaceEntry {
     }
 
     /**
+     * 返回文件内容。
+     * <p>
      * Returns the file content.
      *
-     * @return file content string
+     * @return 文件内容字符串
      */
     public String getContent() {
         return content;
     }
 
     /**
+     * 设置文件内容。
+     * <p>
      * Sets the file content.
      *
-     * @param content the file content string
+     * @param content 文件内容字符串
      */
     public void setContent(String content) {
         this.content = content;
     }
 
     /**
+     * 返回写入此文件时使用的字符编码。
+     * <p>
      * Returns the character encoding used to write this file.
      *
-     * @return encoding name (e.g. "UTF-8")
+     * @return 编码名称（例如 "UTF-8"）
      */
     public String getEncoding() {
         return encoding;
     }
 
     /**
+     * 设置写入此文件时使用的字符编码。
+     * <p>
      * Sets the character encoding used to write this file.
      *
-     * @param encoding encoding name (e.g. "UTF-8")
+     * @param encoding 编码名称（例如 "UTF-8"）
      */
     public void setEncoding(String encoding) {
         this.encoding = encoding;

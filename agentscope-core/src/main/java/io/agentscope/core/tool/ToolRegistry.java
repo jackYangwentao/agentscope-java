@@ -21,20 +21,19 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Internal registry for managing tool registration and lookup.
+ * 管理工具注册和查找的内部注册表。
  *
- * <p>This class maintains mappings between tool names and their implementations, along with
- * metadata about registered tool functions. It is used internally by {@link Toolkit} to organize
- * and retrieve tools.
+ * <p>该类维护工具名称与其实现之间的映射关系，以及已注册工具函数的元数据。
+ * 由 {@link Toolkit} 内部使用以组织和检索工具。
  *
- * <p><b>Thread Safety:</b> This class is thread-safe, using {@link ConcurrentHashMap} for internal
- * storage to support concurrent tool registration and lookup operations.
+ * <p><b>线程安全性：</b>该类是线程安全的，使用 {@link ConcurrentHashMap} 作为内部存储，
+ * 支持并发的工具注册和查找操作。
  *
- * <p><b>Key Responsibilities:</b>
+ * <p><b>核心职责：</b>
  * <ul>
- *   <li>Store and retrieve {@link AgentTool} implementations by name</li>
- *   <li>Maintain {@link RegisteredToolFunction} metadata for schema generation</li>
- *   <li>Support dynamic tool removal for group-based activation</li>
+ *   <li>按名称存储和检索 {@link AgentTool} 实现</li>
+ *   <li>维护 {@link RegisteredToolFunction} 元数据用于 Schema 生成</li>
+ *   <li>支持基于工具组激活的动态工具移除</li>
  * </ul>
  */
 class ToolRegistry {

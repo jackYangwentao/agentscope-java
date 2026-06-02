@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Interface for extended model that adds properties to tool parameters.
+ * 扩展模型接口，用于向工具参数添加额外属性。
  */
 public interface ExtendedModel {
 

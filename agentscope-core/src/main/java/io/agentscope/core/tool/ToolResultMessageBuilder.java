@@ -21,10 +21,10 @@ import io.agentscope.core.message.ToolResultBlock;
 import io.agentscope.core.message.ToolUseBlock;
 
 /**
- * Utility class for building tool result messages from ToolResultBlock objects.
+ * 工具结果消息构建工具类，用于从 ToolResultBlock 对象构建工具结果消息。
  *
- * This class handles the conversion of ToolResultBlock to Msg with ToolResultBlock,
- * setting proper id and name from the original tool call.
+ * 该类处理 ToolResultBlock 到包含 ToolResultBlock 的 Msg 的转换，
+ * 并从原始工具调用中设置正确的 id 和 name。
  * @hidden
  */
 public class ToolResultMessageBuilder {

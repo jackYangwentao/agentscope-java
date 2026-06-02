@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 /**
- * Factory for creating skill access tools that allow agents to dynamically load and access skills.
+ * 技能访问工具工厂，用于创建允许智能体动态加载和访问技能的工具。
  */
 class SkillToolFactory {
 

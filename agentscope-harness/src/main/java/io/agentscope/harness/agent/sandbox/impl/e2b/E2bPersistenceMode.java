@@ -15,11 +15,16 @@
  */
 package io.agentscope.harness.agent.sandbox.impl.e2b;
 
-/** How workspace bytes are persisted for E2B sandboxes. */
+/**
+ * E2B 沙箱工作空间字节的持久化方式。
+ * How workspace bytes are persisted for E2B sandboxes.
+ */
 public enum E2bPersistenceMode {
-    /** Tar archive bytes (default, compatible with other Harness snapshots). */
+    /** Tar 归档字节（默认值，与其他 Harness 快照兼容）。Tar archive bytes (default, compatible with other Harness snapshots). */
     TAR,
     /**
+     * E2B {@code POST /sandboxes/{id}/snapshots} 加上 Harness 快照流中的 {@link E2bSnapshotRefs} 标记字节
+     * （恢复时会以快照 ID 作为 {@code templateID} 重新创建沙箱）。
      * E2B {@code POST /sandboxes/{id}/snapshots} plus {@link E2bSnapshotRefs} marker bytes in the
      * Harness snapshot stream (restore recreates a sandbox with the snapshot id as {@code templateID}).
      */

@@ -19,19 +19,19 @@ import io.agentscope.core.state.State;
 import java.util.List;
 
 /**
- * Utility class for computing hash values of state lists.
+ * 计算状态列表哈希值的工具类。
  *
- * <p>This class provides hash computation for change detection in Session implementations. The hash
- * is used to detect if a list has been modified (not just appended) since the last save operation.
+ * <p>该类提供哈希计算用于 Session 实现中的变更检测。哈希用于检测自上次保存操作以来
+ * 列表是否已被修改（不仅仅是追加）。
  *
- * <p>The hash computation uses a sampling strategy to avoid iterating over large lists:
+ * <p>哈希计算使用采样策略以避免遍历大列表：
  *
  * <ul>
- *   <li>For small lists (≤5 elements): all elements are included
- *   <li>For large lists: samples at positions 0, 1/4, 1/2, 3/4, and last
+ *   <li>小列表（≤5 个元素）：包含所有元素</li>
+ *   <li>大列表：对位置 0、1/4、1/2、3/4 和最后一个进行采样</li>
  * </ul>
  *
- * <p>Usage in Session implementations:
+ * <p>在 Session 实现中的使用：
  *
  * <pre>{@code
  * String currentHash = ListHashUtil.computeHash(values);

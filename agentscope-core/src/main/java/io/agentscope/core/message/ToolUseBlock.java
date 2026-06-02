@@ -22,14 +22,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Represents a tool use request within a message.
+ * 表示消息中的工具使用请求。
  *
- * <p>This content block is used when an agent requests to execute a tool.
- * It contains the tool's unique identifier, name, input parameters, and optionally
- * the raw content for streaming tool calls.
+ * <p>该内容块用于智能体请求执行工具时。它包含工具的唯一标识符、名称、输入参数，
+ * 以及可选的流式工具调用的原始内容。
  *
- * <p>The tool input is stored as a generic map of string keys to object values,
- * allowing for flexible parameter passing to different tool implementations.
+ * <p>工具输入以字符串键到对象值的通用映射形式存储，允许灵活地向不同的工具实现传递参数。
  */
 public final class ToolUseBlock extends ContentBlock {
 

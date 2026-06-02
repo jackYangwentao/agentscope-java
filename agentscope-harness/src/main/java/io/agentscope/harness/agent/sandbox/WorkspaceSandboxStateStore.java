@@ -28,19 +28,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * 文件系统支持的 {@link SandboxStateStore} 实现。
  * Filesystem-backed implementation of {@link SandboxStateStore}.
  *
- * <p>On-disk layout (relative to {@code workspaceRoot}):
+ * <p>磁盘布局（相对于 {@code workspaceRoot}）：
+ * On-disk layout (relative to {@code workspaceRoot}):
  *
  * <pre>
- * SESSION scope  → agents/&lt;agentId&gt;/context/&lt;safe(sessionId)&gt;/_sandbox.json
- * USER scope     → agents/&lt;agentId&gt;/sandboxes/user/&lt;safe(userId)&gt;.json
- * AGENT scope    → agents/&lt;agentId&gt;/sandboxes/agent.json
- * GLOBAL scope   → sandboxes/global.json
+ * SESSION 作用域 → agents/&lt;agentId&gt;/context/&lt;safe(sessionId)&gt;/_sandbox.json
+ * USER 作用域    → agents/&lt;agentId&gt;/sandboxes/user/&lt;safe(userId)&gt;.json
+ * AGENT 作用域   → agents/&lt;agentId&gt;/sandboxes/agent.json
+ * GLOBAL 作用域  → sandboxes/global.json
  * </pre>
  *
- * <p>Values that contain characters outside {@code [a-zA-Z0-9_\-.]} are Base64url-encoded
- * (no padding) to produce filesystem-safe filenames.
+ * <p>包含 {@code [a-zA-Z0-9_\-.]} 之外字符的值将进行 Base64url 编码（无填充），
+ * 以生成文件系统安全的文件名。
  */
 public final class WorkspaceSandboxStateStore implements SandboxStateStore {
 

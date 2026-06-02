@@ -29,7 +29,11 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-/** Minimal HTTP client for the Daytona control plane and toolbox process API. */
+/**
+ * 用于 Daytona 控制平面和工具箱进程 API 的最小化 HTTP 客户端。
+ * <p>
+ * Minimal HTTP client for the Daytona control plane and toolbox process API.
+ */
 final class DaytonaHttp {
 
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
@@ -52,6 +56,11 @@ final class DaytonaHttp {
         }
     }
 
+    /**
+     * 创建沙箱实例，返回沙箱 ID。
+     * <p>
+     * Create a sandbox instance and return the sandbox ID.
+     */
     String createSandbox() throws IOException {
         ObjectNode body = json.createObjectNode();
         if (opt.getSnapshotId() != null && !opt.getSnapshotId().isBlank()) {
@@ -84,16 +93,31 @@ final class DaytonaHttp {
         return id.asText();
     }
 
+    /**
+     * 启动指定 ID 的沙箱实例。
+     * <p>
+     * Start the sandbox instance with the given ID.
+     */
     void startSandbox(String sandboxId) throws IOException {
         String url = opt.getControlPlaneBaseUrl() + "/sandbox/" + sandboxId + "/start";
         DaytonaRetry.withRetries(opt.getMaxRetries(), () -> postJson(url, json.createObjectNode()));
     }
 
+    /**
+     * 获取指定沙箱的详细信息（JSON 格式）。
+     * <p>
+     * Get the details of the specified sandbox (JSON format).
+     */
     JsonNode getSandbox(String sandboxId) throws IOException {
         String url = opt.getControlPlaneBaseUrl() + "/sandbox/" + sandboxId;
         return DaytonaRetry.withRetries(opt.getMaxRetries(), () -> getJson(url));
     }
 
+    /**
+     * 删除指定 ID 的沙箱实例。
+     * <p>
+     * Delete the sandbox instance with the given ID.
+     */
     void deleteSandbox(String sandboxId) throws IOException {
         String url = opt.getControlPlaneBaseUrl() + "/sandbox/" + sandboxId;
         Request req =
@@ -111,6 +135,11 @@ final class DaytonaHttp {
         }
     }
 
+    /**
+     * 在沙箱中执行命令，返回执行结果 JSON。
+     * <p>
+     * Execute a command in the sandbox and return the execution result as JSON.
+     */
     JsonNode execute(String sandboxId, String command, String cwd, int timeoutSeconds)
             throws IOException {
         ObjectNode body = json.createObjectNode();
@@ -124,6 +153,11 @@ final class DaytonaHttp {
                 opt.getMaxRetries(), () -> postJson(url, body, /* toolbox */ true));
     }
 
+    /**
+     * 轮询等待沙箱状态变为"已启动"。
+     * <p>
+     * Poll until the sandbox state transitions to "started".
+     */
     void waitUntilStarted(String sandboxId, int maxWaitSeconds) throws Exception {
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(maxWaitSeconds);
         while (System.nanoTime() < deadline) {
@@ -139,6 +173,11 @@ final class DaytonaHttp {
                 "Daytona sandbox did not become ready in time: " + sandboxId);
     }
 
+    /**
+     * 从沙箱 JSON 响应中提取文本状态字段（优先 "state"，其次 "status"）。
+     * <p>
+     * Extract a text state field from the sandbox JSON response ("state" first, then "status").
+     */
     private static String textState(JsonNode s) {
         if (s == null) {
             return null;
@@ -158,6 +197,11 @@ final class DaytonaHttp {
         return postJson(url, body, false);
     }
 
+    /**
+     * 发送 POST 请求并解析 JSON 响应。
+     * <p>
+     * Send a POST request and parse the JSON response.
+     */
     private JsonNode postJson(String url, ObjectNode body, boolean toolbox) throws IOException {
         Request.Builder rb =
                 new Request.Builder()
@@ -181,6 +225,11 @@ final class DaytonaHttp {
         }
     }
 
+    /**
+     * 发送 GET 请求并解析 JSON 响应。
+     * <p>
+     * Send a GET request and parse the JSON response.
+     */
     private JsonNode getJson(String url) throws IOException {
         Request req =
                 new Request.Builder().url(url).get().addHeader("Authorization", bearer()).build();
@@ -195,6 +244,11 @@ final class DaytonaHttp {
         }
     }
 
+    /**
+     * 构造 Bearer 认证头信息。
+     * <p>
+     * Build the Bearer authorization header.
+     */
     private String bearer() {
         String key = opt.getApiKey();
         if (key == null || key.isBlank()) {

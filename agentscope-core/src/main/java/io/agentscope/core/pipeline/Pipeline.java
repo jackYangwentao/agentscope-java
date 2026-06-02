@@ -19,12 +19,12 @@ import io.agentscope.core.message.Msg;
 import reactor.core.publisher.Mono;
 
 /**
- * Base interface for pipeline execution in AgentScope.
+ * AgentScope 中管道执行的基础接口。
  *
- * Pipelines provide orchestration of agents and operations in various patterns
- * such as sequential, parallel (fanout), or custom flows.
+ * 管道提供智能体和操作的编排能力，支持多种模式，
+ * 如串行、并行（扇出）或自定义流程。
  *
- * @param <T> Type of the pipeline result
+ * @param <T> 管道结果的类型
  */
 public interface Pipeline<T> {
 

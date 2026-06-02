@@ -23,7 +23,7 @@ import java.util.Map;
 import reactor.core.publisher.Mono;
 
 /**
- * Factory for creating meta tools that allow agents to dynamically manage tool groups.
+ * 元工具工厂，用于创建允许智能体动态管理工具组的元工具。
  */
 class MetaToolFactory {
 

@@ -56,6 +56,12 @@ import reactor.core.publisher.Mono;
  * by {@code WorkspaceContextHook} on the same {@link PreReasoningEvent} chain.
  *
  * <p>{@link RuntimeContext} is bound on each call by {@link io.agentscope.core.ReActAgent}.
+ *
+ * <p>对话压缩钩子，在每次 LLM 推理调用之前执行对话压缩。
+ * 在 {@link PreReasoningEvent} 上触发。
+ * 当压缩阈值被超出时：长时记忆从前缀中刷出、完整对话卸载到会话 JSONL、
+ * 前缀通过一次 LLM 调用蒸馏为结构化摘要、agent 的工作内存被替换为
+ * {@code [summaryMsg] + preservedTail}。
  */
 public class CompactionHook implements Hook, RuntimeContextAware {
 
@@ -89,6 +95,8 @@ public class CompactionHook implements Hook, RuntimeContextAware {
         if (event instanceof PreReasoningEvent pre) {
             // Must emit a value: Reactor's thenReturn() would not run if the source completed
             // "empty" (e.g. Mono.empty() from flatMap), which would drop all later hooks.
+            // 必须发射一个值：如果源以"empty"完成（例如 flatMap 中的 Mono.empty()），
+            // Reactor 的 thenReturn() 将不会运行，这会丢弃所有后续钩子。
             return (Mono<T>) (Mono<?>) handlePreReasoning(pre);
         }
         return Mono.just(event);
@@ -96,6 +104,7 @@ public class CompactionHook implements Hook, RuntimeContextAware {
 
     // -------------------------------------------------------------------------
     // Core compaction flow
+    // 核心压缩流程
     // -------------------------------------------------------------------------
 
     private Mono<PreReasoningEvent> handlePreReasoning(PreReasoningEvent event) {
@@ -105,6 +114,7 @@ public class CompactionHook implements Hook, RuntimeContextAware {
 
         // inputMessages contains only conversation messages — SYSTEM is managed separately
         // via event.getSystemMessage() / event.setSystemMessage()
+        // inputMessages 仅包含对话消息 — SYSTEM 消息通过 event.getSystemMessage()/event.setSystemMessage() 单独管理
         List<Msg> conversationMsgs = event.getInputMessages();
 
         String agentId = event.getAgent().getName();
@@ -143,6 +153,10 @@ public class CompactionHook implements Hook, RuntimeContextAware {
      *
      * <p>Uses {@link Memory#clear()} + {@link Memory#addMessage(Msg)} to synchronise the
      * in-memory state so subsequent reasoning rounds start from the compacted baseline.
+     *
+     * <p>将 agent 的工作内存替换为压缩后的消息列表。
+     * 使用 {@link Memory#clear()} + {@link Memory#addMessage(Msg)} 同步内存中的状态，
+     * 以便后续推理轮次从压缩后的基线开始。
      */
     private static void applyToMemory(Memory memory, List<Msg> compacted) {
         try {
@@ -158,6 +172,7 @@ public class CompactionHook implements Hook, RuntimeContextAware {
 
     // -------------------------------------------------------------------------
     // Helpers
+    // 辅助方法
     // -------------------------------------------------------------------------
 
     private MemoryFlushManager buildFlushManager() {

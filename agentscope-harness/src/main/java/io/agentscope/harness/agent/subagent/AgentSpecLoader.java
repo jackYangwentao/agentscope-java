@@ -35,17 +35,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Loads {@link SubagentDeclaration} instances from Markdown files with YAML front matter placed
- * in the {@code subagents/} directory of a workspace.
+ * 从工作区 {@code subagents/} 目录中带有 YAML 前置元数据的 Markdown 文件加载 {@link SubagentDeclaration} 实例。
  *
- * <p><strong>File naming</strong>: the filename (without the {@code .md} extension) becomes the
- * subagent's {@code name} / agent-id. The front matter must not contain a {@code name} field.
+ * <p><strong>文件命名</strong>：文件名（不含 {@code .md} 扩展名）成为子代理的 {@code name}/agent-id。
+ * 前置元数据不得包含 {@code name} 字段。
  *
- * <p><strong>Scan strategy</strong>: only <em>direct</em> children of the given directory are
- * scanned (non-recursive) to prevent accidentally loading files that live inside a definition
- * workspace that happens to be stored under the same parent.
+ * <p><strong>扫描策略</strong>：仅扫描指定目录的<em>直接</em>子文件（非递归），
+ * 防止意外加载存储在同一父目录下的定义工作区中的文件。
  *
- * <p>File format:
+ * <p>文件格式：
  *
  * <pre>
  * ---
@@ -62,13 +60,13 @@ import org.slf4j.LoggerFactory;
  * You are a code reviewer...
  * </pre>
  *
- * <p>Rules:
+ * <p>规则：
  * <ul>
- *   <li>{@code description} is required.
- *   <li>When {@code workspace.path} is present, the Markdown body must be blank; the subagent's
- *       system prompt is read from {@code &lt;workspace.path&gt;/AGENTS.md} at runtime.
- *   <li>When {@code workspace.path} is absent, the Markdown body (if any) becomes the inline
- *       {@link SubagentDeclaration#getInlineAgentsBody()}.
+ *   <li>{@code description} 为必填项。
+ *   <li>当存在 {@code workspace.path} 时，Markdown 正文必须为空；子代理的系统提示
+ *       在运行时从 {@code &lt;workspace.path&gt;/AGENTS.md} 读取。
+ *   <li>当 {@code workspace.path} 不存在时，Markdown 正文（如果有）将成为内联的
+ *       {@link SubagentDeclaration#getInlineAgentsBody()}。
  * </ul>
  */
 public final class AgentSpecLoader {

@@ -20,6 +20,11 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.agentscope.harness.agent.sandbox.impl.docker.DockerSandboxState;
 
 /**
+ * 为 {@link io.agentscope.harness.agent.sandbox.SandboxState} 注册 Jackson 多态子类型。
+ * 官方后端在此添加其 {@link NamedType} 条目；调用者也可以使用
+ * {@link com.fasterxml.jackson.databind.ObjectMapper#registerSubtypes}
+ * 为应用特定的状态类注册，而无需编辑 {@link io.agentscope.harness.agent.sandbox.SandboxState}。
+ * <p>
  * Registers Jackson polymorphic subtypes for {@link io.agentscope.harness.agent.sandbox.SandboxState}.
  * Official backends add their {@link NamedType} entries here; callers may also use {@link
  * com.fasterxml.jackson.databind.ObjectMapper#registerSubtypes} for application-specific state

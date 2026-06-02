@@ -20,21 +20,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 /**
- * Represents URL-based media content.
+ * 表示基于 URL 的媒体内容。
  *
- * <p>This source references media files accessible via URLs, supporting
- * both remote HTTP/HTTPS URLs and local file URLs. This approach is
- * preferred when media files are hosted externally or when file size
- * makes Base64 encoding impractical.
+ * <p>此来源引用可通过 URL 访问的媒体文件，支持远程 HTTP/HTTPS URL 和本地文件 URL。
+ * 当媒体文件托管在外部或文件大小使 Base64 编码不切实际时，推荐使用此方式。
  *
- * <p>Supported URL formats:
+ * <p>支持的 URL 格式：
  * <ul>
- *   <li>Remote URLs: https://example.com/image.jpg</li>
- *   <li>Local files: file:///absolute/path/to/file.jpg</li>
+ *   <li>远程 URL：https://example.com/image.jpg</li>
+ *   <li>本地文件：file:///absolute/path/to/file.jpg</li>
  * </ul>
  *
- * <p>Using URL sources is more efficient for large media files and allows
- * the system to stream content rather than loading everything into memory.
+ * <p>使用 URL 来源对于大型媒体文件更有效率，允许系统流式传输内容而不是将所有内容加载到内存中。
  */
 public class URLSource extends Source {
 

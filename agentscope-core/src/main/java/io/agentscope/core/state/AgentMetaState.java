@@ -16,12 +16,12 @@
 package io.agentscope.core.state;
 
 /**
- * State record for agent metadata.
+ * 智能体元数据的状态记录。
  *
- * <p>This record captures the essential metadata of an agent for persistence. It is used by {@link
- * io.agentscope.core.ReActAgent} to save and restore agent configuration across sessions.
+ * <p>该记录捕获智能体的基本元数据以进行持久化。由 {@link io.agentscope.core.ReActAgent}
+ * 用于跨会话保存和恢复智能体配置。
  *
- * <p>Example usage:
+ * <p>使用示例：
  *
  * <pre>{@code
  * AgentMetaState state = new AgentMetaState("agent_001", "Assistant", "A helpful assistant", "You are a helpful assistant.");
@@ -31,10 +31,10 @@ package io.agentscope.core.state;
  * Optional<AgentMetaState> loaded = session.get(sessionKey, "agent_meta", AgentMetaState.class);
  * }</pre>
  *
- * @param id the unique identifier of the agent
- * @param name the display name of the agent
- * @param description a brief description of the agent's purpose
- * @param systemPrompt the system prompt used to configure agent behavior
+ * @param id 智能体的唯一标识符
+ * @param name 智能体的显示名称
+ * @param description 智能体用途的简要描述
+ * @param systemPrompt 用于配置智能体行为的系统提示词
  * @see State
  * @see StateModule
  */

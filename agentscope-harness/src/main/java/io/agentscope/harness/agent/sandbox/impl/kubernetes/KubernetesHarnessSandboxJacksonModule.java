@@ -19,6 +19,10 @@ import com.fasterxml.jackson.databind.jsontype.NamedType;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
 /**
+ * 注册 Kubernetes 沙箱后端的 Jackson {@link NamedType} 条目。
+ * 在同一 {@link com.fasterxml.jackson.databind.ObjectMapper} 上混用 Docker 和 Kubernetes 沙箱时，
+ * 与 {@link io.agentscope.harness.agent.sandbox.json.HarnessSandboxJacksonModule} 配合使用。
+ * <p>
  * Registers Jackson {@link com.fasterxml.jackson.databind.jsontype.NamedType} entries for the
  * Kubernetes sandbox backend. Combine with {@link
  * io.agentscope.harness.agent.sandbox.json.HarnessSandboxJacksonModule} on the same {@link

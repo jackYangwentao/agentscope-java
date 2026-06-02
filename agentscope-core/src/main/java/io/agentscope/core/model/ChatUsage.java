@@ -16,10 +16,10 @@
 package io.agentscope.core.model;
 
 /**
- * Represents token usage information for chat completion responses.
+ * 表示聊天完成响应的令牌使用信息。
  *
- * <p>This immutable data class tracks the number of tokens used during a chat completion,
- * including input tokens (prompt), output tokens (generated response), and execution time.
+ * <p>此不可变数据类跟踪聊天完成过程中使用的令牌数量，包括输入令牌（提示）、
+ * 输出令牌（生成的响应）和执行时间。
  */
 public class ChatUsage {
 

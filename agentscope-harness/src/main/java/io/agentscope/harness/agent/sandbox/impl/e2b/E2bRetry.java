@@ -19,10 +19,18 @@ import io.agentscope.harness.agent.sandbox.SandboxException;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
+/**
+ * E2B API 调用的重试工具。
+ * Retry utility for E2B API calls.
+ */
 final class E2bRetry {
 
     private E2bRetry() {}
 
+    /**
+     * 以指数退避方式重试可重试的异常，最多 {@code maxAttempts} 次。
+     * Retries retryable exceptions with exponential backoff, up to {@code maxAttempts} times.
+     */
     static <T> T withRetries(int maxAttempts, Callable<T> call) throws IOException {
         int n = Math.max(1, maxAttempts);
         IOException last = null;
@@ -50,6 +58,10 @@ final class E2bRetry {
         throw new IOException("retry exhausted");
     }
 
+    /**
+     * 判断异常是否可重试（基于 HTTP 状态码）。
+     * Returns whether the exception is retryable based on HTTP status code.
+     */
     private static boolean retryable(Exception e) {
         String m = e.getMessage() != null ? e.getMessage() : "";
         return m.contains("HTTP 408")
@@ -58,6 +70,10 @@ final class E2bRetry {
                 || m.contains("HTTP 503");
     }
 
+    /**
+     * 休眠实现指数退避。
+     * Sleep with exponential backoff.
+     */
     private static void sleepBackoff(int attempt) {
         try {
             Thread.sleep(200L * (attempt + 1L));

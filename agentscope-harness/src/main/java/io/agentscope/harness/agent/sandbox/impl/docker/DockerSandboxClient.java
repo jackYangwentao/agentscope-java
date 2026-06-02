@@ -28,10 +28,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Docker 沙箱后端的 {@link SandboxClient} 实现。
  * {@link SandboxClient} implementation for the Docker sandbox backend.
  *
- * <p>Creates and manages Docker containers via the {@code docker} CLI. The Docker daemon must
- * be accessible from the host's {@code PATH}.
+ * <p>通过 {@code docker} CLI 创建和管理 Docker 容器。Docker 守护进程必须可从主机的 {@code PATH} 访问。
  */
 public class DockerSandboxClient implements SandboxClient<DockerSandboxClientOptions> {
 
@@ -47,6 +47,8 @@ public class DockerSandboxClient implements SandboxClient<DockerSandboxClientOpt
     }
 
     /**
+     * 直接使用给定的映射器。对于 {@link SandboxState} JSON 序列化/反序列化，在调用 {@link #deserializeState}
+     * 之前需要在此映射器上注册 {@link HarnessSandboxJacksonModule}（以及自定义状态子类所需的任何额外 {@code NamedType}）。
      * Uses the given mapper as-is. For {@link SandboxState} JSON round-trip, register {@link
      * HarnessSandboxJacksonModule} (and any extra {@code NamedType} for custom state subclasses)
      * on this mapper before calling {@link #deserializeState}.
@@ -108,6 +110,7 @@ public class DockerSandboxClient implements SandboxClient<DockerSandboxClientOpt
 
     @Override
     public void delete(Sandbox sandbox) {
+        // 空操作：清理由 DockerSandbox.shutdown() 处理
         // No-op: cleanup is handled by DockerSandbox.shutdown()
     }
 

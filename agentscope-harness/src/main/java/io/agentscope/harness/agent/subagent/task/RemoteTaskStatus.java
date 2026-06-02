@@ -15,5 +15,5 @@
  */
 package io.agentscope.harness.agent.subagent.task;
 
-/** Status snapshot returned by the remote task HTTP API ({@code GET /tasks/{taskId}}). */
+/** 远程任务 HTTP API 返回的状态快照（{@code GET /tasks/{taskId}}）。 */
 public record RemoteTaskStatus(String status, String error) {}

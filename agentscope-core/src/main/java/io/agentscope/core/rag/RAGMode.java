@@ -16,13 +16,13 @@
 package io.agentscope.core.rag;
 
 /**
- * RAG (Retrieval-Augmented Generation) mode enumeration.
+ * RAG（检索增强生成）模式枚举。
  *
- * <p>Defines how knowledge retrieval is integrated with the agent:
+ * <p>定义知识检索如何与智能体集成：
  * <ul>
- *   <li><b>GENERIC</b>: Knowledge is automatically retrieved and injected before each reasoning step via Hook</li>
- *   <li><b>AGENTIC</b>: Agent actively decides when to retrieve knowledge via Tool</li>
- *   <li><b>NONE</b>: No RAG functionality enabled</li>
+ *   <li><b>GENERIC</b>：通过钩子在每个推理步骤前自动检索并注入知识</li>
+ *   <li><b>AGENTIC</b>：智能体通过工具主动决定何时检索知识</li>
+ *   <li><b>NONE</b>：不启用 RAG 功能</li>
  * </ul>
  */
 public enum RAGMode {

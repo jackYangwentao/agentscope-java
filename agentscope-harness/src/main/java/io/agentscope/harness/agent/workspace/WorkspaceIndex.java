@@ -47,11 +47,25 @@ import org.slf4j.LoggerFactory;
  * <p><strong>Thread-safety:</strong> SQLite serialises concurrent writers through its own
  * transaction machinery. No external locks are required.
  */
+/**
+ * 本地工作区的最佳努力 SQLite 索引。
+ *
+ * <p>跟踪在本地物化的文件，作用于两个路径前缀：{@code agents/&#42;/sessions/&#42;&#42;}
+ * 和 {@code memory/&#42;&#42;}。该索引用于加速远程支持的工作区模式下的
+ * {@code ls / glob / exists / grep} 操作，避免在枚举前缀下的路径时进行完整的存储键扫描。
+ * 文件<em>内容</em>从不存储在索引中——{@code grep} 仍然权威地从远程存储获取每个候选文件。
+ *
+ * <p><strong>一致性模型：</strong>索引采用最佳努力模式，可能滞后于远程更改。
+ * 远程写入保持权威性。索引更新失败会被静默记录，不会传播给调用方。
+ *
+ * <p><strong>线程安全：</strong>SQLite 通过自身的事务机制序列化并发写入者。无需外部锁。
+ */
 public class WorkspaceIndex implements AutoCloseable {
 
     private static final Logger log = LoggerFactory.getLogger(WorkspaceIndex.class);
 
     /** Schema version stored in index_state; bump when the schema changes. */
+    /** 存储在 index_state 中的模式版本号；模式变更时需更新。 */
     private static final int SCHEMA_VERSION = 1;
 
     private static final String INDEX_DIR = ".index";
@@ -60,6 +74,10 @@ public class WorkspaceIndex implements AutoCloseable {
     /**
      * Path prefixes (workspace-relative) that are eligible for indexing.
      * Only files under one of these prefixes will be tracked.
+     */
+    /**
+     * 符合索引条件的路径前缀（工作区相对路径）。
+     * 仅在这些前缀下的文件会被跟踪。
      */
     private static final List<String> INDEXED_PREFIXES =
             List.of(WorkspaceConstants.AGENTS_DIR + "/", WorkspaceConstants.MEMORY_DIR + "/");
@@ -78,6 +96,15 @@ public class WorkspaceIndex implements AutoCloseable {
      *
      * @param workspaceRoot absolute path to the workspace root directory
      * @return a ready-to-use {@link WorkspaceIndex}, or {@code null} on failure
+     */
+    /**
+     * 打开（或创建）指定工作区根目录的工作区索引。
+     *
+     * <p>如果索引无法初始化，则返回 {@code null}——调用方应将 {@code null} 索引视为
+     * "不可用"并回退到远程扫描。
+     *
+     * @param workspaceRoot 工作区根目录的绝对路径
+     * @return 就绪可用的 {@link WorkspaceIndex}，或失败时返回 {@code null}
      */
     public static WorkspaceIndex open(Path workspaceRoot) {
         try {
@@ -139,6 +166,13 @@ public class WorkspaceIndex implements AutoCloseable {
      * @param sizeBytes file size in bytes; pass {@code -1} if unknown
      * @param modifiedAt ISO-8601 timestamp string; pass {@code null} to use current time
      */
+    /**
+     * 在索引中更新插入文件条目。如果路径不在已索引的前缀下或发生任何错误，则静默无操作。
+     *
+     * @param path       工作区相对路径（正斜杠）
+     * @param sizeBytes  文件大小（字节）；未知时传递 {@code -1}
+     * @param modifiedAt ISO-8601 时间戳字符串；传递 {@code null} 使用当前时间
+     */
     public void upsert(String path, long sizeBytes, String modifiedAt) {
         if (!isIndexable(path)) {
             return;
@@ -169,6 +203,12 @@ public class WorkspaceIndex implements AutoCloseable {
      * @param path workspace-relative path
      * @param localFile absolute path on disk (used for size / mtime); may not exist
      */
+    /**
+     * 便捷重载方法，如果本地文件存在则从其读取文件大小。
+     *
+     * @param path      工作区相对路径
+     * @param localFile 磁盘上的绝对路径（用于获取大小/修改时间）；可能不存在
+     */
     public void upsertFromLocalFile(String path, Path localFile) {
         if (!isIndexable(path)) {
             return;
@@ -191,6 +231,11 @@ public class WorkspaceIndex implements AutoCloseable {
      *
      * @param path workspace-relative path
      */
+    /**
+     * 从索引中移除文件条目。错误时静默无操作。
+     *
+     * @param path 工作区相对路径
+     */
     public void remove(String path) {
         if (!isIndexable(path)) {
             return;
@@ -206,6 +251,9 @@ public class WorkspaceIndex implements AutoCloseable {
     /**
      * Renames (moves) an index entry from {@code fromPath} to {@code toPath}. Silently no-ops on
      * errors.
+     */
+    /**
+     * 将索引条目从 {@code fromPath} 重命名（移动）到 {@code toPath}。错误时静默无操作。
      */
     public void rename(String fromPath, String toPath) {
         if (!isIndexable(fromPath) && !isIndexable(toPath)) {
@@ -232,6 +280,9 @@ public class WorkspaceIndex implements AutoCloseable {
      * Returns {@code true} if the index contains an entry for the given path with
      * {@code present_local = 1}.
      */
+    /**
+     * 如果索引包含指定路径且 {@code present_local = 1} 的条目，则返回 {@code true}。
+     */
     public boolean exists(String path) {
         if (!isIndexable(path)) {
             return false;
@@ -254,6 +305,12 @@ public class WorkspaceIndex implements AutoCloseable {
      *
      * @param prefix workspace-relative directory prefix (e.g. {@code agents/a1/sessions/})
      * @return list of matching paths, may be empty
+     */
+    /**
+     * 返回所有以指定前缀开头的本地存在的路径。
+     *
+     * @param prefix 工作区相对目录前缀（例如 {@code agents/a1/sessions/}）
+     * @return 匹配的路径列表，可能为空
      */
     public List<String> listByPrefix(String prefix) {
         List<String> result = new ArrayList<>();
@@ -278,6 +335,10 @@ public class WorkspaceIndex implements AutoCloseable {
     /**
      * Returns true if the index has any entries under the given prefix. Faster than
      * {@link #listByPrefix} when only presence is needed.
+     */
+    /**
+     * 如果索引在指定前缀下有任何条目，则返回 true。当仅需判断是否存在时，
+     * 比 {@link #listByPrefix} 更快。
      */
     public boolean hasPrefix(String prefix) {
         try (PreparedStatement ps =
@@ -306,9 +367,17 @@ public class WorkspaceIndex implements AutoCloseable {
      *
      * @param workspaceRoot absolute path to workspace root
      */
+    /**
+     * 通过遍历本地工作区目录（{@code agents/&#42;/sessions} 和 {@code memory}）来重建索引。
+     * 现有条目被替换；不存在的文件的过期条目被移除。
+     *
+     * <p>这是最佳努力操作：错误会被记录但不会抛出异常。
+     *
+     * @param workspaceRoot 工作区根目录的绝对路径
+     */
     public void rebuildFromDisk(Path workspaceRoot) {
         try {
-            // Clear existing entries
+            // Clear existing entries / 清除现有条目
             try (Statement st = conn.createStatement()) {
                 st.executeUpdate("DELETE FROM files");
             }
@@ -357,6 +426,9 @@ public class WorkspaceIndex implements AutoCloseable {
     /**
      * Returns {@code true} if the given workspace-relative path falls under one of the
      * indexed directory prefixes.
+     */
+    /**
+     * 如果指定工作区相对路径属于某个已索引的目录前缀，则返回 {@code true}。
      */
     static boolean isIndexable(String path) {
         if (path == null || path.isBlank()) {

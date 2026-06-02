@@ -46,6 +46,11 @@ import reactor.core.publisher.Mono;
  *
  * <p>This hook runs at the lowest priority (first in, last out) so it captures all events
  * without interfering with other hooks.
+ *
+ * <p>可观测性钩子，记录 agent 完整的推理和执行轨迹。
+ * INFO 级别记录简洁摘要：事件类型、agent 名称、工具名称/ID 和消息长度。
+ * DEBUG 级别额外记录工具调用参数、工具结果内容、推理文本和输入消息详情。
+ * 此钩子以最低优先级运行（先进后出），以便在不干扰其他钩子的情况下捕获所有事件。
  */
 public class AgentTraceHook implements Hook {
 
@@ -192,6 +197,12 @@ public class AgentTraceHook implements Hook {
         }
     }
 
+    /**
+     * Truncates a string to the specified maximum length, appending a truncation notice if
+     * exceeded.
+     *
+     * <p>将字符串截断到指定最大长度，如果超出则附加截断提示。
+     */
     private static String truncate(String s, int max) {
         if (s == null || s.isEmpty()) {
             return "<empty>";
@@ -202,6 +213,12 @@ public class AgentTraceHook implements Hook {
         return s.substring(0, max) + "...[truncated, limit=" + max + " chars]";
     }
 
+    /**
+     * Converts a map to its JSON string representation, falling back to {@code toString()} on
+     * serialization failure.
+     *
+     * <p>将 Map 转换为其 JSON 字符串表示形式，序列化失败时回退到 {@code toString()}。
+     */
     private static String mapToJson(Map<String, Object> map) {
         if (map == null || map.isEmpty()) {
             return "{}";
@@ -213,6 +230,11 @@ public class AgentTraceHook implements Hook {
         }
     }
 
+    /**
+     * Computes the total character length of all text blocks within a tool result.
+     *
+     * <p>计算工具结果中所有文本块的总字符长度。
+     */
     private static int toolResultLength(ToolResultBlock tr) {
         if (tr == null || tr.getOutput() == null) {
             return 0;
@@ -226,6 +248,11 @@ public class AgentTraceHook implements Hook {
         return len;
     }
 
+    /**
+     * Extracts the concatenated text content from all text blocks in a tool result.
+     *
+     * <p>从工具结果的所有文本块中提取拼接后的文本内容。
+     */
     private static String toolResultText(ToolResultBlock tr) {
         if (tr == null || tr.getOutput() == null) {
             return "";

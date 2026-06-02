@@ -30,16 +30,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Abstract filesystem API for agents: list, read, write, edit, grep, glob, upload, download.
+ * Agent 使用的抽象文件系统 API：列出、读取、写入、编辑、搜索、Glob、上传、下载。
  *
- * <p>Implementations may target the local disk, a sandbox, a key-value store, or other storage.
- * Host-rooted types {@link LocalFilesystem} and {@link LocalFilesystemWithShell} also expose
- * constructors that take the workspace root as a {@link String} path (same semantics as
- * {@link java.nio.file.Path}).
+ * <p>实现可以针对本地磁盘、沙箱、键值存储或其他存储后端。
+ * 宿主根类型 {@link LocalFilesystem} 和 {@link LocalFilesystemWithShell} 也暴露
+ * 接受工作区根路径作为 {@link String} 参数的构造函数（语义与 {@link java.nio.file.Path} 相同）。
  *
- * <p>Every operation accepts a {@link RuntimeContext} so backends can scope work to the current
- * session, user, or sandbox. Callers that are not inside a tool/agent call with a merged context
- * should pass {@link RuntimeContext#empty()}.
+ * <p>每个操作都接受一个 {@link RuntimeContext}，以便后端可以将工作范围限定到当前
+ * 会话、用户或沙箱。不在工具/Agent 调用中的调用者应传递 {@link RuntimeContext#empty()}。
  */
 public interface AbstractFilesystem {
 
@@ -167,7 +165,7 @@ public interface AbstractFilesystem {
      */
     boolean exists(RuntimeContext runtimeContext, String path);
 
-    // ==================== Path validation utility ====================
+    // ==================== 路径验证工具方法 ====================
 
     /**
      * Validates that {@code path} is safe (non-null, non-blank, no {@code ..} traversal).

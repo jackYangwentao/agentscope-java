@@ -17,30 +17,28 @@
 package io.agentscope.core.model;
 
 /**
- * Represents the tool choice behavior for LLM model calls.
+ * 表示 LLM 模型调用的工具选择行为。
  *
- * <p>This sealed interface defines how the model should handle tool calling:
+ * <p>该密封接口定义了模型应如何处理工具调用：
  * <ul>
- *   <li>{@link Auto} - Let the model decide whether and which tools to call (default)</li>
- *   <li>{@link None} - Prevent the model from calling any tools</li>
- *   <li>{@link Required} - Force the model to call at least one tool (model chooses which)</li>
- *   <li>{@link Specific} - Force the model to call a specific tool by name</li>
+ *   <li>{@link Auto} - 让模型决定是否以及调用哪些工具（默认）</li>
+ *   <li>{@link None} - 阻止模型调用任何工具</li>
+ *   <li>{@link Required} - 强制模型至少调用一个工具（模型选择调用哪个）</li>
+ *   <li>{@link Specific} - 强制模型按名称调用特定工具</li>
  * </ul>
  *
- * <p><b>Usage Example:</b>
+ * <p><b>使用示例：</b>
  * <pre>{@code
- * // Force model to call a specific tool
+ * // 强制模型调用特定工具
  * GenerateOptions options = GenerateOptions.builder()
  *     .toolChoice(new ToolChoice.Specific("generate_response"))
  *     .build();
  *
- * // Let model decide (default)
+ * // 让模型自行决定（默认）
  * GenerateOptions options = GenerateOptions.builder()
  *     .toolChoice(new ToolChoice.Auto())
  *     .build();
  * }</pre>
- *
- * @see GenerateOptions
  */
 public sealed interface ToolChoice
         permits ToolChoice.Auto, ToolChoice.None, ToolChoice.Required, ToolChoice.Specific {

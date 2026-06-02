@@ -25,16 +25,14 @@ import io.agentscope.core.tool.ToolParam;
 import java.util.List;
 
 /**
- * Knowledge retrieval tools for Agentic RAG mode.
+ * 用于智能体式 RAG 模式的知识检索工具。
  *
- * <p>This class provides tool methods that can be registered with agents to enable
- * autonomous knowledge retrieval. Agents can call these tools to search the knowledge
- * base when they need information.
+ * <p>该类提供了可注册到智能体的工具方法，支持自动化的知识检索。智能体可以在需要信息时
+ * 调用这些工具来搜索知识库。
  *
- * <p>This is the Agentic mode implementation - agents decide when and how to retrieve
- * knowledge from the knowledge base.
+ * <p>这是智能体式模式的实现——智能体决定何时以及如何从知识库中检索知识。
  *
- * <p>Example usage:
+ * <p>使用示例：
  * <pre>{@code
  * KnowledgeBase knowledgeBase = new SimpleKnowledge(embeddingModel, vectorStore);
  * KnowledgeRetrievalTools tools = new KnowledgeRetrievalTools(knowledgeBase, RetrieveConfig.builder().build());

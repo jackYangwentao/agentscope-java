@@ -23,7 +23,34 @@ import java.util.List;
 import reactor.core.publisher.Mono;
 
 /**
- * Hook interface for monitoring and intercepting agent execution.
+ * 用于监控和拦截 Agent 执行的 Hook 接口。
+ *
+ * <p>所有 Agent 执行事件通过单一的 {@link #onEvent(HookEvent)} 方法投递。
+ * 该统一事件模型提供了一种干净、类型安全的方式来拦截和修改 Agent 行为。
+ *
+ * <p><b>Hook 优先级:</b> Hook 按优先级顺序执行(数值越小,优先级越高)。
+ * 默认优先级为 100。相同优先级的 Hook 按注册顺序执行。
+ *
+ * <p><b>事件可修改性:</b> 事件是否可修改通过是否存在 setter 方法来指示:
+ * <ul>
+ *   <li>有 setter 的事件(如 {@link PreReasoningEvent#setInputMessages})允许修改</li>
+ *   <li>无 setter 的事件为通知只读型</li>
+ * </ul>
+ *
+ * <p><b>示例用法:</b>
+ *
+ * <pre>{@code
+ * // 使用默认优先级的基础 Hook
+ * Hook loggingHook = new Hook() { ... };
+ *
+ * // 高优先级 Hook(先执行)
+ * Hook authHook = new Hook() { ... };
+ *
+ * // 修改事件
+ * Hook hintInjector = new Hook() { ... };
+ * }</pre>
+ *
+ * <p>Hook interface for monitoring and intercepting agent execution.
  *
  * <p>All agent execution events are delivered through a single {@link #onEvent(HookEvent)} method.
  * This unified event model provides a clean, type-safe way to intercept and modify agent behavior.
@@ -43,72 +70,13 @@ import reactor.core.publisher.Mono;
  *
  * <pre>{@code
  * // Basic hook with default priority
- * Hook loggingHook = new Hook() {
- *     @Override
- *     public <T extends HookEvent> Mono<T> onEvent(T event) {
- *         return switch (event) {
- *             case PreReasoningEvent e -> {
- *                 System.out.println("Reasoning with model: " + e.getModelName());
- *                 yield Mono.just(e);
- *             }
- *             case ReasoningChunkEvent e -> {
- *                 // Display streaming output
- *                 System.out.print(extractText(e.getIncrementalChunk()));
- *                 yield Mono.just(e);
- *             }
- *             default -> Mono.just(event);
- *         };
- *     }
- * };
+ * Hook loggingHook = new Hook() { ... };
  *
  * // High priority hook (executes first)
- * Hook authHook = new Hook() {
- *     @Override
- *     public int priority() {
- *         return 10;  // High priority
- *     }
- *
- *     @Override
- *     public <T extends HookEvent> Mono<T> onEvent(T event) {
- *         return switch (event) {
- *             case PreActingEvent e -> {
- *                 // Inject auth token before any other hook
- *                 ToolUseBlock toolUse = e.getToolUse();
- *                 // ... add auth
- *                 e.setToolUse(toolUse);
- *                 yield Mono.just(e);
- *             }
- *             default -> Mono.just(event);
- *         };
- *     }
- * };
+ * Hook authHook = new Hook() { ... };
  *
  * // Modifying events
- * Hook hintInjector = new Hook() {
- *     @Override
- *     public <T extends HookEvent> Mono<T> onEvent(T event) {
- *         return switch (event) {
- *             case PreReasoningEvent e -> {
- *                 // Modify messages before LLM reasoning
- *                 List<Msg> msgs = new ArrayList<>(e.getInputMessages());
- *                 msgs.add(0, Msg.builder()
- *                         .role(MsgRole.SYSTEM)
- *                         .content(new TextBlock("Think step by step"))
- *                         .build());
- *                 e.setInputMessages(msgs);
- *                 yield Mono.just(e);
- *             }
- *             case PostActingEvent e -> {
- *                 // Modify tool result
- *                 ToolResultBlock result = e.getToolResult();
- *                 // ... process result
- *                 e.setToolResult(result);
- *                 yield Mono.just(e);
- *             }
- *             default -> Mono.just(event);
- *         };
- *     }
- * };
+ * Hook hintInjector = new Hook() { ... };
  * }</pre>
  *
  * @see HookEvent
@@ -117,28 +85,27 @@ import reactor.core.publisher.Mono;
 public interface Hook {
 
     /**
-     * Handle a hook event.
+     * 处理 Hook 事件。
+     *
+     * <p>此方法为所有 Agent 执行事件调用。使用模式匹配来处理特定事件类型。
+     *
+     * <p><b>可修改事件:</b> 对于有 setter 的事件,可修改上下文,更改将影响 Agent 执行。
+     *
+     * <p><b>通知事件:</b> 无 setter 的事件为只读。
+     *
+     * @param event Hook 事件
+     * @param <T> 具体事件类型
+     * @return 包含可能被修改后事件的 Mono
+     *
+     * <p>Handle a hook event.
      *
      * <p>This method is called for all agent execution events. Use pattern matching to handle
      * specific event types.
      *
      * <p><b>Modifiable Events:</b> For events with setters, you can modify the context and the
-     * changes will affect agent execution:
-     * <ul>
-     *   <li>{@link PreReasoningEvent} - Modify messages before LLM reasoning</li>
-     *   <li>{@link PostReasoningEvent} - Modify reasoning results</li>
-     *   <li>{@link PreActingEvent} - Modify tool parameters before execution</li>
-     *   <li>{@link PostActingEvent} - Modify tool results</li>
-     *   <li>{@link PreCallEvent} - Modify messages before agent starts</li>
-     *   <li>{@link PostCallEvent} - Modify final agent response</li>
-     * </ul>
+     * changes will affect agent execution.
      *
-     * <p><b>Notification Events:</b> Events without setters are read-only:
-     * <ul>
-     *   <li>{@link ReasoningChunkEvent} - Streaming reasoning chunks</li>
-     *   <li>{@link ActingChunkEvent} - Streaming tool execution chunks</li>
-     *   <li>{@link ErrorEvent} - Errors during execution</li>
-     * </ul>
+     * <p><b>Notification Events:</b> Events without setters are read-only.
      *
      * @param event The hook event
      * @param <T> The concrete event type
@@ -147,7 +114,20 @@ public interface Hook {
     <T extends HookEvent> Mono<T> onEvent(T event);
 
     /**
-     * Optional tools installed together with this hook.
+     * 与此 Hook 一起安装的可选工具。
+     *
+     * <p>在 {@link ReActAgent.Builder#build()} 期间,框架会复制构建器的 {@link Toolkit},
+     * 然后将每个 Hook 的 {@code tools()} 列表中的每个非 null 元素
+     * 使用 {@link Toolkit#registerTool(Object)} 注册到 Agent 本地的副本。
+     *
+     * <p>返回 {@link AgentTool} 实例和/或声明了 {@code @Tool} 方法的对象。
+     * 默认实现返回空列表,因此现有 Hook 无需更改。
+     *
+     * <p>如果此方法返回 {@code null},则视为空列表。
+     *
+     * @return 为此 Hook 注册的工具实例(可能不可变)
+     *
+     * <p>Optional tools installed together with this hook.
      *
      * <p>During {@link ReActAgent.Builder#build()}, the framework copies the builder {@link
      * Toolkit} and then registers each non-null element from every hook's {@code tools()} list on
@@ -165,7 +145,21 @@ public interface Hook {
     }
 
     /**
-     * The priority of this hook (lower value = higher priority).
+     * 此 Hook 的优先级(数值越小,优先级越高)。
+     *
+     * <p>Hook 按优先级升序执行。相同优先级的 Hook 按注册顺序执行。
+     *
+     * <p><b>常见优先级范围:</b>
+     * <ul>
+     *   <li>0-50: 关键系统 Hook(认证、安全)</li>
+     *   <li>51-100: 高优先级 Hook(验证、预处理)</li>
+     *   <li>101-500: 普通优先级 Hook(业务逻辑)</li>
+     *   <li>501-1000: 低优先级 Hook(日志、监控)</li>
+     * </ul>
+     *
+     * @return 优先级值(默认: 100)
+     *
+     * <p>The priority of this hook (lower value = higher priority).
      *
      * <p>Hooks are executed in ascending priority order. Hooks with the same priority execute in
      * their registration order.

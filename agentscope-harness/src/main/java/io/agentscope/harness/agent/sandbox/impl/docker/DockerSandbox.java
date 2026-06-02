@@ -40,10 +40,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Docker {@link io.agentscope.harness.agent.sandbox.Sandbox} 实现，在容器中运行命令。
  * Docker {@link io.agentscope.harness.agent.sandbox.Sandbox} that runs commands in a container.
  *
- * <p>Uses the {@code docker} CLI via {@link ProcessBuilder}; no docker-java library
- * dependency is required. The Docker daemon must be accessible on the host.
+ * <p>通过 {@link ProcessBuilder} 使用 {@code docker} CLI；不需要 docker-java 库依赖。Docker 守护进程必须在主机上可访问。
  *
  * <h2>Container Lifecycle</h2>
  * <ul>
@@ -79,10 +79,11 @@ public class DockerSandbox extends AbstractBaseSandbox {
     }
 
     /**
+     * 确保底层 Docker 容器正在运行，然后执行标准的 4 分支工作空间启动逻辑。
      * Ensures the backing Docker container is running before executing the standard
      * 4-branch workspace start logic.
      *
-     * @throws Exception if the container cannot be started
+     * @throws Exception 如果容器无法启动
      */
     @Override
     public void start() throws Exception {
@@ -91,9 +92,10 @@ public class DockerSandbox extends AbstractBaseSandbox {
     }
 
     /**
+     * 如果容器是自管理的，则停止并移除 Docker 容器。
      * Stops and removes the Docker container if self-managed.
      *
-     * @throws Exception if the container cannot be stopped or removed
+     * @throws Exception 如果容器无法停止或移除
      */
     @Override
     public void shutdown() throws Exception {
@@ -353,18 +355,18 @@ public class DockerSandbox extends AbstractBaseSandbox {
     }
 
     // -----------------------------------------------------------------
-    //  Container management
+    //  容器管理 / Container management
     // -----------------------------------------------------------------
 
     /**
-     * Ensures the Docker container is running.
+     * 确保 Docker 容器正在运行。
      *
-     * <p>Priority:
+     *         <p>优先级：
      * <ol>
-     *   <li>If container exists and is running — reuse it.</li>
-     *   <li>If container exists and is stopped — restart it.</li>
-     *   <li>If container is missing or unknown — create a new container, reset
-     *       {@code workspaceRootReady} to force full workspace reinitialisation.</li>
+     *   <li>如果容器存在且运行中——复用。</li>
+     *   <li>如果容器存在但已停止——重启。</li>
+     *   <li>如果容器缺失或未知——创建新容器，重置
+     *       {@code workspaceRootReady} 以强制完全重新初始化工作空间。</li>
      * </ol>
      */
     private void doEnsureContainerRunning() throws Exception {
@@ -531,6 +533,7 @@ public class DockerSandbox extends AbstractBaseSandbox {
     }
 
     /**
+     * 检查容器状态并返回其是否运行中、已停止或未知。
      * Inspects a container and returns whether it is running, stopped, or unknown.
      */
     private ContainerState inspectContainerState(String containerId) {
@@ -571,11 +574,12 @@ public class DockerSandbox extends AbstractBaseSandbox {
     }
 
     /**
+     * 运行 Docker CLI 命令，阻塞直到完成。
      * Runs a Docker CLI command, blocking until completion.
      *
-     * @param timeoutSeconds maximum time to wait
-     * @param command        command and arguments
-     * @throws SandboxException.SandboxRuntimeException if the command fails or times out
+     * @param timeoutSeconds 最长等待时间
+     * @param command        命令和参数
+     * @throws SandboxException.SandboxRuntimeException 如果命令失败或超时
      */
     private void runDockerCliBlocking(int timeoutSeconds, String... command) throws Exception {
         ProcessBuilder pb = new ProcessBuilder(command);
@@ -612,6 +616,7 @@ public class DockerSandbox extends AbstractBaseSandbox {
     }
 
     /**
+     * 将 InputStream 读取为字符串，在 {@code maxBytes} 处截断。
      * Reads an InputStream into a String, truncating at {@code maxBytes}.
      */
     private static String readStream(InputStream in, int maxBytes) {
@@ -633,7 +638,7 @@ public class DockerSandbox extends AbstractBaseSandbox {
         }
     }
 
-    /** Container state as determined by {@code docker inspect}. */
+    /** 由 {@code docker inspect} 确定的容器状态。Container state as determined by {@code docker inspect}. */
     private enum ContainerState {
         RUNNING,
         STOPPED,

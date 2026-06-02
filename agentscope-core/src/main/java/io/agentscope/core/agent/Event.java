@@ -24,6 +24,28 @@ import io.agentscope.core.message.Msg;
 /**
  * An event emitted during streaming agent execution.
  *
+ * <p>在 Agent 流式执行期间发出的一条事件。事件以结构化方式观察 Agent 执行,
+ * 为每条消息提供清晰的事件类型标识和完成状态。
+ *
+ * <p><b>使用示例:</b>
+ * <pre>{@code
+ * agent.stream(userMsg, options)
+ *     .subscribe(event -> {
+ *         switch (event.getType()) {
+ *             case REASONING -> {
+ *                 if (event.isLast()) {
+ *                     System.out.println("✓ Reasoning complete");
+ *                 } else {
+ *                     System.out.print("...");  // Progress indicator
+ *                 }
+ *             }
+ *             case TOOL_RESULT -> {
+ *                 System.out.println("Tool: " + event.getMessage().getTextContent());
+ *             }
+ *         }
+ *     });
+ * }</pre>
+ *
  * <p>Events provide a structured way to observe agent execution, with clear
  * type identification and completion status for each message.
  *
@@ -55,30 +77,29 @@ public class Event {
     private final boolean isLast;
 
     /**
-     * Identifies the originating (sub)agent when this event was emitted by a nested subagent
-     * during a parent {@code stream()} call. {@code null} for events emitted by the top-level
-     * agent itself.
+     * 标识事件来源:在父 {@code stream()} 调用过程中,如果事件由嵌套的子 Agent 发出,
+     * 此字段指向该子 Agent;若事件由顶层 Agent 自身发出,则为 {@code null}。
      */
     private final EventSource source;
 
     /**
-     * Creates a new event (top-level agent — no source).
+     * 创建一条新事件(顶层 Agent — 无 source)。
      *
-     * @param type The event type (REASONING, TOOL_RESULT, etc.)
-     * @param message The message content
-     * @param isLast Whether this is the last/complete message for this event
+     * @param type 事件类型(REASONING、TOOL_RESULT 等)
+     * @param message 消息内容
+     * @param isLast 是否为该事件的最后/完整消息
      */
     public Event(EventType type, Msg message, boolean isLast) {
         this(type, message, isLast, null);
     }
 
     /**
-     * Creates a new event with optional source.
+     * 创建一条带可选 source 的新事件。
      *
-     * @param type The event type
-     * @param message The message content
-     * @param isLast Whether this is the last/complete message
-     * @param source The originating subagent, or {@code null} for the top-level agent
+     * @param type 事件类型
+     * @param message 消息内容
+     * @param isLast 是否为最后/完整消息
+     * @param source 源子 Agent,顶层 Agent 时为 {@code null}
      */
     @JsonCreator
     public Event(
@@ -93,78 +114,73 @@ public class Event {
     }
 
     /**
-     * Returns a copy of this event with the given source attached. The original event is not
-     * modified (immutable copy).
+     * 返回带有指定 source 的事件副本。原事件不会被修改(不可变副本)。
      *
-     * @param source the originating subagent descriptor
-     * @return new Event with {@code source} set
+     * @param source 源子 Agent 描述符
+     * @return 设置了 {@code source} 的新 Event
      */
     public Event withSource(EventSource source) {
         return new Event(this.type, this.message, this.isLast, source);
     }
 
     /**
-     * Get the event type.
+     * 获取事件类型。
      *
-     * <p>Use this to determine what kind of message this is and how to process it.
+     * <p>据此判断消息种类及处理方式。
      *
-     * @return The event type
+     * @return 事件类型
      */
     public EventType getType() {
         return type;
     }
 
     /**
-     * Get the message content.
+     * 获取消息内容。
      *
-     * <p>The message contains the actual data - inspect {@link Msg#getRole()},
-     * {@link Msg#getContent()}, and other fields for details.
+     * <p>消息包含实际数据 — 可通过 {@link Msg#getRole()}、{@link Msg#getContent()}
+     * 等字段进一步查看细节。
      *
-     * @return The message
+     * @return 消息
      */
     public Msg getMessage() {
         return message;
     }
 
     /**
-     * Check if this is the last/complete message for this event.
+     * 检查此事件是否为该消息的最后/完整消息。
      *
-     * <p><b>Return values:</b>
+     * <p><b>返回值:</b>
      * <ul>
-     *   <li>{@code true}: Complete message or final chunk. Safe to persist,
-     *       display as final, or trigger downstream processing.</li>
-     *   <li>{@code false}: Intermediate chunk. More events with the same
-     *       message ID will follow. Useful for real-time UI updates.</li>
+     *   <li>{@code true}: 完整消息或最后一个分片。可安全持久化、作为最终结果展示或触发下游处理。</li>
+     *   <li>{@code false}: 中间分片。随后还会有相同 message ID 的事件。适合用于实时 UI 更新。</li>
      * </ul>
      *
-     * <p><b>Streaming behavior:</b>
-     * For streaming events (e.g., LLM streaming output), multiple events will
-     * be emitted with the same {@link Msg#getId()}:
+     * <p><b>流式行为:</b>
+     * 对于流式事件(例如 LLM 流式输出),会发出多条具有相同 {@link Msg#getId()} 的事件:
      * <pre>
      * Event(type=REASONING, msg(id="abc", content=[...]), isLast=false)
      * Event(type=REASONING, msg(id="abc", content=[...]), isLast=false)
-     * Event(type=REASONING, msg(id="abc", content=[...]), isLast=true)  ← Final
+     * Event(type=REASONING, msg(id="abc", content=[...]), isLast=true)  ← 最终
      * </pre>
      *
-     * <p><b>Non-streaming behavior:</b>
-     * For non-streaming events, there will be only one event and {@code isLast}
-     * is always {@code true}.
+     * <p><b>非流式行为:</b>
+     * 对于非流式事件,只会发出一个事件,此时 {@code isLast} 恒为 {@code true}。
      *
-     * <p><b>Example usage:</b>
+     * <p><b>使用示例:</b>
      * <pre>{@code
      * agent.stream(userMsg, options)
      *     .subscribe(event -> {
      *         if (event.isLast()) {
-     *             // Complete message - safe to persist or process
+     *             // 完整消息 — 可安全持久化或处理
      *             database.save(event.getMessage());
      *         } else {
-     *             // Intermediate chunk - update UI
+     *             // 中间分片 — 更新 UI
      *             ui.append(event.getMessage().getTextContent());
      *         }
      *     });
      * }</pre>
      *
-     * @return true if this is the last chunk, false if more chunks will follow
+     * @return 如果是最后分片则返回 true;若还有更多分片则返回 false
      */
     @JsonProperty("isLast")
     public boolean isLast() {
@@ -172,25 +188,23 @@ public class Event {
     }
 
     /**
-     * Returns the originating subagent descriptor, or {@code null} if this event was emitted by
-     * the top-level agent.
+     * 返回源子 Agent 描述符,如果事件由顶层 Agent 发出则返回 {@code null}。
      *
-     * <p>Consumers can use this to route subagent events to the correct UI card or log channel
-     * without needing out-of-band metadata.
+     * <p>消费者可借此将子 Agent 事件路由到对应的 UI 卡片或日志通道,
+     * 无需依赖带外元数据。
      *
-     * @return the event source, or {@code null} for the top-level agent
+     * @return 事件源,顶层 Agent 时为 {@code null}
      */
     public EventSource getSource() {
         return source;
     }
 
     /**
-     * Get the message ID (delegates to {@link Msg#getId()}).
+     * 获取消息 ID(委托给 {@link Msg#getId()})。
      *
-     * <p>Events with the same message ID are parts of the same logical message.
-     * Use this to group streaming chunks together.
+     * <p>具有相同消息 ID 的事件属于同一逻辑消息的不同部分。可据此对流式分片分组。
      *
-     * @return The message ID
+     * @return 消息 ID
      */
     public String getMessageId() {
         return message.getId();

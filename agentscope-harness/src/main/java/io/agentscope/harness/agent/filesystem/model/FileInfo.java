@@ -16,13 +16,13 @@
 package io.agentscope.harness.agent.filesystem.model;
 
 /**
- * Structured file listing info. Only {@code path} is required;
- * other fields are best-effort and may be absent depending on filesystem implementation.
+ * 结构化的文件列表信息。仅 {@code path} 是必需的；
+ * 其他字段根据文件系统实现可能缺失。
  *
- * @param path absolute or relative file path
- * @param isDirectory whether the entry is a directory
- * @param size file size in bytes (approximate)
- * @param modifiedAt ISO 8601 timestamp of last modification, or empty string if unknown
+ * @param path 绝对或相对文件路径
+ * @param isDirectory 是否为目录
+ * @param size 文件大小（字节，近似值）
+ * @param modifiedAt ISO 8601 格式的最后修改时间戳，未知时为空字符串
  */
 public record FileInfo(String path, boolean isDirectory, long size, String modifiedAt) {
 

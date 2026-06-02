@@ -19,11 +19,22 @@ import io.agentscope.harness.agent.sandbox.SandboxException;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
-/** Simple bounded retry for transient Daytona HTTP failures. */
+/**
+ * Daytona HTTP 临时故障的简单有界重试。
+ * Simple bounded retry for transient Daytona HTTP failures.
+ */
 final class DaytonaRetry {
 
     private DaytonaRetry() {}
 
+    /**
+     * 使用最大尝试次数执行可重试调用。
+     * Executes a callable with retry up to the given max attempts.
+     *
+     * @param maxAttempts 最大尝试次数 / max attempts
+     * @param call        可重试调用 / retryable call
+     * @return 调用结果 / call result
+     */
     static <T> T withRetries(int maxAttempts, Callable<T> call) throws IOException {
         int n = Math.max(1, maxAttempts);
         IOException last = null;
@@ -51,11 +62,19 @@ final class DaytonaRetry {
         throw new IOException("retry exhausted");
     }
 
+    /**
+     * 判断异常是否应该重试（HTTP 429/503/502）。
+     * Returns whether the exception is retryable (HTTP 429/503/502).
+     */
     private static boolean retryable(Exception e) {
         String m = e.getMessage() != null ? e.getMessage() : "";
         return m.contains("HTTP 429") || m.contains("HTTP 503") || m.contains("HTTP 502");
     }
 
+    /**
+     * 指数退避休眠。
+     * Sleeps with exponential backoff.
+     */
     private static void sleepBackoff(int attempt) {
         try {
             Thread.sleep(200L * (attempt + 1L));

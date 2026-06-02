@@ -20,16 +20,15 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.agentscope.harness.agent.sandbox.snapshot.SandboxSnapshot;
 
 /**
+ * 沙箱的可序列化状态，由 {@link SandboxStateStore} 持久化，以便沙箱可以在多次调用之间恢复。
  * Serializable state of a sandbox, persisted by {@link SandboxStateStore} so a sandbox can
  * be resumed across calls.
  *
- * <p>The {@link #workspaceRootReady} flag drives the 4-branch start logic: it records whether
- * the workspace was fully initialized at the last stop.
+ * <p>{@link #workspaceRootReady} 标志驱动 4 分支启动逻辑：记录上次停止时工作空间是否已完全初始化。
  *
- * <p>Concrete subtypes are registered for Jackson via {@link
- * io.agentscope.harness.agent.sandbox.json.HarnessSandboxJacksonModule} (and optional {@link
- * com.fasterxml.jackson.databind.ObjectMapper#registerSubtypes} for extension types), not via
- * {@code @JsonSubTypes} on this class.
+ * <p>具体子类型通过 {@link io.agentscope.harness.agent.sandbox.json.HarnessSandboxJacksonModule}
+ * （以及扩展类型的可选 {@link com.fasterxml.jackson.databind.ObjectMapper#registerSubtypes}）注册到 Jackson，
+ * 而不是在此类上使用 {@code @JsonSubTypes}。
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 public abstract class SandboxState {

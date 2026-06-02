@@ -25,11 +25,11 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
+ * 基于通用 AgentScope {@link Session} 抽象的 {@link SandboxStateStore} 实现。
  * {@link SandboxStateStore} backed by the generic AgentScope {@link Session} abstraction.
  *
- * <p>This store keeps sandbox lifecycle state in the same state backend as ReActAgent runtime
- * state. As a result, providing a distributed {@link Session} implementation (for example Redis)
- * automatically enables distributed sandbox resume state.
+ * <p>该存储将沙箱生命周期状态保存在与 ReActAgent 运行时状态相同的后端中。
+ * 因此，提供分布式 {@link Session} 实现（例如 Redis）会自动启用分布式沙箱恢复状态。
  */
 public final class SessionSandboxStateStore implements SandboxStateStore {
 

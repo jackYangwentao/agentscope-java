@@ -54,6 +54,12 @@ import reactor.core.publisher.Mono;
  *
  * <p>Post-call failures (persist, release) are logged but do not propagate — this ensures
  * the agent call result is always returned to the caller even if sandbox cleanup fails.
+ *
+ * <p>沙箱生命周期钩子，管理每次 agent 调用前后的沙箱会话生命周期。
+ * PreCallEvent：从 RuntimeContext 读取 SandboxContext、通过 SandboxManager 获取会话、
+ * 启动会话、将活动会话注入 SandboxBackedFilesystem 代理。
+ * PostCallEvent/ErrorEvent：持久化沙箱状态、释放会话、清除文件系统代理中的会话引用。
+ * 后调用失败会被记录但不会传播，确保即使沙箱清理失败也能将 agent 调用结果返回给调用者。
  */
 public class SandboxLifecycleHook implements Hook, RuntimeContextAware {
 
@@ -71,6 +77,12 @@ public class SandboxLifecycleHook implements Hook, RuntimeContextAware {
      * thread-local would drop the handle and skip persist/release. A typical {@link
      * io.agentscope.harness.agent.HarnessAgent} rejects concurrent calls per agent, so a single
      * {@link AtomicReference} is sufficient.
+     *
+     * <p>在 {@link PreCallEvent} 和 {@link PostCallEvent} 之间持有获取结果。
+     * 不使用 {@link ThreadLocal}：Reactor 可能在不同线程上恢复钩子阶段，
+     * 因此线程本地变量会丢失句柄并跳过持久化/释放。
+     * 典型的 {@link io.agentscope.harness.agent.HarnessAgent} 拒绝每个 agent 的并发调用，
+     * 因此单个 {@link AtomicReference} 就足够了。
      */
     private final AtomicReference<SandboxAcquireResult> currentAcquireResult =
             new AtomicReference<>();
@@ -78,8 +90,12 @@ public class SandboxLifecycleHook implements Hook, RuntimeContextAware {
     /**
      * Creates the hook.
      *
+     * <p>创建钩子。
+     *
      * @param sandboxManager the manager responsible for session acquire/release
+     *     <p>负责会话获取/释放的管理器
      * @param filesystemProxy the filesystem proxy that receives injected sessions
+     *     <p>接收注入会话的文件系统代理
      */
     public SandboxLifecycleHook(
             SandboxManager sandboxManager, SandboxBackedFilesystem filesystemProxy) {
@@ -178,6 +194,7 @@ public class SandboxLifecycleHook implements Hook, RuntimeContextAware {
                             ctx != null ? ctx.get(SandboxContext.class) : null;
 
                     // Persist state first (before release destroys workspace)
+                    // 首先持久化状态（在释放销毁工作区之前）
                     try {
                         sandboxManager.persistState(result, sandboxContext, ctx);
                     } catch (Exception e) {
@@ -188,6 +205,7 @@ public class SandboxLifecycleHook implements Hook, RuntimeContextAware {
                     }
 
                     // Release the session (stop + optional shutdown)
+                    // 释放会话（停止 + 可选关闭）
                     try {
                         sandboxManager.release(result);
                     } catch (Exception e) {
@@ -198,9 +216,11 @@ public class SandboxLifecycleHook implements Hook, RuntimeContextAware {
                     }
 
                     // Release the execution guard lease — always runs after release()
+                    // 释放执行保护租约 — 始终在 release() 之后运行
                     result.getLease().close();
 
                     // Clear the session reference from the filesystem proxy
+                    // 清除文件系统代理中的会话引用
                     filesystemProxy.setSandbox(null);
 
                     return event;

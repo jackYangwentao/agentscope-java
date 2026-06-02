@@ -18,12 +18,11 @@ package io.agentscope.harness.agent.subagent;
 import io.agentscope.core.agent.Agent;
 
 /**
- * Creates a new subagent instance for a single spawn or session. Registered under an {@code
- * agent_id} in {@link DefaultAgentManager}; each {@link #create()} call should return a fresh
- * agent when isolation is required.
+ * 为单次生成或会话创建新的子代理实例。在 {@link DefaultAgentManager} 中按 {@code agent_id} 注册；
+ * 每次 {@link #create()} 调用应在需要隔离时返回全新的代理。
  *
- * <p>This type replaces a raw {@link java.util.function.Supplier} for subagent wiring so call sites
- * and maps are self-documenting.
+ * <p>此类型取代了用于子代理连接的原始 {@link java.util.function.Supplier}，
+ * 使调用点和映射具有自文档性。
  */
 @FunctionalInterface
 public interface SubagentFactory {

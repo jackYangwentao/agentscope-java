@@ -20,10 +20,10 @@ import io.agentscope.core.message.ToolUseBlock;
 import java.util.function.BiConsumer;
 
 /**
- * Default implementation of ToolEmitter that delivers chunks to a callback.
+ * ToolEmitter 的默认实现，将数据块传递给回调函数。
  *
- * <p>This class is package-private and created internally by the framework when a tool method
- * declares a ToolEmitter parameter. Each tool invocation gets its own DefaultToolEmitter instance.
+ * <p>该类是包级私有的，当工具方法声明 ToolEmitter 参数时由框架内部创建。
+ * 每次工具调用都会获得自己的 DefaultToolEmitter 实例。
  */
 class DefaultToolEmitter implements ToolEmitter {
 

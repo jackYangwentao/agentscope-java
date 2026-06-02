@@ -40,6 +40,12 @@ import reactor.core.publisher.Mono;
  *
  * <p>Priority is set to 900 (low) so this hook runs after other hooks like
  * {@link MemoryFlushHook} have completed their work.
+ *
+ * <p>会话持久化钩子，在每次调用后自动将 agent 状态持久化到会话。
+ * 同时处理 {@link PostCallEvent}（成功路径）和 {@link ErrorEvent}（错误路径），
+ * 确保无论结果如何都会保存状态。
+ * 保存是最佳努力的：失败会被记录但不会传播异常。
+ * 当上下文中未配置会话时，此钩子为无操作。
  */
 public class SessionPersistenceHook implements Hook, RuntimeContextAware {
 

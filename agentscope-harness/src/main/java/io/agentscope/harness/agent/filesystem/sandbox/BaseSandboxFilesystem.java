@@ -36,20 +36,18 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Abstract base sandbox implementation with {@link #execute} as the core abstract method.
+ * 以 {@link #execute} 为核心抽象方法的抽象基沙箱实现。
  *
- * <p>This class provides default implementations for all {@link AbstractFilesystem} methods by
- * delegating
- * to shell commands via {@link #execute}. File listing, grep, and glob use standard Unix
- * commands. Read uses server-side commands for paginated access. Write delegates content
- * transfer to {@link #uploadFiles}. Edit uses server-side commands for string replacement.
+ * <p>此类通过 {@link #execute} 委托到 shell 命令，为所有 {@link AbstractFilesystem} 方法
+ * 提供默认实现。文件列表、grep 和 glob 使用标准 Unix 命令。Read 使用服务器端命令进行分页访问。
+ * Write 将内容传输委托给 {@link #uploadFiles}。Edit 使用服务器端命令进行字符串替换。
  *
- * <p>Subclasses must implement:
+ * <p>子类必须实现：
  * <ul>
- *   <li>{@link #execute} - execute a command in the sandbox</li>
- *   <li>{@link #uploadFiles} - upload files to the sandbox</li>
- *   <li>{@link #downloadFiles} - download files from the sandbox</li>
- *   <li>{@link #id()} - unique identifier for the sandbox instance</li>
+ *   <li>{@link #execute} — 在沙箱中执行命令</li>
+ *   <li>{@link #uploadFiles} — 上传文件到沙箱</li>
+ *   <li>{@link #downloadFiles} — 从沙箱下载文件</li>
+ *   <li>{@link #id()} — 沙箱实例的唯一标识符</li>
  * </ul>
  */
 public abstract class BaseSandboxFilesystem implements AbstractSandboxFilesystem {

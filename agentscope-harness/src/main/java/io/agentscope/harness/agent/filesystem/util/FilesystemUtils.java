@@ -18,7 +18,7 @@ package io.agentscope.harness.agent.filesystem.util;
 import java.util.Set;
 
 /**
- * Shared utility functions for filesystem implementations.
+ * 文件系统实现的共享工具函数。
  */
 public final class FilesystemUtils {
 
@@ -33,7 +33,7 @@ public final class FilesystemUtils {
                     ".rar", ".class", ".jar", ".war", ".ear", ".so", ".dll", ".dylib", ".exe");
 
     /**
-     * Classify a file as "text" or "binary" based on extension.
+     * 根据扩展名将文件分类为"text"或"binary"。
      */
     public static String getFileType(String path) {
         if (path == null) {
@@ -48,10 +48,10 @@ public final class FilesystemUtils {
     }
 
     /**
-     * Perform string replacement with occurrence validation.
+     * 执行字符串替换并验证出现次数。
      *
-     * @return a two-element array {@code [newContent, occurrenceCount]} on success,
-     *         or a single-element array {@code [errorMessage]} on failure
+     * @return 成功时返回包含 {@code [newContent, occurrenceCount]} 的双元素数组，
+     *         失败时返回包含 {@code [errorMessage]} 的单元素数组
      */
     public static Object[] performStringReplacement(
             String content, String oldString, String newString, boolean replaceAll) {
@@ -86,7 +86,7 @@ public final class FilesystemUtils {
         return new Object[] {newContent, occurrences};
     }
 
-    /** Count non-overlapping occurrences of a substring. */
+    /** 统计子字符串的非重叠出现次数。 */
     public static int countOccurrences(String text, String sub) {
         int count = 0;
         int idx = 0;
@@ -97,7 +97,7 @@ public final class FilesystemUtils {
         return count;
     }
 
-    /** Shell-escape a string for safe use in shell commands. */
+    /** 对字符串进行 Shell 转义，以确保在 Shell 命令中安全使用。 */
     public static String shellQuote(String s) {
         if (s == null || s.isEmpty()) {
             return "''";

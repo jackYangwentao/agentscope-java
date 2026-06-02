@@ -20,39 +20,37 @@ import java.util.List;
 import reactor.core.publisher.Mono;
 
 /**
- * Abstract base class for long-term memory implementations.
+ * 长期记忆实现的抽象基类。
  *
- * <p>This class provides a time-series memory management system that persists information
- * beyond individual conversation sessions. Long-term memory enables agents to:
+ * <p>该类提供了一个时间序列记忆管理系统，能够持久化超越单个对话会话的信息。长期记忆使智能体能够：
  * <ul>
- *   <li>Remember user preferences, habits, and personal information across sessions
- *   <li>Learn from past interactions and improve over time
- *   <li>Maintain context for long-running tasks or projects
- *   <li>Build personalized experiences based on historical data
+ *   <li>跨会话记住用户偏好、习惯和个人信息
+ *   <li>从过去的交互中学习并不断提升
+ *   <li>为长期运行的任务或项目维护上下文
+ *   <li>基于历史数据构建个性化体验
  * </ul>
  *
- * <p>This class defines the core memory API for framework-level integration:
+ * <p>该类定义了用于框架集成级别的核心记忆 API：
  * <ul>
- *   <li>{@link #record(List)} - Record messages to memory (called by framework)
- *   <li>{@link #retrieve(Msg)} - Retrieve relevant memories (called by framework)
+ *   <li>{@link #record(List)} - 将消息记录到记忆（由框架调用）
+ *   <li>{@link #retrieve(Msg)} - 检索相关的记忆（由框架调用）
  * </ul>
  *
- * <p>For agent-controlled memory operations (AGENT_CONTROL mode), use {@link LongTermMemoryTools}
- * which provides tool functions that adapt these core methods for agent use.
+ * <p>对于智能体控制的记忆操作（AGENT_CONTROL 模式），请使用 {@link LongTermMemoryTools}，
+ * 该类提供了将这些核心方法适配为智能体可调用的工具函数。
  *
- * <p>All methods are asynchronous and return Reactor {@link Mono} types for non-blocking
- * integration with the agent framework.
+ * <p>所有方法均为异步，并返回 Reactor {@link Mono} 类型，以便与智能体框架进行非阻塞集成。
  *
- * <p><b>Usage Example:</b>
+ * <p><b>使用示例：</b>
  * <pre>{@code
- * // Create long-term memory instance
+ * // 创建长期记忆实例
  * LongTermMemoryBase longTermMemory = Mem0LongTermMemory.builder()
  *     .agentName("Assistant")
  *     .userName("user_123")
  *     .apiBaseUrl("http://localhost:8000")
  *     .build();
  *
- * // Use in ReActAgent
+ * // 在 ReActAgent 中使用
  * ReActAgent agent = ReActAgent.builder()
  *     .name("Assistant")
  *     .model(model)

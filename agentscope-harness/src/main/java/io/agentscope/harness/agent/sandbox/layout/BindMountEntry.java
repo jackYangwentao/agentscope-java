@@ -16,6 +16,21 @@
 package io.agentscope.harness.agent.sandbox.layout;
 
 /**
+ * 声明一个主机目录（在 Kubernetes 上为文件）以绑定挂载方式挂载到沙箱工作区中，
+ * 挂载位置为 {@link io.agentscope.harness.agent.sandbox.WorkspaceSpec#getRoot()} 下的映射键路径。
+ * <p>
+ * {@link io.agentscope.harness.agent.sandbox.WorkspaceSpec} 条目的 <strong>键</strong> 是工作区内的相对路径
+ * （例如键 {@code cache} → {@code <workspaceRoot>/cache}）。
+ * {@link #hostPath} 是主机（Docker）或 Kubernetes 节点（HostPath 卷）上的绝对路径。
+ * <p>
+ * <strong>后端支持：</strong>{@link io.agentscope.harness.agent.sandbox.impl.docker.DockerSandbox}
+ * 传递 {@code -v host:container}；{@link io.agentscope.harness.agent.sandbox.impl.kubernetes}
+ * 使用 HostPath 卷 + volumeMount。云沙箱（Daytona、E2B）在运行时忽略此条目
+ * （参见日志）；在这些环境中请使用投影（projection）或特定于供应商的挂载。
+ * <p>
+ * <strong>安全说明：</strong>绑定挂载会将主机路径暴露给沙箱工作负载；
+ * 只挂载您信任模型和工具读取或修改的路径。
+ * <p>
  * Declares a host directory (or file on Kubernetes) bind-mounted into the sandbox workspace at
  * the map key path under {@link io.agentscope.harness.agent.sandbox.WorkspaceSpec#getRoot()}.
  *

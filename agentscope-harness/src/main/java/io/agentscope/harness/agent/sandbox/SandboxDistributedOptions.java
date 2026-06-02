@@ -22,6 +22,7 @@ import io.agentscope.harness.agent.sandbox.snapshot.RedisSnapshotSpec;
 import io.agentscope.harness.agent.sandbox.snapshot.SandboxSnapshotSpec;
 
 /**
+ * 分布式沙箱的高层配置，由 {@link io.agentscope.harness.agent.HarnessAgent.Builder#sandboxDistributed} 使用。
  * High-level distributed sandbox configuration used by
  * {@link io.agentscope.harness.agent.HarnessAgent.Builder#sandboxDistributed}.
  *
@@ -50,9 +51,10 @@ public final class SandboxDistributedOptions {
     }
 
     /**
+     * 创建具有安全分布式默认值的构建器。
      * Creates a builder with safe distributed defaults.
      *
-     * <p>Defaults:
+     * <p>默认值：
      *
      * <ul>
      *   <li>{@code requireDistributed = true}
@@ -63,6 +65,7 @@ public final class SandboxDistributedOptions {
     }
 
     /**
+     * 创建使用 OSS 快照后端和分布式安全默认值的选项。
      * Creates options with OSS snapshot backend and distributed-safe defaults.
      */
     public static SandboxDistributedOptions oss(Session session, OssSnapshotSpec snapshotSpec) {
@@ -70,6 +73,7 @@ public final class SandboxDistributedOptions {
     }
 
     /**
+     * 创建使用 Redis 快照后端和分布式安全默认值的选项。
      * Creates options with Redis snapshot backend and distributed-safe defaults.
      */
     public static SandboxDistributedOptions redis(Session session, RedisSnapshotSpec snapshotSpec) {
@@ -77,6 +81,7 @@ public final class SandboxDistributedOptions {
     }
 
     /**
+     * 返回 {@link SessionSandboxStateStore} 使用的分布式会话后端。
      * Returns the distributed session backend used by {@link SessionSandboxStateStore}.
      */
     public Session getSession() {
@@ -84,6 +89,7 @@ public final class SandboxDistributedOptions {
     }
 
     /**
+     * 返回用于工作空间归档持久化的快照规范。
      * Returns the snapshot spec used for workspace archive persistence.
      */
     public SandboxSnapshotSpec getSnapshotSpec() {
@@ -91,6 +97,7 @@ public final class SandboxDistributedOptions {
     }
 
     /**
+     * 分布式前置条件不满足时构建器是否应快速失败。
      * Whether builder should fail-fast when distributed prerequisites are not met.
      */
     public boolean isRequireDistributed() {
@@ -106,6 +113,7 @@ public final class SandboxDistributedOptions {
         private Builder() {}
 
         /**
+         * 设置分布式会话后端（用于状态槽持久化）。
          * Sets distributed session backend (for state slot persistence).
          */
         public Builder session(Session session) {
@@ -114,6 +122,7 @@ public final class SandboxDistributedOptions {
         }
 
         /**
+         * 设置用于工作空间持久化的快照策略。
          * Sets snapshot strategy used for workspace persistence.
          */
         public Builder snapshotSpec(SandboxSnapshotSpec snapshotSpec) {
@@ -122,10 +131,11 @@ public final class SandboxDistributedOptions {
         }
 
         /**
+         * 启用/禁用分布式前置条件的快速失败检查。
          * Enables/disables fail-fast checks for distributed prerequisites.
          *
-         * <p>When {@code true} (default), builder throws if effective session remains local
-         * ({@code WorkspaceSession}) or snapshot spec is absent/no-op.
+         * <p>当 {@code true}（默认值）时，如果有效会话仍然是本地的
+         * （{@code WorkspaceSession}）或快照规范缺失/无操作，构建器将抛出异常。
          */
         public Builder requireDistributed(boolean requireDistributed) {
             this.requireDistributed = requireDistributed;

@@ -35,21 +35,20 @@ import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
 /**
- * DashScope Chat Model using native HTTP API.
+ * 使用原生 HTTP API 的 DashScope Chat Model。
  *
- * <p>This implementation uses direct HTTP calls to DashScope API via OkHttp,
- * without depending on the DashScope Java SDK.
+ * <p>该实现通过 OkHttp 使用直接的 HTTP 调用与 DashScope API 通信，
+ * 不依赖 DashScope Java SDK。
  *
- * <p>Supports both text and vision models through automatic endpoint routing.
- * Use {@link EndpointType} to explicitly control the endpoint selection.
+ * <p>通过自动端点路由支持文本和视觉模型。使用 {@link EndpointType} 显式控制端点选择。
  *
- * <p>Features:
+ * <p>特性：
  * <ul>
- *   <li>Streaming and non-streaming modes</li>
- *   <li>Tool calling support</li>
- *   <li>Thinking mode support</li>
- *   <li>Automatic message format conversion</li>
- *   <li>Timeout and retry configuration</li>
+ *   <li>流式和非流式模式</li>
+ *   <li>工具调用支持</li>
+ *   <li>思考模式支持</li>
+ *   <li>自动消息格式转换</li>
+ *   <li>超时和重试配置</li>
  * </ul>
  */
 public class DashScopeChatModel extends ChatModelBase {

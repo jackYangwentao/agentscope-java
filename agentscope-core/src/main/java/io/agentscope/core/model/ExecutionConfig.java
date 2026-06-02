@@ -25,28 +25,27 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 
 /**
- * Unified execution configuration for timeout and retry behavior.
+ * 超时和重试行为的统一执行配置。
  *
- * <p>This class replaces the previous TimeoutConfig and RetryConfig classes, providing a single
- * unified configuration for controlling execution behavior of both model API calls and tool
- * executions.
+ * <p>该类替代了之前的 TimeoutConfig 和 RetryConfig 类，为模型 API 调用和工具执行的
+ * 执行行为控制提供单一统一配置。
  *
- * <p>Use the builder pattern to construct instances. All fields are optional and nullable.
+ * <p>使用构建器模式构造实例。所有字段均为可选的且可为 null。
  *
- * <h2>Standard Defaults</h2>
+ * <h2>标准默认值</h2>
  *
  * <ul>
- *   <li>{@link #MODEL_DEFAULTS}: 5 minutes timeout, 3 retry attempts with exponential backoff
- *   <li>{@link #TOOL_DEFAULTS}: 5 minutes timeout, no retry (1 attempt only)
+ *   <li>{@link #MODEL_DEFAULTS}：5 分钟超时，3 次指数退避重试
+ *   <li>{@link #TOOL_DEFAULTS}：5 分钟超时，无重试（仅 1 次尝试）
  * </ul>
  *
- * <h2>Configuration Merging</h2>
+ * <h2>配置合并</h2>
  *
- * <p>Use {@link #mergeConfigs(ExecutionConfig, ExecutionConfig)} to combine configurations with
- * parameter-by-parameter precedence. This allows layering configs from different sources:
+ * <p>使用 {@link #mergeConfigs(ExecutionConfig, ExecutionConfig)} 以按参数优先级组合配置。
+ * 这允许从不同来源分层叠加配置：
  *
  * <pre>{@code
- * // Priority: per-request > agent-level > component-defaults > system-defaults
+ * // 优先级：每次请求 > 智能体级别 > 组件默认值 > 系统默认值
  * ExecutionConfig effective = ExecutionConfig.mergeConfigs(
  *     perRequestConfig,
  *     ExecutionConfig.mergeConfigs(agentConfig, ExecutionConfig.MODEL_DEFAULTS)

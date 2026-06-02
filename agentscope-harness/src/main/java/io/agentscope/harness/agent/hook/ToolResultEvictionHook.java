@@ -63,6 +63,12 @@ import reactor.core.publisher.Mono;
  *
  * <p>Tools listed in {@link ToolResultEvictionConfig#getExcludedToolNames()} are never evicted
  * (e.g. {@code readFile} — evicting would cause re-read loops).
+ *
+ * <p>工具结果驱逐钩子，在每次工具调用之后、结果存储到 agent 内存之前，
+ * 将过大的工具结果驱逐到 {@link AbstractFilesystem}。
+ * 当 ToolResultBlock 的文本内容超过配置的最大字符数时，将完整结果写入文件系统，
+ * 并用包含首尾预览和 readFile 使用说明的紧凑占位符替换上下文中的 ToolResultBlock。
+ * 与参数截断和对话压缩相互独立，各自评估独立条件。
  */
 public class ToolResultEvictionHook implements Hook, RuntimeContextAware {
 
@@ -85,6 +91,7 @@ public class ToolResultEvictionHook implements Hook, RuntimeContextAware {
     @Override
     public int priority() {
         // After AgentTraceHook (0) — original result size is logged first, then replaced
+        // 在 AgentTraceHook (0) 之后 — 先记录原始结果大小，然后替换
         return 50;
     }
 
@@ -159,8 +166,14 @@ public class ToolResultEvictionHook implements Hook, RuntimeContextAware {
 
     // -------------------------------------------------------------------------
     // Helpers
+    // 辅助方法
     // -------------------------------------------------------------------------
 
+    /**
+     * Extracts the concatenated text content from all text blocks in a tool result.
+     *
+     * <p>从工具结果的所有文本块中提取拼接后的文本内容。
+     */
     private String extractText(ToolResultBlock toolResult) {
         if (toolResult.getOutput() == null) {
             return "";
@@ -174,17 +187,30 @@ public class ToolResultEvictionHook implements Hook, RuntimeContextAware {
         return sb.toString();
     }
 
+    /**
+     * Builds the filesystem path for evicted tool results, sanitizing agent name and tool call ID
+     * for filesystem safety.
+     *
+     * <p>为驱逐的工具结果构建文件系统路径，对 agent 名称和工具调用 ID 进行文件系统安全净化。
+     */
     private String buildEvictionPath(String agentName, String toolCallId) {
         String base = config.getEvictionPath();
         if (!base.startsWith("/")) {
             base = "/" + base;
         }
         // Sanitize to filesystem-safe characters
+        // 净化为文件系统安全的字符
         String safeAgent = agentName.replaceAll("[^a-zA-Z0-9_-]", "_");
         String safeId = toolCallId.replaceAll("[^a-zA-Z0-9_-]", "_");
         return base + "/" + safeAgent + "/" + safeId;
     }
 
+    /**
+     * Builds a compact placeholder string with a head+tail preview and an instruction to use
+     * readFile for the full content.
+     *
+     * <p>构建紧凑的占位符字符串，包含首尾预览和使用 readFile 读取完整内容的说明。
+     */
     private String buildPlaceholder(String fullText, String evictionPath) {
         int len = fullText.length();
         int pLen = Math.min(config.getPreviewChars(), len / 2);

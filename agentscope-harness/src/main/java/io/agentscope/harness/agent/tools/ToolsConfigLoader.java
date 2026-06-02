@@ -29,9 +29,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * 将 {@code workspace/tools.json} 加载为 {@link ToolsConfig}。
  * Loads {@code workspace/tools.json} into a {@link ToolsConfig}.
  *
- * <p>Reads through {@link WorkspaceManager#readManagedWorkspaceFileUtf8} so that the
+ * <p>通过 {@link WorkspaceManager#readManagedWorkspaceFileUtf8} 读取，
+ * 使文件系统覆盖（沙箱/远程）路径的行为与 {@code AGENTS.md} 一致。
+ * 在解析前对原始 JSON 文本执行 {@code ${ENV_VAR}} 环境变量替换，
+ * 使头部、环境条目、URL 等中的密钥不保留在文件中。
+ * 解析失败时不会抛出异常——会记录日志并返回 {@link Optional#empty()}，
+ * 确保代理仍能使用其默认工具包正常构建。
+ * Reads through {@link WorkspaceManager#readManagedWorkspaceFileUtf8} so that the
  * filesystem-overlay (sandbox / remote) path is honoured exactly like {@code AGENTS.md}. Performs
  * {@code ${ENV_VAR}} substitution against {@link System#getenv} on the raw JSON text before
  * parsing so that secrets in headers, env entries, urls, etc. are kept out of the file. Parse
@@ -50,6 +57,9 @@ public final class ToolsConfigLoader {
     private ToolsConfigLoader() {}
 
     /**
+     * 读取由 {@code wsManager} 管理的工作空间中的 {@code tools.json} 文件。
+     * 当文件缺失、空白、不可读（例如在调用上下文存在前访问沙箱文件系统）或无法解析时
+     * 返回 {@link Optional#empty()}。
      * Reads {@code tools.json} relative to the workspace managed by {@code wsManager}. Returns
      * {@link Optional#empty()} when the file is missing, blank, unreadable (e.g. sandbox
      * filesystem accessed before its call context exists), or unparseable.
@@ -64,8 +74,7 @@ public final class ToolsConfigLoader {
                     wsManager.readManagedWorkspaceFileUtf8(
                             RuntimeContext.empty(), WorkspaceConstants.TOOLS_JSON);
         } catch (Exception e) {
-            // Sandbox/remote filesystems may not be reachable at build time. Fall back silently —
-            // the agent should still build.
+            // 沙箱/远程文件系统在构建时可能不可达。静默回退——代理仍应正常构建。
             log.debug(
                     "Could not read {} via workspace manager ({}); skipping.",
                     WorkspaceConstants.TOOLS_JSON,
@@ -89,6 +98,9 @@ public final class ToolsConfigLoader {
     }
 
     /**
+     * 将 {@code raw} 中的 {@code ${VAR}} 替换为 {@link System#getenv} 的值。
+     * 未设置的环境变量解析为空字符串并在 WARN 级别记录。
+     * 这对于使 {@code "Authorization": "Bearer ${GITHUB_TOKEN}"} 等头部不保留在工作空间文件中很有用。
      * Replaces {@code ${VAR}} occurrences in {@code raw} with {@link System#getenv} values. Unset
      * variables resolve to an empty string and are logged at WARN. Useful so that headers like
      * {@code "Authorization": "Bearer ${GITHUB_TOKEN}"} can stay out of the workspace file.

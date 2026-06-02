@@ -25,6 +25,8 @@ import redis.clients.jedis.UnifiedJedis;
 import redis.clients.jedis.params.SetParams;
 
 /**
+ * 基于 Redis 的 {@link SandboxExecutionGuard} 实现，通过 Redis {@code SET NX PX} 租约机制序列化
+ * 对沙箱隔离槽的并发访问。
  * Redis-backed {@link SandboxExecutionGuard} that serialises concurrent access to a sandbox
  * isolation slot using a Redis {@code SET NX PX} lease.
  *
@@ -94,6 +96,7 @@ public final class RedisSandboxExecutionGuard implements SandboxExecutionGuard {
     private static final Logger log = LoggerFactory.getLogger(RedisSandboxExecutionGuard.class);
 
     /**
+     * Lua 脚本：仅当 {@code KEYS[1]} 的值等于 {@code ARGV[1]} 时原子性地删除该键。
      * Lua script: atomically delete {@code KEYS[1]} only when its value equals {@code ARGV[1]}.
      * Returns 1 on success, 0 if the key was already gone or held by a different token.
      */
@@ -117,20 +120,23 @@ public final class RedisSandboxExecutionGuard implements SandboxExecutionGuard {
     }
 
     /**
+     * 创建此守卫的构建器。
      * Creates a builder for this guard.
      *
-     * @param jedis initialized Jedis client; the same instance used for
-     *              {@link io.agentscope.harness.agent.sandbox.snapshot.RedisSnapshotSpec} is fine
+     * @param jedis 已初始化的 Jedis 客户端；可与
+     *              {@link io.agentscope.harness.agent.sandbox.snapshot.RedisSnapshotSpec}
+     *              使用同一实例
      */
     public static Builder builder(UnifiedJedis jedis) {
         return new Builder(jedis);
     }
 
     /**
+     * 获取指定 {@code key} 的 Redis 租约，以 {@code retryInterval} 间隔轮询直到槽位空闲。
      * Acquires the Redis-backed lease for {@code key}, spinning at {@code retryInterval} until
      * the slot is free.
      *
-     * @throws InterruptedException if the calling thread is interrupted while waiting
+     * @throws InterruptedException 如果等待期间调用线程被中断
      */
     @Override
     public SandboxLease tryEnter(SandboxIsolationKey key) throws InterruptedException {
@@ -180,10 +186,10 @@ public final class RedisSandboxExecutionGuard implements SandboxExecutionGuard {
     }
 
     // -------------------------------------------------------------------------
-    // Builder
+    // 构建器 / Builder
     // -------------------------------------------------------------------------
 
-    /** Builder for {@link RedisSandboxExecutionGuard}. */
+    /** {@link RedisSandboxExecutionGuard} 的构建器。Builder for {@link RedisSandboxExecutionGuard}. */
     public static final class Builder {
 
         private static final Duration DEFAULT_LEASE_TTL = Duration.ofMinutes(30);
@@ -200,12 +206,12 @@ public final class RedisSandboxExecutionGuard implements SandboxExecutionGuard {
         }
 
         /**
+         * 设置锁键使用的 Redis 键前缀。
          * Sets the Redis key prefix used for lock keys.
          *
-         * <p>Default: {@code "agentscope:sandbox:lock:"}. Useful when multiple environments or
-         * tenants share the same Redis instance and need namespace separation.
+         * <p>默认值：{@code "agentscope:sandbox:lock:"}。当多个环境或租户共享同一 Redis 实例并需要命名空间隔离时有用。
          *
-         * @param keyPrefix the key prefix; must not be null or blank
+         * @param keyPrefix 键前缀；不能为 null 或空白
          */
         public Builder keyPrefix(String keyPrefix) {
             if (keyPrefix == null || keyPrefix.isBlank()) {
@@ -216,14 +222,14 @@ public final class RedisSandboxExecutionGuard implements SandboxExecutionGuard {
         }
 
         /**
+         * 设置每个 Redis 锁键的 TTL。
          * Sets the TTL for each Redis lock key.
          *
-         * <p>Default: {@code 30 minutes}. Must exceed the worst-case agent call duration
-         * (including LLM latency, retries, and snapshot operations). When a call outlasts the TTL
-         * the key is evicted and the next waiter may enter — this is a safety valve, not a
-         * correctness guarantee.
+         * <p>默认值：{@code 30 分钟}。必须超过最坏情况的 agent 调用持续时间
+         * （包括 LLM 延迟、重试和快照操作）。当调用超过 TTL 时键会被驱逐，
+         * 下一个等待者可以进入——这是一个安全阀，而非正确性保证。
          *
-         * @param ttl the lease TTL; must be positive
+         * @param ttl 租约 TTL；必须为正数
          */
         public Builder leaseTtl(Duration ttl) {
             Objects.requireNonNull(ttl, "leaseTtl must not be null");
@@ -235,12 +241,13 @@ public final class RedisSandboxExecutionGuard implements SandboxExecutionGuard {
         }
 
         /**
+         * 设置锁获取尝试之间的轮询间隔。
          * Sets the polling interval between lock acquisition attempts.
          *
-         * <p>Default: {@code 500 ms}. Lower values reduce latency at the cost of more Redis
-         * round-trips; higher values reduce load at the cost of increased queuing delay.
+         * <p>默认值：{@code 500 ms}。较低的值可以减少延迟，但会增加 Redis 往返次数；
+         * 较高的值可以降低负载，但会增加排队延迟。
          *
-         * @param interval the retry interval; must be positive
+         * @param interval 重试间隔；必须为正数
          */
         public Builder retryInterval(Duration interval) {
             Objects.requireNonNull(interval, "retryInterval must not be null");
@@ -251,7 +258,7 @@ public final class RedisSandboxExecutionGuard implements SandboxExecutionGuard {
             return this;
         }
 
-        /** Builds the {@link RedisSandboxExecutionGuard}. */
+        /** 构建 {@link RedisSandboxExecutionGuard} 实例。Builds the {@link RedisSandboxExecutionGuard}. */
         public RedisSandboxExecutionGuard build() {
             return new RedisSandboxExecutionGuard(this);
         }

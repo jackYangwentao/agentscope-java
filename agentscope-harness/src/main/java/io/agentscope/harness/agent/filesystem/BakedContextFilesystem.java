@@ -29,20 +29,26 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Filesystem wrapper that substitutes a fixed {@link RuntimeContext} on every delegated call,
- * ignoring whatever RC the caller supplies.
+ * 文件系统包装器，在每次委托调用时替换为固定的 {@link RuntimeContext}，忽略调用者提供的上下文。
  *
- * <p>Used by {@code HarnessAgent.workspaceFor(userId, sessionId)} to construct an out-of-band
- * {@link io.agentscope.harness.agent.workspace.WorkspaceManager} view bound to an explicit user
- * identity. Controllers acting on another user's namespace can pass {@link RuntimeContext#empty()}
- * downstream; this wrapper ensures the namespace factory underneath still receives the baked-in
- * identity rather than the (empty) caller context.
+ * <p>由 {@code HarnessAgent.workspaceFor(userId, sessionId)} 使用，构造绑定到显式用户身份的带外
+ * {@link io.agentscope.harness.agent.workspace.WorkspaceManager} 视图。作用于其他用户命名空间的
+ * 控制器可以向下游传递 {@link RuntimeContext#empty()}；此包装器确保底层的命名空间工厂仍然接收
+ * 预设的身份而不是（空的）调用者上下文。
  */
 public final class BakedContextFilesystem implements AbstractFilesystem {
 
+    /** 被委托的实际文件系统实例 */
     private final AbstractFilesystem delegate;
+    /** 固定的运行时上下文，所有调用均使用此上下文而非调用者传入的上下文 */
     private final RuntimeContext bakedRc;
 
+    /**
+     * 创建一个烘焙上下文文件系统。
+     *
+     * @param delegate 实际执行文件操作的下游文件系统
+     * @param bakedRc 固定的运行时上下文；如果为 null 则使用 {@link RuntimeContext#empty()}
+     */
     public BakedContextFilesystem(AbstractFilesystem delegate, RuntimeContext bakedRc) {
         this.delegate = Objects.requireNonNull(delegate, "delegate");
         this.bakedRc = bakedRc != null ? bakedRc : RuntimeContext.empty();

@@ -47,13 +47,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * {@link AbstractFilesystem} backed by a {@link BaseStore} (persistent, cross-thread).
+ * 基于 {@link BaseStore}（持久化、跨线程）的 {@link AbstractFilesystem} 实现。
  *
- * <p>Files are organized via namespaces and persist across threads/sessions. The namespace can be
- * static (fixed at construction time) or dynamic (resolved at every operation via a {@link
- * NamespaceFactory}).
+ * <p>文件通过命名空间组织，跨线程/会话持久化。命名空间可以静态（构造时固定）
+ * 或动态（每次操作通过 {@link NamespaceFactory} 解析）。
  *
- * <p>Dynamic namespace example:
+ * <p>动态命名空间示例：
  *
  * <pre>{@code
  * RemoteFilesystem fs = new RemoteFilesystem(store,
@@ -66,18 +65,17 @@ public class RemoteFilesystem implements AbstractFilesystem {
     private final NamespaceFactory namespaceFactory;
 
     /**
-     * Optional best-effort local index. When non-null, {@code ls}, {@code glob}, {@code exists}
-     * and {@code grep} consult the index first and fall back to the remote store only when the
-     * index has no matching entries.
+     * 可选的尽力而为本地索引。当非 null 时，{@code ls}、{@code glob}、{@code exists}
+     * 和 {@code grep} 会先查询索引，仅在索引没有匹配项时回退到远程存储。
      */
     private WorkspaceIndex index;
 
     /**
-     * Creates a RemoteFilesystem with a {@link NamespaceFactory} that is called on every operation,
-     * allowing the namespace to vary based on runtime context.
+     * 创建一个使用 {@link NamespaceFactory} 的 RemoteFilesystem，该工厂在每次操作时被调用，
+     * 允许命名空间根据运行时上下文变化。
      *
-     * @param store the store to use for persistence
-     * @param namespaceFactory factory that returns the namespace tuple per operation
+     * @param store 用于持久化的存储
+     * @param namespaceFactory 每次操作返回命名空间元组的工厂
      */
     public RemoteFilesystem(BaseStore store, NamespaceFactory namespaceFactory) {
         if (store == null) {
@@ -91,43 +89,40 @@ public class RemoteFilesystem implements AbstractFilesystem {
     }
 
     /**
-     * Creates a RemoteFilesystem with a fixed namespace.
+     * 创建具有固定命名空间的 RemoteFilesystem。
      *
-     * @param store the store to use for persistence
-     * @param namespace the namespace tuple for organizing files
+     * @param store 用于持久化的存储
+     * @param namespace 用于组织文件的命名空间元组
      */
     public RemoteFilesystem(BaseStore store, List<String> namespace) {
         this(store, toFactory(namespace));
     }
 
     /**
-     * Creates a RemoteFilesystem with a default "filesystem" namespace.
+     * 创建使用默认 "filesystem" 命名空间的 RemoteFilesystem。
      *
-     * @param store the store to use for persistence
+     * @param store 用于持久化的存储
      */
     public RemoteFilesystem(BaseStore store) {
         this(store, List.of("filesystem"));
     }
 
     /**
-     * Attaches a best-effort {@link WorkspaceIndex} to accelerate list/glob/exists/grep
-     * operations. The index may be {@code null} (disabled) or become stale.
+     * 附加一个尽力而为的 {@link WorkspaceIndex} 以加速 list/glob/exists/grep 操作。
+     * 索引可能为 {@code null}（禁用）或变得过时。
      *
-     * <p>Fallback semantics differ per operation:
+     * <p>各操作的回退语义不同：
      *
      * <ul>
-     *   <li>{@code ls}, {@code glob}, {@code exists} — when the index has no matching prefix
-     *       the operation falls back to a full remote-store scan, so results remain correct
-     *       even if this node's index is stale.
-     *   <li>{@code grep} — when the index is non-{@code null} the operation first enumerates
-     *       candidates from the index. If the index path yields zero matches, the operation
-     *       falls back to a full remote-store scan so that sibling-node writes not yet seen by
-     *       this node's index are not silently missed. Content for each candidate is always
-     *       fetched authoritatively from the remote store.
+     *   <li>{@code ls}、{@code glob}、{@code exists} — 当索引没有匹配的前缀时，
+     *       操作回退到完整的远程存储扫描，因此即使此节点的索引过时，结果仍然正确。
+     *   <li>{@code grep} — 当索引非 {@code null} 时，操作先从索引枚举候选路径。
+     *       如果索引路径产生零匹配，操作回退到完整的远程存储扫描，以便不会静默错过
+     *       此节点索引尚未看到的兄弟节点写入。每个候选的内容始终从远程存储权威获取。
      * </ul>
      *
-     * @param index workspace index; {@code null} disables index-backed fast paths
-     * @return this instance (fluent)
+     * @param index 工作空间索引；{@code null} 禁用索引支持的快速路径
+     * @return 此实例（流式接口）
      */
     public RemoteFilesystem withIndex(WorkspaceIndex index) {
         this.index = index;
@@ -273,7 +268,7 @@ public class RemoteFilesystem implements AbstractFilesystem {
         return WriteResult.ok(filePath);
     }
 
-    /** Maximum CAS retry attempts for {@link #edit} under concurrent writers. */
+    /** 并发写入下 {@link #edit} 的最大 CAS 重试次数。 */
     static final int EDIT_MAX_RETRIES = 5;
 
     @Override
@@ -617,7 +612,7 @@ public class RemoteFilesystem implements AbstractFilesystem {
         return WriteResult.ok(toPath);
     }
 
-    // ==================== Internal helpers ====================
+    // ==================== 内部辅助方法 ====================
 
     private List<StoreItem> searchAllItems(RuntimeContext runtimeContext) {
         List<String> ns = getNamespace(runtimeContext);

@@ -25,6 +25,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * 将 {@code workspace/tools.json} 中 {@code mcpServers} 下声明的 MCP 服务器注册到 {@link Toolkit}。
+ * 每个条目根据其 {@code transport}（{@code stdio} / {@code sse} / {@code http}）
+ * 通过 {@link McpClientBuilder} 构建为 {@link McpClientWrapper}，
+ * 然后通过 {@link Toolkit#registration()} 注册，以便每台服务器的 {@code enableTools} 白名单生效。
  * Registers MCP servers declared under {@code mcpServers} in {@code workspace/tools.json} into a
  * {@link Toolkit}.
  *
@@ -32,7 +36,9 @@ import org.slf4j.LoggerFactory;
  * to its {@code transport} ({@code stdio} / {@code sse} / {@code http}) and then registered through
  * {@link Toolkit#registration()} so that per-server {@code enableTools} allowlists are honoured.
  *
- * <p>Failures during a single server's setup are caught and logged; remaining servers still
+ * <p>单台服务器设置过程中的失败会被捕获并记录；其余服务器仍会注册，
+ * 确保一个坏条目不会中止代理的启动流程。
+ * Failures during a single server's setup are caught and logged; remaining servers still
  * register so that one bad entry never aborts the agent's bootstrap.
  */
 public final class McpServerRegistrar {
@@ -42,9 +48,9 @@ public final class McpServerRegistrar {
     private McpServerRegistrar() {}
 
     /**
-     * Registers every entry in {@code servers} into {@code toolkit}. Synchronous: each server is
-     * built and registered before the next is attempted. {@code servers} may be {@code null} or
-     * empty (no-op).
+     * 将 {@code servers} 中的每个条目注册到 {@code toolkit}。
+     * 同步：每个服务器依次构建和注册后再开始下一个。
+     * {@code servers} 可能为 {@code null} 或空（无操作）。
      */
     public static void register(Toolkit toolkit, Map<String, McpServerConfig> servers) {
         if (toolkit == null || servers == null || servers.isEmpty()) {
@@ -69,6 +75,7 @@ public final class McpServerRegistrar {
         }
     }
 
+    /** 注册单个 MCP 服务器。 */
     private static void registerOne(Toolkit toolkit, String name, McpServerConfig cfg) {
         McpClientWrapper wrapper = buildClient(name, cfg);
         Toolkit.ToolRegistration reg = toolkit.registration().mcpClient(wrapper);
@@ -84,6 +91,7 @@ public final class McpServerRegistrar {
                 enableTools);
     }
 
+    /** 根据配置构建 MCP 客户端。 */
     private static McpClientWrapper buildClient(String name, McpServerConfig cfg) {
         String transport = cfg.getTransport();
         if (transport == null || transport.isBlank()) {
@@ -113,6 +121,7 @@ public final class McpServerRegistrar {
         return builder.buildAsync().block();
     }
 
+    /** 配置 stdio 传输类型的 MCP 客户端。 */
     private static void configureStdio(McpClientBuilder builder, String name, McpServerConfig cfg) {
         if (cfg.getCommand() == null || cfg.getCommand().isBlank()) {
             throw new IllegalArgumentException(
@@ -123,6 +132,7 @@ public final class McpServerRegistrar {
         builder.stdioTransport(cfg.getCommand(), args, env);
     }
 
+    /** 配置 SSE 传输类型的 MCP 客户端。 */
     private static void configureSse(McpClientBuilder builder, String name, McpServerConfig cfg) {
         if (cfg.getUrl() == null || cfg.getUrl().isBlank()) {
             throw new IllegalArgumentException("sse MCP server '" + name + "' requires a 'url'.");
@@ -136,6 +146,7 @@ public final class McpServerRegistrar {
         }
     }
 
+    /** 配置流式 HTTP 传输类型的 MCP 客户端。 */
     private static void configureStreamableHttp(
             McpClientBuilder builder, String name, McpServerConfig cfg) {
         if (cfg.getUrl() == null || cfg.getUrl().isBlank()) {

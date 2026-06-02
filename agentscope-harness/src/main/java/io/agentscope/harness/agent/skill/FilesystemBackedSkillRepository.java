@@ -45,6 +45,17 @@ import org.slf4j.LoggerFactory;
  * <p>Write operations are not supported — the namespaced read view is intentionally
  * unidirectional.
  */
+/**
+ * 基于 {@link AbstractFilesystem} 的只读 {@link AgentSkillRepository} 实现。
+ *
+ * <p>将原先内联在 {@code DynamicSkillHook} 中的 Layer-1 代码提升为独立的存储库，
+ * 使得 {@code DynamicSkillHook} 可以统一地遍历任意数量的存储库。
+ * 由于 {@link AbstractFilesystem} 每次调用都接受 {@link RuntimeContext}，
+ * 该存储库委托给 {@link Supplier}，使每次调用都能观察到调用者当前的按用户命名空间。
+ * 这正是实现 Layer-1（按用户）覆盖语义的基础，使其能够覆盖共享的工作区技能。
+ *
+ * <p>不支持写操作——命名空间读取视图故意设计为单向的。
+ */
 public class FilesystemBackedSkillRepository implements AgentSkillRepository {
 
     private static final Logger log =
@@ -66,6 +77,12 @@ public class FilesystemBackedSkillRepository implements AgentSkillRepository {
      *                          namespacing is honored (non-null)
      * @param source            source identifier attached to loaded skills; falls back to
      *                          {@code "filesystem-namespaced"} when null
+     */
+    /**
+     * @param filesystem        用于读取技能文件的命名空间文件系统（非空）
+     * @param skillsRelativeDir 工作区下包含 {@code <skill-name>/SKILL.md} 条目的相对目录（非空）
+     * @param contextSupplier   在每次调用时提供 {@link RuntimeContext}，以便遵守按用户命名空间（非空）
+     * @param source            附加到加载技能的来源标识符；为 null 时回退到 {@code "filesystem-namespaced"}
      */
     public FilesystemBackedSkillRepository(
             AbstractFilesystem filesystem,

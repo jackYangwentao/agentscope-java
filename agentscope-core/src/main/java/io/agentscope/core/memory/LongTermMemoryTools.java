@@ -25,18 +25,16 @@ import java.util.List;
 import reactor.core.publisher.Mono;
 
 /**
- * Tool adapter that exposes long-term memory operations as agent-callable tools.
+ * 将长期记忆操作暴露为智能体可调用工具的工具适配器。
  *
- * <p>This class provides a clean separation between the core memory API (defined in
- * {@link LongTermMemory}) and the tool interface used by agents. It adapts the
- * developer-facing {@code record()} and {@code retrieve()} methods into tool functions
- * with agent-friendly signatures.
+ * <p>该类提供了核心记忆 API（定义于 {@link LongTermMemory}）与智能体所使用的工具接口之间的清晰分离。
+ * 它将面向开发者的 {@code record()} 和 {@code retrieve()} 方法适配为具有智能体友好签名的工具函数。
  *
- * <p><b>Architecture:</b>
+ * <p><b>架构：</b>
  * <ul>
- *   <li><b>LongTermMemoryBase:</b> Defines core storage API ({@code record()}, {@code retrieve()})
- *   <li><b>LongTermMemoryTools:</b> Adapts core API to tool interface for agent control
- *   <li><b>ReActAgent:</b> Registers tools when {@code AGENT_CONTROL} mode is enabled
+ *   <li><b>LongTermMemoryBase：</b>定义核心存储 API（{@code record()}、{@code retrieve()}）
+ *   <li><b>LongTermMemoryTools：</b>将核心 API 适配为供智能体控制的工具接口
+ *   <li><b>ReActAgent：</b>在启用 {@code AGENT_CONTROL} 模式时注册工具
  * </ul>
  *
  * <p><b>Usage Example:</b>

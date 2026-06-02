@@ -21,7 +21,15 @@ import java.util.Map;
 
 /**
  * Data class that holds user input information with dual representation.
- * Contains both content blocks (for message construction) and optional structured data
+ *
+ * <p>以双重表示形式保存用户输入信息的数据类。同时包含:
+ * <ul>
+ *   <li>内容块列表(用于构造消息)</li>
+ *   <li>可选的结构化数据(用于类型化输入校验)</li>
+ * </ul>
+ * 这种双重性质允许在同一统一输入系统中灵活处理简单文本输入和复杂结构化表单。
+ *
+ * <p>Contains both content blocks (for message construction) and optional structured data
  * (for typed input validation). This dual nature allows flexible handling of simple text
  * input and complex structured forms within the same unified input system.
  */
@@ -31,10 +39,10 @@ public class UserInputData {
     private final Map<String, Object> structuredInput;
 
     /**
-     * Creates a new UserInputData instance.
+     * 创建一个新的 UserInputData 实例。
      *
-     * @param blocksInput List of content blocks representing the user input
-     * @param structuredInput Optional structured data map for typed input (may be null)
+     * @param blocksInput 表示用户输入的内容块列表
+     * @param structuredInput 用于类型化输入的可选结构化数据映射(可为 null)
      */
     public UserInputData(List<ContentBlock> blocksInput, Map<String, Object> structuredInput) {
         this.blocksInput = blocksInput;
@@ -42,24 +50,23 @@ public class UserInputData {
     }
 
     /**
-     * Gets the content blocks representing the user input.
+     * 获取表示用户输入的内容块列表。
      *
-     * <p>Content blocks can include text, images, audio, or other multimodal content. This
-     * representation is suitable for constructing message objects.
+     * <p>内容块可包括文本、图像、音频或其他多模态内容。该表示形式适合用于构造消息对象。
      *
-     * @return List of content blocks (may be null or empty)
+     * @return 内容块列表(可能为 null 或空)
      */
     public List<ContentBlock> getBlocksInput() {
         return blocksInput;
     }
 
     /**
-     * Gets the structured input data as a key-value map.
+     * 以键值对映射形式获取结构化输入数据。
      *
-     * <p>This optional representation allows for typed input validation and complex form handling.
-     * For example, a form with name, age, and email fields can be represented as a map.
+     * <p>这种可选表示形式支持类型化输入校验和复杂表单处理。
+     * 例如,包含姓名、年龄和邮箱字段的表单可以表示为一个 Map。
      *
-     * @return Map of structured input data, or null if not provided
+     * @return 结构化输入数据 Map,如果未提供则为 null
      */
     public Map<String, Object> getStructuredInput() {
         return structuredInput;

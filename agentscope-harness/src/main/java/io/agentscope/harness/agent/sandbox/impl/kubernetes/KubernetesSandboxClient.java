@@ -29,7 +29,11 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** {@link SandboxClient} for Kubernetes Pods. */
+/**
+ * Kubernetes Pod 的 {@link SandboxClient} 实现。
+ * <p>
+ * {@link SandboxClient} for Kubernetes Pods.
+ */
 public class KubernetesSandboxClient implements SandboxClient<KubernetesSandboxClientOptions> {
 
     private static final Logger log = LoggerFactory.getLogger(KubernetesSandboxClient.class);
@@ -46,6 +50,9 @@ public class KubernetesSandboxClient implements SandboxClient<KubernetesSandboxC
     }
 
     /**
+     * @param defaultOptions 合并到每次 {@link #create} 调用的模板选项
+     * @param objectMapper   可选 mapper；为 null 时将使用默认 mapper（注册 harness 和 Kubernetes Jackson 模块）
+     * <p>
      * @param defaultOptions template options merged into each {@link #create} call
      * @param objectMapper optional mapper; when null a default mapper is created with harness and
      *     Kubernetes Jackson modules
@@ -63,6 +70,11 @@ public class KubernetesSandboxClient implements SandboxClient<KubernetesSandboxC
                                 .registerModule(new KubernetesHarnessSandboxJacksonModule());
     }
 
+    /**
+     * 创建新的 Kubernetes Pod 沙箱实例。
+     * <p>
+     * Create a new Kubernetes Pod sandbox instance.
+     */
     @Override
     public Sandbox create(
             WorkspaceSpec workspaceSpec,
@@ -94,6 +106,11 @@ public class KubernetesSandboxClient implements SandboxClient<KubernetesSandboxC
         return new KubernetesSandbox(state, runtime);
     }
 
+    /**
+     * 从之前的状态恢复 Kubernetes Pod 沙箱会话。
+     * <p>
+     * Resume a Kubernetes Pod sandbox session from a prior state.
+     */
     @Override
     public Sandbox resume(SandboxState state) {
         if (!(state instanceof KubernetesSandboxState k8s)) {
@@ -106,11 +123,21 @@ public class KubernetesSandboxClient implements SandboxClient<KubernetesSandboxC
         return new KubernetesSandbox(k8s, runtime);
     }
 
+    /**
+     * 删除沙箱（shutdown 会处理受管 Pod 的删除）。
+     * <p>
+     * Delete the sandbox (shutdown handles owned Pod deletion).
+     */
     @Override
     public void delete(Sandbox sandbox) {
         // shutdown performs deletion for owned pods
     }
 
+    /**
+     * 将沙箱状态序列化为 JSON 字符串。
+     * <p>
+     * Serialize the sandbox state to a JSON string.
+     */
     @Override
     public String serializeState(SandboxState state) {
         try {
@@ -121,6 +148,11 @@ public class KubernetesSandboxClient implements SandboxClient<KubernetesSandboxC
         }
     }
 
+    /**
+     * 从 JSON 字符串反序列化沙箱状态。
+     * <p>
+     * Deserialize the sandbox state from a JSON string.
+     */
     @Override
     public SandboxState deserializeState(String json) {
         try {
@@ -131,6 +163,11 @@ public class KubernetesSandboxClient implements SandboxClient<KubernetesSandboxC
         }
     }
 
+    /**
+     * 合并默认选项与调用方选项（调用方优先）。
+     * <p>
+     * Merge default options with call-site options (call-site takes precedence).
+     */
     private KubernetesSandboxClientOptions merge(KubernetesSandboxClientOptions callOptions) {
         KubernetesSandboxClientOptions base =
                 defaultOptions != null ? defaultOptions : new KubernetesSandboxClientOptions();
@@ -174,6 +211,11 @@ public class KubernetesSandboxClient implements SandboxClient<KubernetesSandboxC
         return o;
     }
 
+    /**
+     * 深拷贝一个 KubernetesSandboxClientOptions 实例。
+     * <p>
+     * Deep copy a KubernetesSandboxClientOptions instance.
+     */
     private static KubernetesSandboxClientOptions copy(KubernetesSandboxClientOptions src) {
         KubernetesSandboxClientOptions o = new KubernetesSandboxClientOptions();
         o.setKubernetesClient(src.getKubernetesClient());
@@ -190,6 +232,11 @@ public class KubernetesSandboxClient implements SandboxClient<KubernetesSandboxC
         return o;
     }
 
+    /**
+     * 解析 KubernetesClient 实例（优先使用显式设置的 client，其次 config，最后自动发现）。
+     * <p>
+     * Resolve a KubernetesClient instance (explicit client first, then config, then auto-discovery).
+     */
     private static KubernetesClient resolveClient(KubernetesSandboxClientOptions merged) {
         if (merged.getKubernetesClient() != null) {
             return merged.getKubernetesClient();

@@ -20,26 +20,24 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.agentscope.core.state.State;
 
 /**
- * Base sealed class for all content blocks in messages.
+ * 消息中所有内容块的密封基类。
  *
- * <p>Content blocks represent different types of content that can be included in a message,
- * such as text, images, audio, video, or thinking content. This sealed hierarchy ensures
- * type safety and enables exhaustive pattern matching.
+ * <p>内容块表示消息中可以包含的不同类型的内容，例如文本、图片、音频、视频或推理内容。
+ * 这种密封层次结构确保了类型安全，并支持穷尽模式匹配。
  *
- * <p><b>Supported Content Types:</b>
+ * <p><b>支持的内容类型：</b>
  * <ul>
- *   <li>{@link TextBlock} - Plain text content
- *   <li>{@link ThinkingBlock} - Agent reasoning/thinking content
- *   <li>{@link ImageBlock} - Image content (URL or Base64)
- *   <li>{@link AudioBlock} - Audio content (URL or Base64)
- *   <li>{@link VideoBlock} - Video content (URL or Base64)
- *   <li>{@link ToolUseBlock} - Tool execution requests
- *   <li>{@link ToolResultBlock} - Tool execution results
+ *   <li>{@link TextBlock} - 纯文本内容
+ *   <li>{@link ThinkingBlock} - 智能体推理/思考内容
+ *   <li>{@link ImageBlock} - 图片内容（URL 或 Base64）
+ *   <li>{@link AudioBlock} - 音频内容（URL 或 Base64）
+ *   <li>{@link VideoBlock} - 视频内容（URL 或 Base64）
+ *   <li>{@link ToolUseBlock} - 工具执行请求
+ *   <li>{@link ToolResultBlock} - 工具执行结果
  * </ul>
  *
- * <p>Uses Jackson annotations for polymorphic JSON serialization with the "type" discriminator
- * field. The sealed modifier restricts subclasses to the specified permits list, enabling
- * compile-time exhaustiveness checking in pattern matching.
+ * <p>使用 Jackson 注解实现多态 JSON 序列化，通过 "type" 鉴别器字段进行区分。
+ * sealed 修饰符将子类限制为指定的 permits 列表，实现了模式匹配的编译时穷尽性检查。
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes({

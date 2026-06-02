@@ -34,23 +34,21 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 
 /**
- * HTTP client for Ollama API.
+ * Ollama API 的 HTTP 客户端。
  *
- * <p>This client handles communication with Ollama's chat and embedding APIs.
- * It provides both synchronous and asynchronous (streaming) request capabilities
- * with proper JSON serialization/deserialization and error handling.
+ * <p>该客户端处理与 Ollama 的聊天和嵌入 API 的通信。它提供同步和异步（流式）请求能力，
+ * 并具有正确的 JSON 序列化/反序列化和错误处理。
  *
- * <p>Features:
+ * <p>特性：
  * <ul>
- *   <li>Synchronous and streaming request support</li>
- *   <li>NDJSON stream parsing for streaming responses</li>
- *   <li>Automatic JSON serialization/deserialization with snake_case naming</li>
- *   <li>Proper error handling with detailed exception information</li>
- *   <li>Configurable base URL and HTTP transport</li>
+ *   <li>同步和流式请求支持</li>
+ *   <li>用于流式响应的 NDJSON 流解析</li>
+ *   <li>自动 JSON 序列化/反序列化，使用 snake_case 命名</li>
+ *   <li>带有详细异常信息的正确错误处理</li>
+ *   <li>可配置的基础 URL 和 HTTP 传输</li>
  * </ul>
  *
- * <p>Default base URL is http://localhost:11434, which is the standard Ollama server address.
- *
+ * <p>默认基础 URL 为 http://localhost:11434，即标准 Ollama 服务器地址。
  */
 public class OllamaHttpClient {
 

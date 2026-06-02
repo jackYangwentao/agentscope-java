@@ -22,15 +22,13 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * Persistent metadata for a background subagent task, stored as JSON in the workspace under
- * {@code agents/<parentAgentId>/tasks/<parentSessionId>.json}.
+ * 后台子代理任务的持久化元数据，以 JSON 格式存储在工作区的
+ * {@code agents/<parentAgentId>/tasks/<parentSessionId>.json} 下。
  *
- * <p>This is the authoritative truth source for task state. In-memory {@link BackgroundTask}
- * handles are a local performance overlay; {@code TaskRecord} survives across JVM restarts and
- * request migrations in distributed deployments.
+ * <p>这是任务状态的权威真相源。内存中的 {@link BackgroundTask} 句柄是本地性能覆盖层；
+ * {@code TaskRecord} 在 JVM 重启和分布式部署的请求迁移中持久存在。
  *
- * <p>All fields use Jackson for JSON serialization. Unknown fields are silently ignored to
- * allow forward-compatible schema evolution.
+ * <p>所有字段使用 Jackson 进行 JSON 序列化。未知字段被静默忽略以允许向前兼容的模式演进。
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)

@@ -18,15 +18,15 @@ package io.agentscope.core.state;
 import io.agentscope.core.util.JsonUtils;
 
 /**
- * Marker interface for session identifiers.
+ * 会话标识符的标记接口。
  *
- * <p>Users can define custom session identifier structures for complex scenarios like multi-tenant
- * applications. The default implementation {@link SimpleSessionKey} uses a simple string.
+ * <p>用户可以为多租户应用等复杂场景定义自定义会话标识符结构。
+ * 默认实现 {@link SimpleSessionKey} 使用简单的字符串。
  *
- * <p>Custom Session implementations can interpret SessionKey structures to determine storage
- * strategies (e.g., multi-tenant database sharding).
+ * <p>自定义 Session 实现可以解析 SessionKey 结构以确定存储策略
+ * （例如，多租户数据库分片）。
  *
- * <p>Example custom implementation:
+ * <p>自定义实现示例：
  *
  * <pre>{@code
  * // Multi-tenant scenario

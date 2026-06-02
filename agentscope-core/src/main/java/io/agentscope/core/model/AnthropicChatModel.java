@@ -36,20 +36,19 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 /**
- * Anthropic Chat Model implementation using the official Anthropic Java SDK.
+ * 使用官方 Anthropic Java SDK 的 Anthropic Chat Model 实现。
  *
  * <p>
- * This implementation provides complete integration with Anthropic's Messages
- * API, including
- * tool calling, streaming support, and extended thinking features.
+ * 该实现提供与 Anthropic 的 Messages API 的完整集成，
+ * 包括工具调用、流式支持和扩展思考功能。
  *
  * <p>
- * Important notes:
+ * 重要说明：
  *
  * <ul>
- * <li>System messages are handled via the system parameter, not as messages
- * <li>Tool results must be in separate user messages
- * <li>Supports Claude models (claude-3-*, claude-sonnet-*, etc.)
+ * <li>系统消息通过 system 参数处理，不作为消息传递</li>
+ * <li>工具结果必须在单独的用户消息中</li>
+ * <li>支持 Claude 模型（claude-3-*、claude-sonnet-* 等）</li>
  * </ul>
  */
 public class AnthropicChatModel extends ChatModelBase {

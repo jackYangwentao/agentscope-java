@@ -36,7 +36,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Unified validator for tool-related operations.
+ * 统一的工具相关操作校验器。
  *
  * <p>This class provides validation capabilities for:
  * <ul>

@@ -22,13 +22,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Utility class for managing session state with simplified API.
+ * 通过简化 API 管理会话状态的工具类。
  *
- * <p>This class provides a fluent API for both loading and saving session state without requiring
- * manual creation of component maps and manual string keys. It supports different session
- * implementations through dependency injection.
+ * <p>该类提供流畅的 API 用于加载和保存会话状态，无需手动创建组件映射和手动管理字符串键。
+ * 通过依赖注入支持不同的会话实现。
  *
- * <p>Usage example with JsonSession:
+ * <p>使用 JsonSession 的示例：
  *
  * <pre>{@code
  * SessionManager.forSessionId("user123")
@@ -38,7 +37,7 @@ import java.util.List;
  *     .loadIfExists();
  * }</pre>
  *
- * <p>Usage example with saving:
+ * <p>保存示例：
  *
  * <pre>{@code
  * SessionManager.forSessionId("user123")

@@ -26,6 +26,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * 用于搜索持久化记忆（MEMORY.md 和 memory/*.md 文件）的工具。
+ * 通过配置的 {@link io.agentscope.harness.agent.filesystem.AbstractFilesystem}
+ * 对所有记忆文件进行关键字搜索（支持本地、沙箱和存储后端）。
  * Tool for searching through persisted memories (MEMORY.md and memory/*.md files).
  *
  * <p>Uses keyword-based search through all memory files visible via the configured
@@ -42,6 +45,15 @@ public class MemorySearchTool {
         this.workspaceManager = workspaceManager;
     }
 
+    /**
+     * 在长期记忆文件（MEMORY.md 和 memory/*.md）中搜索相关信息。
+     * 在回答有关之前工作、决策、日期、人员、偏好或待办事项的问题前使用。
+     * Search through long-term memory files (MEMORY.md and memory/*.md) for
+     * relevant information. Use before answering questions about prior
+     * work, decisions, dates, people, preferences, or todos.
+     *
+     * @Tool memory_search
+     */
     @Tool(
             name = "memory_search",
             description =
@@ -60,6 +72,9 @@ public class MemorySearchTool {
         return keywordSearch(rc, query);
     }
 
+    /**
+     * 在所有记忆文件中执行关键字搜索，返回匹配的路径、行号和内容片段。
+     */
     private String keywordSearch(RuntimeContext rc, String query) {
         StringJoiner results = new StringJoiner("\n");
         int matchCount = 0;

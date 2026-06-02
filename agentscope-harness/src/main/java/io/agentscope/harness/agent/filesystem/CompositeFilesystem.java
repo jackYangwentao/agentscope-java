@@ -38,19 +38,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Routes file operations to different {@link AbstractFilesystem} backends by path prefix.
+ * 通过路径前缀将文件操作路由到不同的 {@link AbstractFilesystem} 后端。
  *
- * <p>Paths are matched against route prefixes (longest first). Unmatched paths fall through to the
- * default backend.
+ * <p>路径按路由前缀匹配（最长前缀优先）。未匹配的路径回退到默认后端。
  *
- * <p>Composite deliberately implements only {@link AbstractFilesystem} — it is the unified,
- * non-sandbox view that blends a local workspace with remote-store-backed paths. Shell execution
- * is intentionally not supported in this mode: routing shell commands across backends is
- * ambiguous, and the primary use case (distributed memory with per-user/session isolation) does
- * not need it. If you need shell execution, use a sandbox-backed filesystem
- * ({@link AbstractSandboxFilesystem}) or {@link LocalFilesystemWithShell} directly instead.
+ * <p>Composite 故意只实现 {@link AbstractFilesystem} — 它是统一的非沙箱视图，
+ * 将本地工作区与远程存储后端路径混合。此模式不支持 Shell 执行：
+ * 跨后端路由 Shell 命令存在歧义，且主要用例（基于用户/会话隔离的分布式内存）
+ * 不需要 Shell 执行。如果需要 Shell 执行，请使用沙箱文件系统
+ * ({@link AbstractSandboxFilesystem}) 或直接使用 {@link LocalFilesystemWithShell}。
  *
- * <p>Example:
+ * <p>示例：
  *
  * <pre>{@code
  * CompositeFilesystem fs = new CompositeFilesystem(
@@ -67,11 +65,11 @@ public class CompositeFilesystem implements AbstractFilesystem {
     private final List<RouteEntry> sortedRoutes;
 
     /**
-     * Creates a composite filesystem with a default backend and prefix-based routes.
+     * 创建组合文件系统，包含默认后端和基于前缀的路由。
      *
-     * @param defaultBackend backend for paths that don't match any route
-     * @param routes map of path prefixes to backends; prefixes must start with {@code "/"}
-     *     and should end with {@code "/"} (e.g. {@code "/memories/"})
+     * @param defaultBackend 未匹配任何路由的路径使用的后端
+     * @param routes 路径前缀到后端的映射；前缀必须以 {@code "/"} 开头，
+     *     应以 {@code "/"} 结尾（例如 {@code "/memories/"}）
      */
     public CompositeFilesystem(
             AbstractFilesystem defaultBackend, Map<String, AbstractFilesystem> routes) {
@@ -90,7 +88,7 @@ public class CompositeFilesystem implements AbstractFilesystem {
         this.sortedRoutes = List.copyOf(entries);
     }
 
-    // ==================== Routing ====================
+    // ==================== 路由逻辑 ====================
 
     private record RouteEntry(String prefix, AbstractFilesystem backend) {}
 
@@ -139,7 +137,7 @@ public class CompositeFilesystem implements AbstractFilesystem {
         return s.substring(i);
     }
 
-    // ==================== Path remapping helpers ====================
+    // ==================== 路径重映射工具方法 ====================
 
     private static String prependRoute(String routePrefix, String backendPath) {
         // Exact-file route: the backend holds one logical key, so the externally visible path
@@ -170,7 +168,7 @@ public class CompositeFilesystem implements AbstractFilesystem {
         return pattern;
     }
 
-    // ==================== AbstractFilesystem ====================
+    // ==================== AbstractFilesystem 接口实现 ====================
 
     @Override
     public LsResult ls(RuntimeContext runtimeContext, String path) {
@@ -508,7 +506,7 @@ public class CompositeFilesystem implements AbstractFilesystem {
         return route.backend().exists(runtimeContext, route.backendPath());
     }
 
-    /** Returns the default backend. */
+    /** 返回默认后端。 */
     public AbstractFilesystem getDefaultBackend() {
         return defaultBackend;
     }

@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Sandbox filesystem spec for Docker backend.
+ * Docker 后端的沙箱文件系统规范。
  */
 public class DockerFilesystemSpec extends SandboxFilesystemSpec {
 

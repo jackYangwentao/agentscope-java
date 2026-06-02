@@ -24,24 +24,24 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Represents an agent skill that can be loaded and used by agents.
+ * 表示可被智能体加载和使用的技能。
  *
- * <p>A skill consists of:
+ * <p>技能由以下部分组成：
  * <ul>
- *   <li>Name and description - identifying the skill
- *   <li>Skill content - the actual skill implementation or instructions
- *   <li>Resources - supporting files or data referenced by the skill
- *   <li>Version and source - tracking skill origin and versioning
+ *   <li>名称和描述——标识技能</li>
+ *   <li>技能内容——实际的技能实现或指令</li>
+ *   <li>资源——技能引用的支持文件或数据</li>
+ *   <li>版本和来源——追踪技能来源和版本信息</li>
  * </ul>
  *
- * <p><b>Creation options:</b>
+ * <p><b>创建方式：</b>
  * <ul>
- *   <li>From markdown with YAML frontmatter - metadata extracted automatically
- *   <li>From explicit parameters - direct construction with all fields
- *   <li>From builder - for creating modified versions of existing skills
+ *   <li>从带 YAML 前置元数据的 Markdown——自动提取元数据</li>
+ *   <li>从显式参数——直接使用所有字段构造</li>
+ *   <li>从 Builder——用于创建现有技能的修改版本</li>
  * </ul>
  *
- * <p><b>Usage examples:</b>
+ * <p><b>使用示例：</b>
  * <pre>{@code
  * // From markdown with frontmatter (use SkillUtil)
  * String skillMd = "---\nname: my_skill\ndescription: Does something\n---\nContent here";

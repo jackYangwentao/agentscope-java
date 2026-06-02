@@ -34,13 +34,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * Pure agent factory and invoker — knows how to create agents from registered factories and invoke
- * them with a prompt.
+ * 纯代理工厂和调用器——知道如何从注册的工厂创建代理并使用提示词调用它们。
  *
- * <p>This is the <em>agent-internal</em> layer. It has <strong>no</strong> session registry, no lane
- * management, no run tracking. The
- * agent-internal {@link AgentSpawnTool} uses this directly for
- * lightweight subagent invocation.
+ * <p>这是<em>代理内部</em>层。它<strong>没有</strong>会话注册表、通道管理或运行跟踪。
+ * 代理内部的 {@link AgentSpawnTool} 直接使用此类进行轻量级子代理调用。
  */
 public final class DefaultAgentManager {
 

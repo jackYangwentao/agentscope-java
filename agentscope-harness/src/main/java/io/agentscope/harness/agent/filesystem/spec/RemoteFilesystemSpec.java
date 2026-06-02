@@ -34,41 +34,41 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Specification for the non-sandbox "composite" filesystem mode.
+ * 非沙箱"组合"文件系统模式的规范。
  *
- * <p>This spec produces a {@link CompositeFilesystem} that blends:
+ * <p>此规范生成一个 {@link CompositeFilesystem}，它混合了：
  *
  * <ul>
- *   <li>a plain {@link LocalFilesystem} (no shell) for workspace-local, unmanaged files;
- *   <li>per-route {@link RemoteFilesystem} instances for cross-node paths (memory, skills,
- *       subagents, knowledge, sessions, tasks). Each route gets its own store namespace
- *       segment to prevent key collisions across routes.
+ *   <li>用于工作空间本地、非托管文件的普通 {@link LocalFilesystem}（无 shell）；
+ *   <li>用于跨节点路径（memory、skills、subagents、knowledge、sessions、tasks）的
+ *       每路由 {@link RemoteFilesystem} 实例。每个路由都有自己的存储命名空间段，
+ *       以防止路由间的键冲突。
  * </ul>
  *
- * <p>Because the default backend is {@link LocalFilesystem} (not {@link LocalFilesystemWithShell}),
- * shell execution is intentionally not available in this mode — use a sandbox filesystem spec or
- * {@link LocalFilesystemWithShell} if shell is required.
+ * <p>由于默认后端是 {@link LocalFilesystem}（而非 {@link LocalFilesystemWithShell}），
+ * 此模式中有意不提供 shell 执行能力——如果需要 shell，请使用沙箱文件系统规范或
+ * {@link LocalFilesystemWithShell}。
  *
- * <p>Default shared routes (each gets an isolated store namespace segment):
+ * <p>默认共享路由（每个路由获得独立的存储命名空间段）：
  *
  * <ul>
- *   <li>{@code AGENTS.md}, {@code MEMORY.md} → segment {@code root}
- *   <li>{@code memory/} → segment {@code memory}
- *   <li>{@code skills/} → segment {@code skills}
- *   <li>{@code subagents/} → segment {@code subagents}
- *   <li>{@code knowledge/} → segment {@code knowledge}
- *   <li>{@code agents/<agentId>/sessions/} → segment {@code sessions}
- *   <li>{@code agents/<agentId>/tasks/} → segment {@code tasks}
+ *   <li>{@code AGENTS.md}, {@code MEMORY.md} → 段 {@code root}
+ *   <li>{@code memory/} → 段 {@code memory}
+ *   <li>{@code skills/} → 段 {@code skills}
+ *   <li>{@code subagents/} → 段 {@code subagents}
+ *   <li>{@code knowledge/} → 段 {@code knowledge}
+ *   <li>{@code agents/<agentId>/sessions/} → 段 {@code sessions}
+ *   <li>{@code agents/<agentId>/tasks/} → 段 {@code tasks}
  * </ul>
  *
- * <p>The store namespace for shared files is controlled by {@link #isolationScope(IsolationScope)},
- * which mirrors the sandbox isolation semantics:
+ * <p>共享文件的存储命名空间由 {@link #isolationScope(IsolationScope)} 控制，
+ * 它镜像了沙箱隔离语义：
  *
  * <ul>
- *   <li>{@link IsolationScope#SESSION} — namespace per session</li>
- *   <li>{@link IsolationScope#USER} (default) — namespace per user, shared across sessions</li>
- *   <li>{@link IsolationScope#AGENT} — namespace per agent, shared across all users</li>
- *   <li>{@link IsolationScope#GLOBAL} — single global namespace</li>
+ *   <li>{@link IsolationScope#SESSION} — 每个会话的命名空间</li>
+ *   <li>{@link IsolationScope#USER}（默认）— 每个用户的命名空间，跨会话共享</li>
+ *   <li>{@link IsolationScope#AGENT} — 每个代理的命名空间，跨所有用户共享</li>
+ *   <li>{@link IsolationScope#GLOBAL} — 单个全局命名空间</li>
  * </ul>
  */
 public class RemoteFilesystemSpec {
@@ -87,9 +87,9 @@ public class RemoteFilesystemSpec {
     }
 
     /**
-     * Adds an extra workspace-relative prefix routed to the shared store.
+     * 添加一个路由到共享存储的额外工作空间相对前缀。
      *
-     * <p>Examples: {@code knowledge/}, {@code prompts/}.
+     * <p>示例：{@code knowledge/}、{@code prompts/}。
      */
     public RemoteFilesystemSpec addSharedPrefix(String prefix) {
         if (prefix != null && !prefix.isBlank()) {
@@ -99,7 +99,7 @@ public class RemoteFilesystemSpec {
     }
 
     /**
-     * Sets the fallback user identifier when runtime {@code userId} is absent/blank.
+     * 设置当运行时 {@code userId} 缺失/空白时的回退用户标识符。
      */
     public RemoteFilesystemSpec anonymousUserId(String userId) {
         if (userId == null || userId.isBlank()) {
@@ -110,13 +110,13 @@ public class RemoteFilesystemSpec {
     }
 
     /**
-     * Sets the isolation scope that controls the store namespace for shared files.
+     * 设置控制共享文件存储命名空间的隔离范围。
      *
-     * <p>Mirrors the sandbox {@link io.agentscope.harness.agent.sandbox.SandboxContext} isolation
-     * semantics. Defaults to {@link IsolationScope#USER}.
+     * <p>镜像沙箱 {@link io.agentscope.harness.agent.sandbox.SandboxContext} 隔离语义。
+     * 默认为 {@link IsolationScope#USER}。
      *
-     * @param scope isolation scope
-     * @return this spec
+     * @param scope 隔离范围
+     * @return 此规范
      */
     public RemoteFilesystemSpec isolationScope(IsolationScope scope) {
         if (scope == null) {
@@ -127,8 +127,8 @@ public class RemoteFilesystemSpec {
     }
 
     /**
-     * Sets the workspace index for accelerating remote filesystem reads (ls/glob/exists/grep).
-     * If not set, the remote filesystem falls back to full store scans.
+     * 设置用于加速远程文件系统读取（ls/glob/exists/grep）的工作空间索引。
+     * 如果未设置，远程文件系统将回退到完整存储扫描。
      */
     public RemoteFilesystemSpec workspaceIndex(WorkspaceIndex index) {
         this.workspaceIndex = index;
@@ -201,11 +201,10 @@ public class RemoteFilesystemSpec {
     }
 
     /**
-     * Builds an {@link OverlayFilesystem} for a workspace-prefix route. The upper layer is the
-     * per-user {@link RemoteFilesystem} backed by {@link BaseStore}; the lower layer is a read-only
-     * {@link LocalFilesystem} rooted at {@code localTemplateDir} so scaffolded template content is
-     * visible as the baseline. {@code virtualMode=true} on the lower so it reports paths anchored
-     * to its own root, which is what {@link CompositeFilesystem}'s route remapping expects.
+     * 为工作空间前缀路由构建 {@link OverlayFilesystem}。上层是由 {@link BaseStore} 支持的
+     * 每用户 {@link RemoteFilesystem}；下层是一个只读的 {@link LocalFilesystem}，根目录为
+     * {@code localTemplateDir}，使得脚手架模板内容作为基线可见。下层启用 {@code virtualMode=true}，
+     * 以便报告锚定到自身根的路径，这正是 {@link CompositeFilesystem} 路由重映射所期望的。
      */
     private OverlayFilesystem overlayRoute(
             Path localTemplateDir, String routeSegment, String agentId) {
@@ -215,10 +214,10 @@ public class RemoteFilesystemSpec {
     }
 
     /**
-     * Builds an {@link OverlayFilesystem} for an exact-file route (e.g. {@code AGENTS.md}).
-     * The upper layer is the per-user {@link RemoteFilesystem} on the {@code root} namespace
-     * segment; the lower layer is the shared workspace-root {@link LocalFilesystem} so the
-     * scaffolded template file ({@code workspace/<filename>}) is visible as the baseline.
+     * 为精确文件路由（例如 {@code AGENTS.md}）构建 {@link OverlayFilesystem}。
+     * 上层是在 {@code root} 命名空间段上的每用户 {@link RemoteFilesystem}；
+     * 下层是共享的工作空间根 {@link LocalFilesystem}，使得脚手架模板文件
+     * （{@code workspace/<filename>}）作为基线可见。
      */
     private OverlayFilesystem exactFileOverlay(
             String routeSegment, String agentId, LocalFilesystem workspaceTemplate) {

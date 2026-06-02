@@ -27,18 +27,37 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** {@link SandboxClient} for E2B. */
+/**
+ * E2B 的 {@link SandboxClient} 实现。
+ * {@link SandboxClient} for E2B.
+ */
 public class E2bSandboxClient implements SandboxClient<E2bSandboxClientOptions> {
 
+    /** 日志记录器。Logger. */
     private static final Logger log = LoggerFactory.getLogger(E2bSandboxClient.class);
 
+    /** 用于序列化/反序列化沙箱状态的 Jackson ObjectMapper。 */
     private final ObjectMapper objectMapper;
+
+    /** 默认 E2B 沙箱客户端选项。Default E2B sandbox client options. */
     private final E2bSandboxClientOptions defaultOptions;
 
+    /**
+     * 使用默认选项和 ObjectMapper 构造 E2bSandboxClient 实例。
+     * Constructs an E2bSandboxClient instance with default options and ObjectMapper.
+     */
     public E2bSandboxClient() {
         this(new E2bSandboxClientOptions(), null);
     }
 
+    /**
+     * 使用给定默认选项和 ObjectMapper 构造 E2bSandboxClient 实例。
+     * Constructs an E2bSandboxClient instance with the given default options and ObjectMapper.
+     *
+     * @param defaultOptions 默认选项 / default options
+     * @param objectMapper   Jackson ObjectMapper，用于序列化状态
+     *                       Jackson ObjectMapper for state serialization
+     */
     public E2bSandboxClient(E2bSandboxClientOptions defaultOptions, ObjectMapper objectMapper) {
         this.defaultOptions =
                 defaultOptions != null ? defaultOptions : new E2bSandboxClientOptions();
@@ -51,6 +70,15 @@ public class E2bSandboxClient implements SandboxClient<E2bSandboxClientOptions> 
                                 .registerModule(new E2bHarnessSandboxJacksonModule());
     }
 
+    /**
+     * 创建一个新的 E2B 沙箱实例。
+     * Creates a new E2B sandbox instance.
+     *
+     * @param workspaceSpec 工作空间规范 / workspace specification
+     * @param snapshotSpec  快照规范 / snapshot specification
+     * @param options       客户端选项 / client options
+     * @return 新创建的 E2B 沙箱 / newly created E2B sandbox
+     */
     @Override
     public Sandbox create(
             WorkspaceSpec workspaceSpec,
@@ -77,6 +105,13 @@ public class E2bSandboxClient implements SandboxClient<E2bSandboxClientOptions> 
         return new E2bSandbox(state, merged);
     }
 
+    /**
+     * 从已有状态恢复一个 E2B 沙箱。
+     * Resumes an E2B sandbox from existing state.
+     *
+     * @param state 沙箱状态 / sandbox state
+     * @return 恢复的 E2B 沙箱 / resumed E2B sandbox
+     */
     @Override
     public Sandbox resume(SandboxState state) {
         if (!(state instanceof E2bSandboxState e2b)) {
@@ -89,6 +124,10 @@ public class E2bSandboxClient implements SandboxClient<E2bSandboxClientOptions> 
     @Override
     public void delete(Sandbox sandbox) {}
 
+    /**
+     * 将沙箱状态序列化为 JSON 字符串。
+     * Serializes sandbox state to a JSON string.
+     */
     @Override
     public String serializeState(SandboxState state) {
         try {
@@ -99,6 +138,10 @@ public class E2bSandboxClient implements SandboxClient<E2bSandboxClientOptions> 
         }
     }
 
+    /**
+     * 从 JSON 字符串反序列化沙箱状态。
+     * Deserializes sandbox state from a JSON string.
+     */
     @Override
     public SandboxState deserializeState(String json) {
         try {
@@ -109,6 +152,10 @@ public class E2bSandboxClient implements SandboxClient<E2bSandboxClientOptions> 
         }
     }
 
+    /**
+     * 合并调用选项与默认选项（调用选项中的非空值覆盖默认值）。
+     * Merges call options with default options (non-null call values override defaults).
+     */
     private E2bSandboxClientOptions merge(E2bSandboxClientOptions call) {
         E2bSandboxClientOptions o = copy(defaultOptions);
         if (call == null) {
@@ -147,6 +194,10 @@ public class E2bSandboxClient implements SandboxClient<E2bSandboxClientOptions> 
         return o;
     }
 
+    /**
+     * 深拷贝 E2B 沙箱客户端选项。
+     * Deep copies E2B sandbox client options.
+     */
     private static E2bSandboxClientOptions copy(E2bSandboxClientOptions src) {
         E2bSandboxClientOptions o = new E2bSandboxClientOptions();
         o.setApiKey(src.getApiKey());

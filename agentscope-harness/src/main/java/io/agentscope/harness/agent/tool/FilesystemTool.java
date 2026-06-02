@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
+ * 基于 {@link AbstractFilesystem} 的文件系统工具，将读/写/编辑/grep/glob 操作暴露为代理可调用的工具。
  * File system tools backed by a {@link AbstractFilesystem}, exposing read/write/edit/grep/glob
  * operations as agent-callable tools.
  */
@@ -42,6 +43,11 @@ public class FilesystemTool {
         this.abstractFilesystem = abstractFilesystem;
     }
 
+    /**
+     * 读取带行号的文件内容。支持通过 offset 和 limit 进行分页。
+     *
+     * @Tool read_file
+     */
     @Tool(
             name = "read_file",
             description =
@@ -63,6 +69,11 @@ public class FilesystemTool {
         return r.fileData() != null ? r.fileData().content() : "";
     }
 
+    /**
+     * 将内容写入新文件，必要时创建父目录。
+     *
+     * @Tool write_file
+     */
     @Tool(
             name = "write_file",
             description = "Write content to a new file, creating parent directories if needed.")
@@ -74,6 +85,11 @@ public class FilesystemTool {
         return r.isSuccess() ? "Written to " + r.path() : "Error: " + r.error();
     }
 
+    /**
+     * 在文件中执行精确字符串替换。除非 replace_all 为 true，否则 old_string 必须唯一。
+     *
+     * @Tool edit_file
+     */
     @Tool(
             name = "edit_file",
             description =

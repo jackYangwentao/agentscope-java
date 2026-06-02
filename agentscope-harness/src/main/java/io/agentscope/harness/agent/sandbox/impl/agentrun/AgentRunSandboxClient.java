@@ -29,24 +29,43 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** {@link SandboxClient} for Alibaba Cloud AgentRun. */
+/**
+ * 阿里云 AgentRun 的 {@link SandboxClient} 实现。
+ * {@link SandboxClient} for Alibaba Cloud AgentRun.
+ */
 public class AgentRunSandboxClient implements SandboxClient<AgentRunSandboxClientOptions> {
 
+    /** 日志记录器。Logger. */
     private static final Logger log = LoggerFactory.getLogger(AgentRunSandboxClient.class);
 
-    /** Crockford Base32 alphabet (ULID-style). */
+    /** Crockford Base32 字母表（ULID 风格）。Crockford Base32 alphabet (ULID-style). */
     private static final char[] CROCKFORD32 = "0123456789ABCDEFGHJKMNPQRSTVWXYZ".toCharArray();
 
-    /** Length of an AgentRun sandboxId (matches the public ULID example). */
+    /** AgentRun sandboxId 的长度（与公开的 ULID 示例匹配）。Length of an AgentRun sandboxId (matches the public ULID example). */
     private static final int SANDBOX_ID_LENGTH = 26;
 
+    /** 用于序列化/反序列化沙箱状态的 Jackson ObjectMapper。 */
     private final ObjectMapper objectMapper;
+
+    /** 默认 AgentRun 沙箱客户端选项。Default AgentRun sandbox client options. */
     private final AgentRunSandboxClientOptions defaultOptions;
 
+    /**
+     * 使用默认选项和 ObjectMapper 构造 AgentRunSandboxClient 实例。
+     * Constructs an AgentRunSandboxClient instance with default options and ObjectMapper.
+     */
     public AgentRunSandboxClient() {
         this(new AgentRunSandboxClientOptions(), null);
     }
 
+    /**
+     * 使用给定默认选项和 ObjectMapper 构造 AgentRunSandboxClient 实例。
+     * Constructs an AgentRunSandboxClient instance with the given default options and ObjectMapper.
+     *
+     * @param defaultOptions 默认选项 / default options
+     * @param objectMapper   Jackson ObjectMapper，用于序列化状态
+     *                       Jackson ObjectMapper for state serialization
+     */
     public AgentRunSandboxClient(
             AgentRunSandboxClientOptions defaultOptions, ObjectMapper objectMapper) {
         this.defaultOptions =
@@ -60,6 +79,15 @@ public class AgentRunSandboxClient implements SandboxClient<AgentRunSandboxClien
                                 .registerModule(new AgentRunHarnessSandboxJacksonModule());
     }
 
+    /**
+     * 创建一个新的 AgentRun 沙箱实例。
+     * Creates a new AgentRun sandbox instance.
+     *
+     * @param workspaceSpec 工作空间规范 / workspace specification
+     * @param snapshotSpec  快照规范 / snapshot specification
+     * @param options       客户端选项 / client options
+     * @return 新创建的沙箱 / newly created sandbox
+     */
     @Override
     public Sandbox create(
             WorkspaceSpec workspaceSpec,
@@ -96,6 +124,13 @@ public class AgentRunSandboxClient implements SandboxClient<AgentRunSandboxClien
         return build(state, merged);
     }
 
+    /**
+     * 从已有状态恢复 AgentRun 沙箱。
+     * Resumes an AgentRun sandbox from existing state.
+     *
+     * @param state 沙箱状态 / sandbox state
+     * @return 恢复的沙箱 / resumed sandbox
+     */
     @Override
     public Sandbox resume(SandboxState state) {
         if (!(state instanceof AgentRunSandboxState ar)) {
@@ -117,6 +152,10 @@ public class AgentRunSandboxClient implements SandboxClient<AgentRunSandboxClien
         }
     }
 
+    /**
+     * 将沙箱状态序列化为 JSON 字符串。
+     * Serializes sandbox state to a JSON string.
+     */
     @Override
     public String serializeState(SandboxState state) {
         try {
@@ -127,6 +166,10 @@ public class AgentRunSandboxClient implements SandboxClient<AgentRunSandboxClien
         }
     }
 
+    /**
+     * 从 JSON 字符串反序列化沙箱状态。
+     * Deserializes sandbox state from a JSON string.
+     */
     @Override
     public SandboxState deserializeState(String json) {
         try {
@@ -137,12 +180,20 @@ public class AgentRunSandboxClient implements SandboxClient<AgentRunSandboxClien
         }
     }
 
+    /**
+     * 构建 AgentRunSandbox 实例，连接相关组件。
+     * Builds an AgentRunSandbox instance, wiring together related components.
+     */
     private Sandbox build(AgentRunSandboxState state, AgentRunSandboxClientOptions merged) {
         AgentRunDataPlaneHttp http = new AgentRunDataPlaneHttp(merged);
         AgentRunMcpChannel mcp = new AgentRunMcpChannel(merged);
         return new AgentRunSandbox(state, merged, http, mcp);
     }
 
+    /**
+     * 判断工作空间根路径是否位于 NAS/OSS 挂载上。
+     * Returns whether the workspace root is under a NAS/OSS mount.
+     */
     private static boolean isWorkspaceUnderMounts(AgentRunSandboxClientOptions opt) {
         String root = opt.getWorkspaceRoot();
         if (root == null || root.isBlank()) {
@@ -165,6 +216,10 @@ public class AgentRunSandboxClient implements SandboxClient<AgentRunSandboxClien
         return false;
     }
 
+    /**
+     * 合并调用选项与默认选项。
+     * Merges call options with default options.
+     */
     private AgentRunSandboxClientOptions merge(AgentRunSandboxClientOptions call) {
         AgentRunSandboxClientOptions o = copy(defaultOptions);
         if (call == null) {
@@ -210,6 +265,10 @@ public class AgentRunSandboxClient implements SandboxClient<AgentRunSandboxClien
         return o;
     }
 
+    /**
+     * 深拷贝 AgentRun 沙箱客户端选项。
+     * Deep copies AgentRun sandbox client options.
+     */
     private static AgentRunSandboxClientOptions copy(AgentRunSandboxClientOptions src) {
         AgentRunSandboxClientOptions o = new AgentRunSandboxClientOptions();
         o.setApiKey(src.getApiKey());
@@ -231,14 +290,19 @@ public class AgentRunSandboxClient implements SandboxClient<AgentRunSandboxClien
     }
 
     /**
+     * 从 {@code sessionId} 推导确定性 26 字符 Crockford-base32 sandbox ID。
+     * <p>
+     * 使用 {@code base32(SHA-256(sessionId))} 的前 26 个字符。
+     * 此形状与 AgentRun 的公开 ULID 示例匹配，使"恢复同一会话"映射到
+     * "使用相同 ID 重新创建沙箱"。
+     * <p>
      * Derives a deterministic 26-character Crockford-base32 sandbox id from {@code sessionId}.
-     *
-     * <p>The first 26 characters of {@code base32(SHA-256(sessionId))} are used. This shape
+     * The first 26 characters of {@code base32(SHA-256(sessionId))} are used. This shape
      * matches AgentRun's public ULID example and lets "resume same session" map to "recreate
      * sandbox with same id".
      *
-     * @param sessionId session identifier
-     * @return deterministic sandbox id with the AgentRun-acceptable shape
+     * @param sessionId 会话标识符 / session identifier
+     * @return 具有 AgentRun 可接受形状的确定性沙箱 ID / deterministic sandbox id
      */
     static String deriveSandboxId(String sessionId) {
         try {
@@ -251,6 +315,7 @@ public class AgentRunSandboxClient implements SandboxClient<AgentRunSandboxClien
             while (sb.length() < SANDBOX_ID_LENGTH) {
                 if (bitsInBuffer < 5) {
                     if (byteIndex >= digest.length) {
+                        // 对于 SHA-256（256 位 → 51 个 base32 字符）不应发生。
                         // Should not happen for SHA-256 (256 bits → 51 base32 chars)
                         break;
                     }

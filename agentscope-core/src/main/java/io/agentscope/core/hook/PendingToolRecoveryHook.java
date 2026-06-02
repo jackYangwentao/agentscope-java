@@ -32,7 +32,27 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 /**
- * Hook that automatically recovers from orphaned pending tool calls by generating error
+ * 自动从孤立待定工具调用中恢复的 Hook,在 Agent 处理新输入前生成错误
+ * {@link ToolResultBlock}。
+ *
+ * <p>当工具执行失败、超时或被中断时,工具调用状态可能留在 memory 中而没有对应结果。
+ * 此 Hook 在 {@link PreCallEvent} 时检测此类孤立的待定工具调用,
+ * 并用合成错误结果修补它们,使 Agent 能够继续处理而不是因
+ * {@link IllegalStateException} 崩溃。
+ *
+ * <p>此 Hook 在 {@link ReActAgent.Builder} 中默认注册。用户可以通过
+ * {@link ReActAgent.Builder#enablePendingToolRecovery(boolean)} 禁用它,
+ * 如果他们更倾向于手动处理待定的工具调用(例如通过 HITL 机制)。
+ *
+ * <p><b>行为:</b>
+ * <ul>
+ *   <li>仅在 Agent 是 {@link ReActAgent} 时激活</li>
+ *   <li>仅在存在待定工具调用且用户输入不包含 {@link ToolResultBlock} 时修补</li>
+ *     (即用户自己未提供结果)</li>
+ *   <li>生成的错误结果作为 TOOL 角色消息添加到 memory 中</li>
+ * </ul>
+ *
+ * <p>Hook that automatically recovers from orphaned pending tool calls by generating error
  * {@link ToolResultBlock}s before the agent processes new input.
  *
  * <p>When tool execution fails, times out, or is interrupted, tool call states may remain in
@@ -71,12 +91,18 @@ public class PendingToolRecoveryHook implements Hook {
 
     @Override
     public int priority() {
+        // 高优先级 — 必须在依赖 memory 状态的其他 Hook 之前运行
         // High priority — must run before other hooks that depend on memory state
         return 10;
     }
 
     /**
-     * Detect and patch orphaned pending tool calls before agent processing begins.
+     * 在 Agent 处理开始前检测并修补孤立的待定工具调用。
+     *
+     * @param event 包含 Agent 和输入消息的 PreCallEvent
+     * @return 修补完成后返回未修改事件的 Mono
+     *
+     * <p>Detect and patch orphaned pending tool calls before agent processing begins.
      *
      * @param event the PreCallEvent containing agent and input messages
      * @return Mono containing the unmodified event after patching is complete
@@ -124,7 +150,12 @@ public class PendingToolRecoveryHook implements Hook {
     }
 
     /**
-     * Find tool call IDs from the last assistant message that have no corresponding
+     * 从 memory 中最后一条 assistant 消息中查找没有对应 {@link ToolResultBlock} 的工具调用 ID。
+     *
+     * @param memory Agent 的 memory
+     * @return 待定工具使用的 ID 集合,如果不存在则返回空集
+     *
+     * <p>Find tool call IDs from the last assistant message that have no corresponding
      * {@link ToolResultBlock} in memory.
      *
      * @param memory the agent's memory
@@ -161,7 +192,14 @@ public class PendingToolRecoveryHook implements Hook {
     }
 
     /**
-     * Generate error {@link ToolResultBlock}s for each pending tool call and add them
+     * 为每个待定工具调用生成错误 {@link ToolResultBlock},并将其作为 TOOL 角色消息
+     * 添加到 memory 中。
+     *
+     * @param agent ReActAgent 实例
+     * @param memory Agent 的 memory
+     * @param pendingIds 要修补的待定工具使用 ID 集合
+     *
+     * <p>Generate error {@link ToolResultBlock}s for each pending tool call and add them
      * to memory as TOOL-role messages.
      *
      * @param agent the ReActAgent instance
@@ -203,7 +241,12 @@ public class PendingToolRecoveryHook implements Hook {
     }
 
     /**
-     * Build an error {@link ToolResultBlock} for a failed or orphaned tool call.
+     * 为失败或孤立的工具调用构建错误 {@link ToolResultBlock}。
+     *
+     * @param toolCall 没有结果(结果丢失)的工具调用
+     * @return 包含格式化错误消息的 ToolResultBlock
+     *
+     * <p>Build an error {@link ToolResultBlock} for a failed or orphaned tool call.
      *
      * @param toolCall the tool call that has no result
      * @return a ToolResultBlock containing a formatted error message

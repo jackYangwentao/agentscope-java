@@ -18,13 +18,12 @@ package io.agentscope.core.state;
 import java.util.List;
 
 /**
- * State record for toolkit active groups.
+ * 工具集激活组的状态记录。
  *
- * <p>This record captures the active tool groups configuration for persistence. The toolkit itself
- * is stateless, but its activeGroups configuration needs to be persisted. This state is managed by
- * {@link io.agentscope.core.ReActAgent}.
+ * <p>该记录捕获激活的工具组配置以进行持久化。工具集本身是无状态的，但其 activeGroups 配置需要持久化。
+ * 此状态由 {@link io.agentscope.core.ReActAgent} 管理。
  *
- * <p>Example usage:
+ * <p>使用示例：
  *
  * <pre>{@code
  * ToolkitState state = new ToolkitState(List.of("web", "file", "calculator"));
@@ -35,7 +34,7 @@ import java.util.List;
  * loaded.ifPresent(s -> toolkit.setActiveGroups(s.activeGroups()));
  * }</pre>
  *
- * @param activeGroups the list of currently active tool group names
+ * @param activeGroups 当前激活的工具组名称列表
  * @see State
  * @see io.agentscope.core.tool.Toolkit
  */

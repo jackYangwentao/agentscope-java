@@ -21,10 +21,9 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Represents a chat completion response from a language model.
+ * 表示来自语言模型的聊天完成响应。
  *
- * <p>This immutable data class contains the response content, usage information,
- * and optional metadata returned by the model after processing a chat request.
+ * <p>此不可变数据类包含模型处理聊天请求后返回的响应内容、使用信息和可选的元数据。
  */
 public class ChatResponse {
 

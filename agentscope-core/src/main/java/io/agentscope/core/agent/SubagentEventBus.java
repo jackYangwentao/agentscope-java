@@ -22,6 +22,19 @@ import reactor.util.context.ContextView;
  * A lightweight channel that allows synchronously-invoked subagents to push their {@link Event}s
  * into the parent agent's {@code Flux<Event>} stream.
  *
+ * <p>一个轻量级通道,允许以同步方式调用的子 Agent 将其 {@link Event} 推送到
+ * 父 Agent 的 {@code Flux<Event>} 流中。
+ *
+ * <p>实例在 {@link AgentBase#createEventStream} 中创建,并以 {@link #CONTEXT_KEY}
+ * 为键存入 Reactor Context。当工具方法(例如 {@code agent_spawn})在该流管道内运行时,
+ * 可通过 {@link #fromContext(ContextView)} 取出总线,并将每个子事件转发到父接收器。
+ *
+ * <p>通过总线发出的事件 <em>必须</em> 已携带 {@link EventSource}(由调用方附加),
+ * 以便下游消费者识别来源子 Agent。
+ *
+ * <p>当父 Agent 通过 {@code call()}(非流式)被调用时,Context 中没有总线,
+ * {@link #fromContext} 返回 {@link Optional#empty()},允许调用方优雅回退到阻塞路径。
+ *
  * <p>An instance is created inside {@link AgentBase#createEventStream} and stored in the Reactor
  * Context under {@link #CONTEXT_KEY}. When a tool method (e.g. {@code agent_spawn}) runs inside
  * that stream pipeline, it can retrieve the bus via {@link #fromContext(ContextView)} and forward
@@ -37,28 +50,25 @@ import reactor.util.context.ContextView;
 public interface SubagentEventBus {
 
     /**
-     * Reactor Context key under which the bus instance is stored. Internal use only; use
-     * {@link #fromContext(ContextView)} for retrieval.
+     * Reactor Context 中用于存储总线实例的键。仅限内部使用;请使用
+     * {@link #fromContext(ContextView)} 进行检索。
      */
     String CONTEXT_KEY = "agentscope.subagent.event.bus";
 
     /**
-     * Emits a subagent event into the parent stream. The event should carry a non-null
-     * {@link EventSource} identifying the originating subagent.
+     * 将子 Agent 事件发送到父流。事件应携带非 null 的 {@link EventSource} 以标识来源子 Agent。
      *
-     * <p>This method is safe to call from any thread; the underlying {@code FluxSink.next} is
-     * thread-safe.
+     * <p>该方法可从任何线程安全调用;底层的 {@code FluxSink.next} 是线程安全的。
      *
-     * @param event the event to forward (must have {@link EventSource} set)
+     * @param event 要转发的事件(必须设置 {@link EventSource})
      */
     void emit(Event event);
 
     /**
-     * Retrieves the {@link SubagentEventBus} from the Reactor Context, if present.
+     * 从 Reactor Context 中检索 {@link SubagentEventBus}(如果存在)。
      *
-     * @param ctx the current Reactor subscriber context
-     * @return an {@link Optional} containing the bus, or empty when running outside a streaming
-     *     pipeline
+     * @param ctx 当前 Reactor 订阅者 Context
+     * @return 包含总线的 {@link Optional};在流式管道之外运行时为空
      */
     static Optional<SubagentEventBus> fromContext(ContextView ctx) {
         if (ctx == null || !ctx.hasKey(CONTEXT_KEY)) {

@@ -20,17 +20,16 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Represents video content in a message.
+ * 表示消息中的视频内容。
  *
- * <p>This content block supports video from two sources:
+ * <p>该内容块支持来自两种来源的视频：
  * <ul>
- *   <li>URL source - video files accessible via HTTP/HTTPS URLs or local file URLs</li>
- *   <li>Base64 source - video encoded as Base64 strings with MIME type</li>
+ *   <li>URL 来源 - 可通过 HTTP/HTTPS URL 或本地文件 URL 访问的视频文件</li>
+ *   <li>Base64 来源 - 使用 MIME 类型编码为 Base64 字符串的视频</li>
  * </ul>
  *
- * <p>Video blocks enable advanced multimodal AI interactions where agents need to process
- * or analyze video content such as presentations, tutorials, surveillance footage,
- * or other visual media that includes motion and temporal elements.
+ * <p>视频块支持高级多模态 AI 交互，使智能体能够处理或分析演示文稿、教程、监控录像
+ * 或其他包含动态和时间元素的视觉媒体。
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public final class VideoBlock extends ContentBlock {

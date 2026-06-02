@@ -40,24 +40,30 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 /**
+ * 供代理内部使用的轻量子代理工具。相比 {@code SessionsTool} 更轻量：
  * Simple subagent tool for agent-internal use. Much lighter than {@code SessionsTool}:
  *
  * <ul>
- *   <li>{@code agent_spawn} — spawn a subagent, run task, return result (sync or async)
- *   <li>{@code agent_send} — send follow-up message to a previously spawned subagent
- *   <li>{@code agent_list} — list active subagents
+ *   <li>{@code agent_spawn} — 生成子代理，运行任务，返回结果（同步或异步）
+ *   <li>{@code agent_send} — 向先前生成的子代理发送后续消息
+ *   <li>{@code agent_list} — 列出活跃的子代理
  * </ul>
  *
- * <p>No sessions, no lanes, no run registry, no announce dispatch. Just "create agent, invoke,
+ * <p>无会话、无通道、无运行注册、无公告分发。仅"创建代理、调用、返回结果"。
+ * No sessions, no lanes, no run registry, no announce dispatch. Just "create agent, invoke,
  * return result". Uses {@link DefaultAgentManager} for agent creation and invocation only.
  *
- * <p>Async tasks ({@code timeout_seconds=0}) are submitted to the {@link TaskRepository} scoped
+ * <p>异步任务（{@code timeout_seconds=0}）提交到以当前 {@link RuntimeContext} 会话 ID 为作用域的
+ * {@link TaskRepository}。这使得任务状态在工作空间存储中可见，支持跨节点检索和压缩后恢复。
+ * Async tasks ({@code timeout_seconds=0}) are submitted to the {@link TaskRepository} scoped
  * by the current session ID from {@link RuntimeContext}. This makes task state visible in
  * workspace storage for cross-node retrieval and recovery after compaction.
  *
- * <h2>Streaming</h2>
+ * <h2>流式处理 / Streaming</h2>
  *
- * <p>{@code agent_spawn} and {@code agent_send} return {@link Mono}{@code <String>} so that the
+ * <p>{@code agent_spawn} 和 {@code agent_send} 返回 {@link Mono}{@code <String>}，使得框架的
+ * 响应式工具调用管道可以在父代理的流式处理链中订阅它们。
+ * {@code agent_spawn} and {@code agent_send} return {@link Mono}{@code <String>} so that the
  * framework's reactive tool-invocation pipeline (see {@code ToolMethodInvoker}) can subscribe them
  * within the parent agent's streaming chain. When a {@link SubagentEventBus} is present in the
  * Reactor Context (injected by {@code AgentBase.createEventStream}), every child {@link
@@ -70,7 +76,9 @@ public class AgentSpawnTool {
 
     private static final Logger log = LoggerFactory.getLogger(AgentSpawnTool.class);
 
+    // 默认超时时间：30秒
     private static final int DEFAULT_TIMEOUT_SECONDS = 30;
+    // 最大超时时间：600秒
     private static final int MAX_TIMEOUT_SECONDS = 600;
     private static final int MAX_SPAWN_DEPTH = 3;
 
@@ -87,6 +95,9 @@ public class AgentSpawnTool {
     private final TaskRepository taskRepository;
     private final int parentSpawnDepth;
 
+    /**
+     * 已生成的子代理记录，包含生成的关键信息。
+     */
     private record SpawnedAgent(
             String key, String agentId, String sessionId, String label, Agent agent, int depth) {}
 
@@ -94,13 +105,15 @@ public class AgentSpawnTool {
     private final ConcurrentHashMap<String, String> labelToKey = new ConcurrentHashMap<>();
 
     /**
+     * 创建 {@code AgentSpawnTool}，从每次工具调用的 {@link RuntimeContext} 派生活跃用户 ID，
+     * 而非使用共享提供者——这防止了单个代理实例服务并发调用者时的身份竞态。
      * Creates an {@code AgentSpawnTool} that derives the active user-id from each tool call's
      * {@link RuntimeContext}, rather than a shared supplier — this prevents identity races when a
      * single agent instance serves concurrent callers.
      *
-     * @param agentManager factory and invoker for subagents
-     * @param taskRepository background task store
-     * @param parentSpawnDepth current spawn-depth of the parent (0 for top-level main agent)
+     * @param agentManager      子代理的工厂和调用器
+     * @param taskRepository    后台任务存储
+     * @param parentSpawnDepth 父级当前的生成深度（顶层主代理为 0）
      */
     public AgentSpawnTool(
             DefaultAgentManager agentManager, TaskRepository taskRepository, int parentSpawnDepth) {
@@ -109,6 +122,13 @@ public class AgentSpawnTool {
         this.parentSpawnDepth = parentSpawnDepth;
     }
 
+    /**
+     * 生成独立的子代理用于委派或后台工作。
+     * 每个响应以三行开头：agent_key（原样传递给 agent_send）、agent_id（子代理类型名）、session_id（内部使用）。
+     * 同步模式返回回复内容；异步模式（timeout_seconds=0）添加 task_id 用于 task_output。
+     *
+     * @Tool agent_spawn
+     */
     @Tool(
             name = "agent_spawn",
             description =
@@ -411,6 +431,11 @@ public class AgentSpawnTool {
                         });
     }
 
+    /**
+     * 列出此代理生成的所有活跃子代理。
+     *
+     * @Tool agent_list
+     */
     @Tool(name = "agent_list", description = "List active subagents spawned by this agent.")
     public String agentList() {
         if (agentsByKey.isEmpty()) {
@@ -435,17 +460,26 @@ public class AgentSpawnTool {
     // -----------------------------------------------------------------
 
     /**
+     * 返回调用本地子代理的 {@link Mono}。
      * Returns a {@link Mono} that invokes the local subagent.
      *
-     * <p>When the parent is in {@code stream()} mode, a {@link SubagentEventBus} is present in
+     * <p>当父代理处于 {@code stream()} 模式时，Reactor Context（通过 {@code AgentBase.createEventStream} 注入）
+     * 中存在 {@link SubagentEventBus}。此时每个子事件会通过总线实时转发给父接收器，为上游消费者提供
+     * 跨完整调用层级扁平化、有序的事件流。
+     * When the parent is in {@code stream()} mode, a {@link SubagentEventBus} is present in
      * the Reactor Context (propagated by {@code AgentBase.createEventStream}). In that case every
      * child event is forwarded to the parent sink in real time via the bus, giving the upstream
      * consumer a flat, ordered event stream across the full call hierarchy.
      *
-     * <p>When no bus is present (plain {@code call()} path), execution falls back to the
+     * <p>当没有总线时（普通 {@code call()} 路径），回退到非流式的 {@code invokeAgent} 调用，无额外开销。
+     * When no bus is present (plain {@code call()} path), execution falls back to the
      * non-streaming {@code invokeAgent} call with no overhead.
      *
-     * <p><b>Context propagation note:</b> this method returns a {@code Mono} whose
+     * <p><b>上下文传播说明：</b>本方法返回的 {@code Mono} 的 {@code deferContextual} 由
+     * {@code ToolMethodInvoker} 的 {@code flatMap} 订阅，能正确继承父流式链中的 Reactor Context。
+     * 不要在返回 {@link String} 的工具方法内部直接对 {@code Mono} 调用 {@code .block()}，
+     * 因为 {@code block()} 会创建独立的订阅，导致 Context 丢失。
+     * Context propagation note: this method returns a {@code Mono} whose
      * {@code deferContextual} is subscribed by {@code ToolMethodInvoker}'s {@code flatMap}, which
      * correctly inherits the Reactor Context from the parent streaming chain. Do NOT call
      * {@code .block()} on this Mono directly inside a tool method that returns {@link String},
@@ -507,6 +541,8 @@ public class AgentSpawnTool {
     }
 
     /**
+     * 为新生成或已知的子代理构建 {@link EventSource}。
+     * 路径由父会话 ID（或回退为 {@code "main"}）加子代理的 {@code agentId} 组成，以 {@code "/"} 分隔。
      * Builds an {@link EventSource} for a freshly spawned or known subagent. The path is
      * constructed from the parent session ID (or {@code "main"} as fallback) plus the child's
      * {@code agentId}, separated by {@code "/"}.
@@ -527,10 +563,12 @@ public class AgentSpawnTool {
     }
 
     /**
+     * 通过 {@link TaskRepository} 提交远程任务（以持久化状态），并阻塞直到任务完成或超时。
      * Submits a remote task through {@link TaskRepository} (for durable state) and blocks until
      * it completes or the timeout elapses.
      *
-     * <p>Using the repository ensures the task is visible to {@code task_list} and survives
+     * <p>使用存储库确保任务对 {@code task_list} 可见，并且能像异步远程任务一样在会话压缩后存活。
+     * Using the repository ensures the task is visible to {@code task_list} and survives
      * conversation compaction, just like async remote tasks do.
      */
     private String runRemoteSync(

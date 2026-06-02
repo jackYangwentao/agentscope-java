@@ -24,18 +24,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Utility class for estimating token count in messages.
+ * 用于估算消息中令牌数的工具类。
  *
- * <p>This class provides methods to estimate the number of input tokens that would be
- * consumed when sending messages to an LLM. The estimation uses a character-based
- * approximation that works reasonably well for both English and Chinese text.
+ * <p>此类提供估算向 LLM 发送消息时将要消耗的输入令牌数的方法。
+ * 估算使用基于字符的近似方法，对英文和中文文本都有合理效果。
  *
- * <p>Token estimation strategy:
+ * <p>令牌估算策略：
  * <ul>
- *   <li>Text content: ~1 token per 2-4 characters (varies by language)
- *   <li>Tool calls: Includes tool name, parameters, and structure overhead
- *   <li>Tool results: Includes output content and structure overhead
- *   <li>Message structure: Role, name, and formatting overhead
+ *   <li>文本内容：约每 2-4 个字符 1 个令牌（因语言而异）</li>
+ *   <li>工具调用：包括工具名称、参数和结构开销</li>
+ *   <li>工具结果：包括输出内容和结构开销</li>
+ *   <li>消息结构：角色、名称和格式化开销</li>
  * </ul>
  */
 public class TokenCounterUtil {

@@ -30,23 +30,21 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * MsgHub is designed to share messages among a group of agents.
+ * MsgHub 设计用于在一组智能体之间共享消息。
  *
- * <p>MsgHub manages message broadcasting and subscription in multi-agent conversations.
- * When agents are added to a MsgHub, they automatically observe each other's messages
- * without explicit message passing code.
+ * <p>MsgHub 管理多智能体对话中的消息广播和订阅。
+ * 当智能体添加到 MsgHub 时，它们会自动观察彼此的消息，无需显式的消息传递代码。
  *
- * <p><b>Features:</b>
+ * <p><b>特性：</b>
  * <ul>
- *   <li><b>Automatic Broadcasting:</b> Messages from any participant are automatically
- *       broadcast to all other participants</li>
- *   <li><b>Dynamic Participants:</b> Add or remove agents during conversation</li>
- *   <li><b>Manual Broadcasting:</b> Broadcast messages manually when needed</li>
- *   <li><b>Announcement Support:</b> Send initial messages when entering the hub</li>
- *   <li><b>Lifecycle Management:</b> Automatic cleanup with try-with-resources</li>
+ *   <li><b>自动广播：</b>任何参与者的消息会自动广播给所有其他参与者</li>
+ *   <li><b>动态参与者：</b>在对话过程中添加或移除智能体</li>
+ *   <li><b>手动广播：</b>需要时手动广播消息</li>
+ *   <li><b>公告支持：</b>进入中心时发送初始消息</li>
+ *   <li><b>生命周期管理：</b>使用 try-with-resources 自动清理</li>
  * </ul>
  *
- * <p><b>Usage Example:</b>
+ * <p><b>使用示例：</b>
  * <pre>{@code
  * // Create agents
  * ReActAgent alice = ReActAgent.builder()

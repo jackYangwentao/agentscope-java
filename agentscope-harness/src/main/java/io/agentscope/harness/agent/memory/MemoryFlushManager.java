@@ -39,17 +39,23 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 /**
- * Manages memory flush operations: extracting long-term memories from a conversation
- * window and appending them to today's daily memory ledger.
+ * 管理内存中对话状态定期刷新到代理的长期内存文件系统。
  *
- * <p><b>Two-layer memory model</b> (this class owns only the first layer):
+ * <p>该组件拥有两层内存模型中的第一层：
  * <ul>
- *   <li>{@code memory/YYYY-MM-DD.md} — append-only daily ledger. Each compaction's flush
- *       appends a timestamped section here. Written ONLY by this class.</li>
- *   <li>{@code MEMORY.md} — globally curated, deduplicated, size-bounded long-term memory.
- *       Written ONLY by {@link MemoryConsolidator} on a periodic schedule. Treated as
- *       read-only context here.</li>
+ *   <li><b>第 1 层 — 每日账本</b>（{@code memory/YYYY-MM-DD.md}）：仅追加文件，由此类拥有。
+ *       每次刷新追加一个带时间戳的章节，包含来自会话主分支的消息合并文本。</li>
+ *   <li><b>第 2 层 — 策划的 MEMORY.md</b>：由 {@link MemoryConsolidator} 拥有。
+ *       定期读取每日账本和当前 MEMORY.md，请求 LLM 合并/去重/裁剪，并用结果覆盖 MEMORY.md。</li>
  * </ul>
+ *
+ * <p>刷新间隔由 {@link MemoryFlushConfig#flushInterval()} 控制。
+ * 在每个时钟周期，管理器收集来自所有活跃代理会话的新消息，按代理 ID 分组，
+ * 并为每个代理将刷新条目追加到代理的每日账本中。之前已刷新过的消息
+ * （通过每个代理的水印跟踪）会被跳过。
+ *
+ * <p>刷新是一种尽力而为、低优先级的后台操作。如果刷新失败，
+ * 则记录错误且不推进水印；下一个时钟周期将重试相同的消息。
  */
 public class MemoryFlushManager {
 

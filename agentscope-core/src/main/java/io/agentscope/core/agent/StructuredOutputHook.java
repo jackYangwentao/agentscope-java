@@ -43,17 +43,28 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 /**
- * Hook for handling structured output generation using the HITL mechanism.
+ * 使用 HITL 机制处理结构化输出生成的 Hook。
+ *
+ * <p>此 Hook 拦截 Agent 事件,确保模型调用 {@code generate_response} 工具来生成结构化输出:
+ *
+ * <ul>
+ *   <li><b>PreReasoning:</b> 在 TOOL_CHOICE 模式下强制 tool_choice 为 generate_response</li>
+ *   <li><b>PostReasoning:</b> 检查是否调用了 generate_response;若没有则触发重试并加入提醒消息</li>
+ *   <li><b>PostActing:</b> 当 generate_response 成功完成时停止 Agent</li>
+ *   <li><b>PostCall:</b> 压缩 memory,移除中间的结构化输出消息</li>
+ * </ul>
+ *
+ * <p>Hook for handling structured output generation using the HITL mechanism.
  *
  * <p>This hook intercepts agent events to ensure the model calls the {@code generate_response}
  * tool for structured output generation:
  *
  * <ul>
- *   <li><b>PreReasoning:</b> In TOOL_CHOICE mode, forces tool_choice to generate_response
+ *   <li><b>PreReasoning:</b> In TOOL_CHOICE mode, forces tool_choice to generate_response</li>
  *   <li><b>PostReasoning:</b> Checks if generate_response was called; if not, triggers retry
- *       with a reminder message
- *   <li><b>PostActing:</b> Stops the agent when generate_response completes successfully
- *   <li><b>PostCall:</b> Compresses memory by removing intermediate structured output messages
+ *       with a reminder message</li>
+ *   <li><b>PostActing:</b> Stops the agent when generate_response completes successfully</li>
+ *   <li><b>PostCall:</b> Compresses memory by removing intermediate structured output messages</li>
  * </ul>
  *
  * @hidden
@@ -62,7 +73,7 @@ public class StructuredOutputHook implements Hook {
 
     private static final Logger log = LoggerFactory.getLogger(StructuredOutputHook.class);
 
-    /** The tool name for structured output generation. */
+    /** 结构化输出生成的工具名称。The tool name for structured output generation. */
     public static final String TOOL_NAME = "generate_response";
 
     private static final int MAX_RETRIES = 3;
@@ -78,7 +89,13 @@ public class StructuredOutputHook implements Hook {
     private ThinkingBlock aggregatedThinking = null;
 
     /**
-     * Creates a new StructuredOutputHook.
+     * 创建新的 StructuredOutputHook。
+     *
+     * @param reminderMode 提醒模式(TOOL_CHOICE 或 PROMPT)
+     * @param baseOptions 基础生成选项
+     * @param memory 用于 PostCall 压缩的 Memory
+     *
+     * <p>Creates a new StructuredOutputHook.
      *
      * @param reminderMode The reminder mode (TOOL_CHOICE or PROMPT)
      * @param baseOptions The base generation options
@@ -105,6 +122,9 @@ public class StructuredOutputHook implements Hook {
         return Mono.just(event);
     }
 
+    /**
+     * 处理 PreReasoning 事件:在 TOOL_CHOICE 模式下,仅在处理 TOOL_CHOICE 提醒消息时强制 tool_choice。
+     */
     private void handlePreReasoning(PreReasoningEvent event) {
         // In TOOL_CHOICE mode, only force tool_choice when processing a TOOL_CHOICE reminder
         // message
@@ -127,6 +147,9 @@ public class StructuredOutputHook implements Hook {
         }
     }
 
+    /**
+     * 检查消息是否为 TOOL_CHOICE 提醒消息。
+     */
     private boolean isToolChoiceReminderMessage(Msg msg) {
         Map<String, Object> metadata = msg.getMetadata();
         if (metadata == null) {
@@ -137,6 +160,11 @@ public class StructuredOutputHook implements Hook {
                 .equals(metadata.get(MessageMetadataKeys.STRUCTURED_OUTPUT_REMINDER_TYPE));
     }
 
+    /**
+     * 处理 PostReasoning 事件:检查是否调用了 generate_response;若没有则触发重试。
+     *
+     * <p>Handle PostReasoning: checks if generate_response was called; if not, triggers retry.
+     */
     private void handlePostReasoning(PostReasoningEvent event) {
         Msg msg = event.getReasoningMessage();
         if (msg == null) {
@@ -158,6 +186,11 @@ public class StructuredOutputHook implements Hook {
         // If max retries exceeded, let it continue to summarizing which will report error
     }
 
+    /**
+     * 处理 PostActing 事件:当 generate_response 成功完成时停止 Agent 并收集元数据。
+     *
+     * <p>Handle PostActing: stops the agent and collects metadata when generate_response succeeds.
+     */
     private void handlePostActing(PostActingEvent event) {
         ToolUseBlock toolUse = event.getToolUse();
         if (toolUse != null && TOOL_NAME.equals(toolUse.getName())) {
@@ -178,16 +211,24 @@ public class StructuredOutputHook implements Hook {
         }
     }
 
+    /**
+     * 处理 PostCall 事件:在结构化输出完成时压缩 memory。
+     *
+     * <p>Handle PostCall: compresses memory when structured output completes.
+     */
     private void handlePostCall(PostCallEvent event) {
         if (!completed) {
             return;
         }
+        // 压缩 memory:移除 generate_response 相关的中间消息
         // Compress memory: remove generate_response related intermediate messages
         compressMemory();
     }
 
     /**
-     * Remove structured output related messages from memory and add final response.
+     * 从 memory 中移除结构化输出相关的消息,并添加最终响应。
+     *
+     * <p>Remove structured output related messages from memory and add final response.
      */
     private void compressMemory() {
         List<Msg> original = new ArrayList<>(memory.getMessages());
@@ -200,10 +241,12 @@ public class StructuredOutputHook implements Hook {
             }
         }
 
+        // 添加最终响应消息(从 resultMsg 中提取)
         // Add the final response message (extracted from resultMsg)
         if (resultMsg != null) {
             Msg finalMsg = extractFinalResponseMsg(resultMsg);
             if (finalMsg != null) {
+                // 将收集的元数据合并到最终消息中
                 // Merge collected metadata into final message
                 finalMsg = mergeCollectedMetadata(finalMsg);
                 memory.addMessage(finalMsg);
@@ -215,7 +258,9 @@ public class StructuredOutputHook implements Hook {
     }
 
     /**
-     * Collect and aggregate metadata from assistant messages that are being removed.
+     * 从正在被移除的 assistant 消息中收集并聚合元数据。
+     *
+     * <p>Collect and aggregate metadata from assistant messages that are being removed.
      */
     private void collectStructuredOutputMetadata(List<Msg> messages) {
         int totalInput = 0;
@@ -225,6 +270,7 @@ public class StructuredOutputHook implements Hook {
 
         for (Msg msg : messages) {
             if (isStructuredOutputRelated(msg) && msg.getRole() == MsgRole.ASSISTANT) {
+                // 收集 ChatUsage
                 // Collect ChatUsage
                 ChatUsage usage = msg.getChatUsage();
                 if (usage != null) {
@@ -234,6 +280,7 @@ public class StructuredOutputHook implements Hook {
                     totalTime += usage.getTime();
                 }
 
+                // 收集 ThinkingBlock(保留最后一个)
                 // Collect ThinkingBlock (keep the last one)
                 ThinkingBlock thinking = msg.getFirstContentBlock(ThinkingBlock.class);
                 if (thinking != null) {
@@ -253,9 +300,12 @@ public class StructuredOutputHook implements Hook {
     }
 
     /**
-     * Merge collected metadata (ChatUsage and ThinkingBlock) into the message.
+     * 将收集的元数据(ChatUsage 和 ThinkingBlock)合并到消息中。
+     *
+     * <p>Merge collected metadata (ChatUsage and ThinkingBlock) into the message.
      */
     private Msg mergeCollectedMetadata(Msg msg) {
+        // 合并 ChatUsage 到 metadata
         // Merge ChatUsage into metadata
         Map<String, Object> metadata =
                 new HashMap<>(msg.getMetadata() != null ? msg.getMetadata() : Map.of());
@@ -263,6 +313,7 @@ public class StructuredOutputHook implements Hook {
             metadata.put(MessageMetadataKeys.CHAT_USAGE, aggregatedUsage);
         }
 
+        // 合并 ThinkingBlock 到内容
         // Merge ThinkingBlock into content
         List<ContentBlock> newContent;
         if (aggregatedThinking != null) {
@@ -286,7 +337,12 @@ public class StructuredOutputHook implements Hook {
     }
 
     /**
-     * Extract the final response message from the tool result message.
+     * 从工具结果消息中提取最终响应消息。
+     *
+     * @param toolResultMsg 包含响应的工具结果消息
+     * @return 最终的响应消息,未找到则返回 null
+     *
+     * <p>Extract the final response message from the tool result message.
      *
      * @param toolResultMsg The tool result message containing the response
      * @return The final response message, or null if not found
@@ -307,18 +363,24 @@ public class StructuredOutputHook implements Hook {
     }
 
     /**
-     * Check if a message is related to structured output and should be removed.
+     * 检查消息是否与结构化输出相关,应被移除。
+     *
+     * <p>Check if a message is related to structured output and should be removed.
      */
     private boolean isStructuredOutputRelated(Msg msg) {
+        // 提醒消息通过 metadata 标记
         // Reminder messages are marked with metadata
         if (hasReminderMetadata(msg)) {
             return true;
         }
 
-        // ToolUse/ToolResult match by tool name
+        // ToolUse/ToolResult 按工具名称匹配
         return hasGenerateResponseTool(msg);
     }
 
+    /**
+     * 检查消息是否包含结构化输出提醒元数据。
+     */
     private boolean hasReminderMetadata(Msg msg) {
         Map<String, Object> metadata = msg.getMetadata();
         return metadata != null
@@ -326,13 +388,18 @@ public class StructuredOutputHook implements Hook {
                         metadata.get(MessageMetadataKeys.STRUCTURED_OUTPUT_REMINDER));
     }
 
+    /**
+     * 检查消息是否包含 generate_response 工具的调用或结果。
+     */
     private boolean hasGenerateResponseTool(Msg msg) {
+        // 检查 ToolUse
         // Check ToolUse
         if (msg.getContentBlocks(ToolUseBlock.class).stream()
                 .anyMatch(tu -> TOOL_NAME.equals(tu.getName()))) {
             return true;
         }
 
+        // 检查 ToolResult(所有结果必须匹配,避免误删混合结果)
         // Check ToolResult (all must match to avoid removing mixed results)
         List<ToolResultBlock> results = msg.getContentBlocks(ToolResultBlock.class);
         return !results.isEmpty()
@@ -340,7 +407,15 @@ public class StructuredOutputHook implements Hook {
     }
 
     /**
-     * Creates a reminder message to prompt the model to call generate_response.
+     * 创建提醒消息,提示模型调用 generate_response。
+     *
+     * <p>消息包含标记其身份的 metadata 和提醒模式,供 {@link #handlePreReasoning}
+     * 判断是否要在重试时强制 tool_choice。
+     *
+     * @param mode 结构化输出提醒模式
+     * @return 携带适当 metadata 的提醒消息
+     *
+     * <p>Creates a reminder message to prompt the model to call generate_response.
      *
      * <p>The message includes metadata to identify it as a reminder and store the
      * reminder mode, which is used by {@link #handlePreReasoning} to determine
@@ -371,7 +446,11 @@ public class StructuredOutputHook implements Hook {
     }
 
     /**
-     * Check if structured output generation is completed.
+     * 检查结构化输出生成是否已完成。
+     *
+     * @return 成功完成则返回 true
+     *
+     * <p>Check if structured output generation is completed.
      *
      * @return true if completed successfully
      */
@@ -380,7 +459,11 @@ public class StructuredOutputHook implements Hook {
     }
 
     /**
-     * Get the result message from generate_response.
+     * 获取 generate_response 的结果消息。
+     *
+     * @return 结果消息,未完成则返回 null
+     *
+     * <p>Get the result message from generate_response.
      *
      * @return The result message, or null if not completed
      */
@@ -389,7 +472,11 @@ public class StructuredOutputHook implements Hook {
     }
 
     /**
-     * Get the aggregated ChatUsage from all reasoning rounds.
+     * 获取所有 reasoning 轮的聚合 ChatUsage。
+     *
+     * @return 聚合后的 ChatUsage,未收集则返回 null
+     *
+     * <p>Get the aggregated ChatUsage from all reasoning rounds.
      *
      * @return The aggregated ChatUsage, or null if no usage was collected
      */
@@ -398,7 +485,11 @@ public class StructuredOutputHook implements Hook {
     }
 
     /**
-     * Get the aggregated ThinkingBlock from the last reasoning round.
+     * 获取最后一个 reasoning 轮的 ThinkingBlock。
+     *
+     * @return ThinkingBlock,未收集则返回 null
+     *
+     * <p>Get the aggregated ThinkingBlock from the last reasoning round.
      *
      * @return The ThinkingBlock, or null if no thinking was collected
      */
@@ -408,6 +499,7 @@ public class StructuredOutputHook implements Hook {
 
     @Override
     public int priority() {
+        // 高优先级,在其他 Hook 之前执行
         // High priority to execute before other hooks
         return 50;
     }

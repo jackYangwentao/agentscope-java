@@ -20,205 +20,224 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Docker 后端 {@link io.agentscope.harness.agent.sandbox.Sandbox} 的可序列化状态。
  * Serializable state for a Docker-backed {@link io.agentscope.harness.agent.sandbox.Sandbox}.
  *
- * <p>Persisted after each call to enable transparent container resume. If the container
- * identified by {@link #containerId} is still alive on resume, the sandbox reconnects. If
- * it is stopped, it is restarted. If it has been removed, a new container is created and the
- * workspace is restored from snapshot.
+ * <p>每次调用后持久化，以支持透明的容器恢复。如果 {@link #containerId} 标识的容器在恢复时仍然
+ * 存活，沙箱会重新连接。如果容器已停止，则重新启动。如果容器已被移除，则创建新容器并从快照
+ * 恢复工作空间。
  */
 public class DockerSandboxState extends SandboxState {
 
-    /** Docker container ID of the backing container. */
+    /** 底层 Docker 容器的容器 ID。Docker container ID of the backing container. */
     private String containerId;
 
-    /** Human-readable container name (e.g. {@code agentscope-sandbox-<sessionId>}). */
+    /** 人类可读的容器名称（例如 {@code agentscope-sandbox-<sessionId>}）。Human-readable container name. */
     private String containerName;
 
-    /** Docker image used to create this container. */
+    /** 用于创建此容器的 Docker 镜像。Docker image used to create this container. */
     private String image;
 
-    /** Workspace root path inside the container. */
+    /** 容器内的工作空间根路径。Workspace root path inside the container. */
     private String workspaceRoot;
 
     /**
+     * SDK 是否拥有容器生命周期（创建/停止/移除）。
      * Whether the SDK owns the container lifecycle (create/stop/remove).
-     * When {@code false}, the container was injected by the developer and will not be removed.
+     * 当 {@code false} 时，容器由开发者注入，不会被移除。
      */
     private boolean containerOwned = true;
 
-    /** Optional memory limit in bytes stored for container recreation on resume. */
+    /** 可选的内存限制（字节），用于在恢复时重建容器。Optional memory limit in bytes. */
     private Long memorySizeBytes;
 
-    /** Optional CPU count limit stored for container recreation on resume. */
+    /** 可选的 CPU 数量限制，用于在恢复时重建容器。Optional CPU count limit. */
     private Long cpuCount;
 
-    /** Exposed port numbers stored for container recreation on resume. */
+    /** 暴露的端口号，用于在恢复时重建容器。Exposed port numbers for container recreation on resume. */
     private int[] exposedPorts = {};
 
-    /** Docker network mode or network name passed to {@code docker run --network}. */
+    /** Docker 网络模式或网络名称，传递给 {@code docker run --network}。Docker network mode or network name. */
     private String network;
 
-    /** Additional raw arguments appended to {@code docker run} before the image name. */
+    /** 附加到 {@code docker run} 镜像名称之前的原始参数。Additional raw arguments appended to {@code docker run}. */
     private List<String> additionalRunArgs = new ArrayList<>();
 
     /**
+     * 返回 Docker 容器 ID。
      * Returns the Docker container ID.
      *
-     * @return container ID, or {@code null} if the container has not been created yet
+     * @return 容器 ID，如果容器尚未创建则返回 {@code null}
      */
     public String getContainerId() {
         return containerId;
     }
 
     /**
+     * 设置 Docker 容器 ID。
      * Sets the Docker container ID.
      *
-     * @param containerId Docker container ID
+     * @param containerId Docker 容器 ID
      */
     public void setContainerId(String containerId) {
         this.containerId = containerId;
     }
 
     /**
+     * 返回容器名称。
      * Returns the container name.
      *
-     * @return container name
+     * @return 容器名称
      */
     public String getContainerName() {
         return containerName;
     }
 
     /**
+     * 设置容器名称。
      * Sets the container name.
      *
-     * @param containerName container name
+     * @param containerName 容器名称
      */
     public void setContainerName(String containerName) {
         this.containerName = containerName;
     }
 
     /**
+     * 返回此容器使用的 Docker 镜像。
      * Returns the Docker image used for this container.
      *
-     * @return Docker image
+     * @return Docker 镜像
      */
     public String getImage() {
         return image;
     }
 
     /**
+     * 设置 Docker 镜像。
      * Sets the Docker image.
      *
-     * @param image Docker image
+     * @param image Docker 镜像
      */
     public void setImage(String image) {
         this.image = image;
     }
 
     /**
+     * 返回容器内的工作空间根路径。
      * Returns the workspace root path inside the container.
      *
-     * @return workspace root path
+     * @return 工作空间根路径
      */
     public String getWorkspaceRoot() {
         return workspaceRoot;
     }
 
     /**
+     * 设置容器内的工作空间根路径。
      * Sets the workspace root path inside the container.
      *
-     * @param workspaceRoot absolute path inside the container
+     * @param workspaceRoot 容器内的绝对路径
      */
     public void setWorkspaceRoot(String workspaceRoot) {
         this.workspaceRoot = workspaceRoot;
     }
 
     /**
+     * 返回 SDK 是否拥有容器生命周期。
      * Returns whether the SDK owns the container lifecycle.
      *
-     * @return {@code true} if the SDK manages container creation and removal
+     * @return {@code true} 如果 SDK 管理容器的创建和移除
      */
     public boolean isContainerOwned() {
         return containerOwned;
     }
 
     /**
+     * 设置 SDK 是否拥有容器生命周期。
      * Sets whether the SDK owns the container lifecycle.
      *
-     * @param containerOwned {@code true} if the SDK should stop and remove the container on shutdown
+     * @param containerOwned {@code true} 如果 SDK 应在关闭时停止并移除容器
      */
     public void setContainerOwned(boolean containerOwned) {
         this.containerOwned = containerOwned;
     }
 
     /**
+     * 返回可选的内存限制（字节）。
      * Returns the optional memory limit in bytes.
      *
-     * @return memory limit or {@code null}
+     * @return 内存限制或 {@code null}
      */
     public Long getMemorySizeBytes() {
         return memorySizeBytes;
     }
 
     /**
+     * 设置内存限制（字节）。
      * Sets the memory limit in bytes.
      *
-     * @param memorySizeBytes memory limit
+     * @param memorySizeBytes 内存限制
      */
     public void setMemorySizeBytes(Long memorySizeBytes) {
         this.memorySizeBytes = memorySizeBytes;
     }
 
     /**
+     * 返回可选的 CPU 数量限制。
      * Returns the optional CPU count limit.
      *
-     * @return CPU count or {@code null}
+     * @return CPU 数量或 {@code null}
      */
     public Long getCpuCount() {
         return cpuCount;
     }
 
     /**
+     * 设置 CPU 数量限制。
      * Sets the CPU count limit.
      *
-     * @param cpuCount number of CPUs
+     * @param cpuCount CPU 数量
      */
     public void setCpuCount(Long cpuCount) {
         this.cpuCount = cpuCount;
     }
 
     /**
+     * 返回暴露的端口号。
      * Returns the exposed port numbers.
      *
-     * @return port numbers array
+     * @return 端口号数组
      */
     public int[] getExposedPorts() {
         return exposedPorts;
     }
 
     /**
+     * 设置暴露的端口号。
      * Sets the exposed port numbers.
      *
-     * @param exposedPorts port numbers
+     * @param exposedPorts 端口号
      */
     public void setExposedPorts(int[] exposedPorts) {
         this.exposedPorts = exposedPorts != null ? exposedPorts : new int[0];
     }
 
     /**
+     * 返回 Docker 网络模式或网络名称。
      * Returns the docker network mode or network name.
      *
-     * @return docker network value, or {@code null} when unset
+     * @return Docker 网络值，未设置时返回 {@code null}
      */
     public String getNetwork() {
         return network;
     }
 
     /**
+     * 设置 Docker 网络模式或网络名称。
      * Sets the docker network mode or network name.
      *
-     * @param network docker network value
+     * @param network Docker 网络值
      */
     public void setNetwork(String network) {
         if (network == null) {
@@ -230,18 +249,20 @@ public class DockerSandboxState extends SandboxState {
     }
 
     /**
+     * 返回附加到 {@code docker run} 的原始参数。
      * Returns additional raw arguments appended to {@code docker run}.
      *
-     * @return additional docker run arguments
+     * @return 附加的 docker run 参数
      */
     public List<String> getAdditionalRunArgs() {
         return additionalRunArgs;
     }
 
     /**
+     * 设置附加到 {@code docker run} 的原始参数。
      * Sets additional raw arguments appended to {@code docker run}.
      *
-     * @param additionalRunArgs additional docker run arguments
+     * @param additionalRunArgs 附加的 docker run 参数
      */
     public void setAdditionalRunArgs(List<String> additionalRunArgs) {
         this.additionalRunArgs = new ArrayList<>();

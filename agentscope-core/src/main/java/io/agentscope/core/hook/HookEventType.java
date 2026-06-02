@@ -16,7 +16,11 @@
 package io.agentscope.core.hook;
 
 /**
- * Enum representing all hook event types.
+ * 所有 Hook 事件类型的枚举。
+ *
+ * <p>这些事件在 Agent 执行的不同阶段触发,可通过实现 {@link Hook} 接口来拦截。
+ *
+ * <p>Enum representing all hook event types.
  *
  * <p>These events are fired at different stages of agent execution and can be
  * intercepted by implementing the {@link Hook} interface.
@@ -25,39 +29,39 @@ package io.agentscope.core.hook;
  * @see HookEvent
  */
 public enum HookEventType {
-    /** Before agent starts processing */
+    /** Agent 开始处理前 */
     PRE_CALL,
 
-    /** After agent completes processing */
+    /** Agent 完成处理后 */
     POST_CALL,
 
-    /** Before LLM reasoning */
+    /** LLM 推理前 */
     PRE_REASONING,
 
-    /** After LLM reasoning completes */
+    /** LLM 推理完成后 */
     POST_REASONING,
 
-    /** During LLM reasoning streaming */
+    /** LLM 推理流式传输期间 */
     REASONING_CHUNK,
 
-    /** Before tool execution */
+    /** 工具执行前 */
     PRE_ACTING,
 
-    /** After tool execution completes */
+    /** 工具执行完成后 */
     POST_ACTING,
 
-    /** During tool execution streaming */
+    /** 工具执行流式传输期间 */
     ACTING_CHUNK,
 
-    /** Before summary generation (when max iterations reached) */
+    /** 摘要生成前(达到最大迭代次数时) */
     PRE_SUMMARY,
 
-    /** After summary generation completes */
+    /** 摘要生成完成后 */
     POST_SUMMARY,
 
-    /** During summary streaming */
+    /** 摘要流式传输期间 */
     SUMMARY_CHUNK,
 
-    /** When an error occurs */
+    /** 发生错误时 */
     ERROR
 }

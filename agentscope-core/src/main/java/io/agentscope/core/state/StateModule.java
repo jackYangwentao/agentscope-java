@@ -18,17 +18,15 @@ package io.agentscope.core.state;
 import io.agentscope.core.session.Session;
 
 /**
- * Interface for all stateful components in AgentScope.
+ * AgentScope 中所有有状态组件的接口。
  *
- * <p>This interface provides state serialization and deserialization capabilities for components
- * that need to persist and restore their internal state. Components that implement this interface
- * can have their state saved to and restored from external storage through the session management
- * system.
+ * <p>该接口为需要持久化和恢复其内部状态的组件提供状态序列化和反序列化能力。
+ * 实现此接口的组件可以通过会话管理系统将其状态保存到外部存储或从外部存储恢复。
  *
- * <p>Use {@link #saveTo(Session, String)} and {@link #loadFrom(Session, String)} for direct session
- * interaction with simple string session IDs.
+ * <p>使用 {@link #saveTo(Session, String)} 和 {@link #loadFrom(Session, String)}
+ * 通过简单字符串会话 ID 直接与会话交互。
  *
- * <p>Example usage:
+ * <p>使用示例：
  *
  * <pre>{@code
  * Session session = new JsonSession(Path.of("sessions"));

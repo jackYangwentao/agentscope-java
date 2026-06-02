@@ -22,31 +22,35 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Event fired before agent starts processing.
+ * Agent 开始处理前触发的事件。
  *
- * <p><b>Modifiable:</b> Yes - {@link #setInputMessages(List)}
+ * <p>此事件允许 Hook 在任何处理开始之前检查或修改输入消息和系统消息。
+ * 在此对消息所做的更改将影响整个 Agent 执行过程。
  *
- * <p><b>Context:</b>
- * <ul>
- *   <li>{@link #getAgent()} - The agent instance</li>
- *   <li>{@link #getMemory()} - Agent's existing memory or conversation history prior to processing this call</li>
- *   <li>{@link #getInputMessages()} - Messages input to the agent (modifiable)</li>
- * </ul>
+ * <p><b>可修改:</b> 是(消息、系统消息)
  *
- * <p><b>Use Cases:</b>
- * <ul>
- *   <li>Log the start of agent execution</li>
- *   <li>Initialize execution-specific resources</li>
- *   <li>Track agent invocation metrics</li>
- *   <li>Filter or modify input messages before agent processing</li>
- * </ul>
+ * <p>Event fired before an agent starts processing.
+ *
+ * <p>This event allows hooks to inspect or modify the input messages and system message
+ * before any processing begins. Changes made to messages here will affect the entire
+ * agent execution.
+ *
+ * <p><b>Modifiable:</b> Yes (messages, system message)
+ *
+ * @see PostCallEvent
  */
 public final class PreCallEvent extends HookEvent {
 
     private List<Msg> inputMessages;
 
     /**
-     * Constructor for PreCallEvent.
+     * PreCallEvent 的构造方法。
+     *
+     * @param agent Agent 实例(不能为 null)
+     * @param inputMessages Agent 的输入消息(不能为 null)
+     * @throws NullPointerException 如果 agent 或 inputMessages 为 null
+     *
+     * <p>Constructor for PreCallEvent.
      *
      * @param agent The agent instance (must not be null)
      * @param inputMessages The messages input to the agent (must not be null)
@@ -60,7 +64,11 @@ public final class PreCallEvent extends HookEvent {
     }
 
     /**
-     * Get the input messages for the agent call.
+     * 获取 Agent 的输入消息列表。
+     *
+     * @return 输入消息列表
+     *
+     * <p>Get the input messages for the agent call.
      *
      * @return The input messages
      */
@@ -69,7 +77,12 @@ public final class PreCallEvent extends HookEvent {
     }
 
     /**
-     * Modify the input messages for the agent call.
+     * 修改 Agent 调用的输入消息列表。
+     *
+     * @param inputMessages 新的消息列表(不能为 null)
+     * @throws NullPointerException 如果 inputMessages 为 null
+     *
+     * <p>Modify the input messages for the agent call.
      *
      * @param inputMessages The new message list (must not be null)
      * @throws NullPointerException if inputMessages is null

@@ -40,6 +40,23 @@ import java.util.List;
  * — RC-driven factories therefore degrade to no namespace. Callers needing per-user folder
  * scoping must bake the user identity into the factory at construction time.
  */
+/**
+ * 工作空间感知的会话实现，将会话状态存储在代理的工作空间目录下。
+ *
+ * <p>存储布局：
+ *
+ * <pre>
+ * &lt;workspace&gt;/[namespace/]agents/&lt;agentId&gt;/context/&lt;sessionId&gt;/{key}.json
+ * &lt;workspace&gt;/[namespace/]agents/&lt;agentId&gt;/context/&lt;sessionId&gt;/{key}.jsonl
+ * </pre>
+ *
+ * <p>这是本地的单租户默认 {@link io.agentscope.core.session.Session} 实现；
+ * 多用户生产部署必须配置分布式会话后端（例如 RedisSession），且不应使用此类。
+ * 由于底层的 {@link JsonSession#getSessionDir(SessionKey)} 钩子在无 {@link RuntimeContext}
+ * 的情况下被调用，因此传入的 {@link NamespaceFactory} 将以 {@link RuntimeContext#empty()}
+ * 进行解析——由 RC 驱动的工厂将降级为无命名空间。
+ * 需要按用户文件夹隔离的调用方必须在构造时将用户身份注入到工厂中。
+ */
 public class WorkspaceSession extends JsonSession {
 
     private final Path workspace;

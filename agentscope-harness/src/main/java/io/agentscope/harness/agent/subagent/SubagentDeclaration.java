@@ -20,34 +20,29 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Declares a subagent: its identity, workspace resolution strategy, and optional capability
- * allowlist.
+ * 声明一个子代理：其身份、工作区解析策略和可选的能力白名单。
  *
- * <p>A declaration binds to exactly one of two <em>source modes</em>:
+ * <p>声明绑定到两种<em>源模式</em>之一：
  *
  * <ol>
- *   <li><b>Definition workspace</b> — {@link #getWorkspacePath()} points to a workspace directory
- *       containing at least {@code AGENTS.md}. That file is used as the subagent's system-prompt
- *       body. Skills, knowledge, and MEMORY in the definition directory are available when the
- *       {@link WorkspaceMode} is {@link WorkspaceMode#ISOLATED}.
- *   <li><b>Remote HTTP</b> — {@link #getUrl()} points to an AgentScope task HTTP server. No local
- *       definition workspace or inline body; the subagent runs out-of-process. Mutually exclusive
- *       with definition workspace and inline body.
+ *   <li><b>定义工作区</b> — {@link #getWorkspacePath()} 指向至少包含 {@code AGENTS.md} 的工作区目录。
+ *       该文件用作子代理的系统提示词正文。当 {@link WorkspaceMode} 为 {@link WorkspaceMode#ISOLATED} 时，
+ *       定义目录中的技能、知识和 MEMORY 均可用。
+ *   <li><b>远程 HTTP</b> — {@link #getUrl()} 指向 AgentScope 任务 HTTP 服务器。没有本地定义工作区或内联正文；
+ *       子代理在进程外运行。与定义工作区和内联正文互斥。
  * </ol>
  *
- * <p>The three source modes are mutually exclusive: at most one of {@link Builder#workspace(Path)},
- * a non-blank {@link Builder#inlineAgentsBody(String)}, or a non-blank {@link Builder#url(String)}
- * may be set.
+ * <p>三种源模式互斥：最多只能设置 {@link Builder#workspace(Path)}、非空
+ * {@link Builder#inlineAgentsBody(String)} 或非空 {@link Builder#url(String)} 中的一个。
  *
- * <p>Workspace resolution follows the five-row decision table in {@link WorkspaceMode}.
+ * <p>工作区解析遵循 {@link WorkspaceMode} 中的五行决策表。
  *
- * <p>The {@code tools} list, when non-empty, acts as an <em>allowlist filter</em> for inherited
- * parent tools: only inherited tools whose names appear in the list are kept. Child-local tool
- * registrations may still be added by the child builder.
+ * <p>{@code tools} 列表在非空时充当继承父工具的<em>白名单过滤器</em>：
+ * 仅保留名称在列表中的继承工具。子代理本地的工具注册仍可由子代理构建器添加。
  *
- * <p>Obtain instances via {@link #builder()}.
+ * <p>通过 {@link #builder()} 获取实例。
  *
- * <p>Example (programmatic):
+ * <p>示例（编程方式）：
  *
  * <pre>{@code
  * SubagentDeclaration decl = SubagentDeclaration.builder()

@@ -16,18 +16,18 @@
 package io.agentscope.harness.agent.memory.compaction;
 
 /**
- * Configuration for conversation compaction (summarization).
+ * 对话压缩（摘要）配置。
  *
  * <ul>
- *   <li><b>trigger</b> — when to run compaction (by token count or message count)</li>
- *   <li><b>keep</b> — how many recent messages to preserve verbatim after compaction</li>
+ *   <li><b>触发</b> — 何时运行压缩（按令牌数或消息数）</li>
+ *   <li><b>保留</b> — 压缩后逐字保留多少条最近消息</li>
  * </ul>
  *
- * <p>Defaults:
+ * <p>默认值：
  * <ul>
- *   <li>Trigger at 50 messages or 80 000 estimated tokens (whichever comes first)</li>
- *   <li>Keep the 20 most recent messages verbatim</li>
- *   <li>Summarization is enabled; memory flush and offload are both enabled before summary</li>
+ *   <li>50 条消息或 80,000 个估计令牌时触发（以先到者为准）</li>
+ *   <li>逐字保留最近 20 条消息</li>
+ *   <li>启用摘要生成；压缩前同时启用内存刷新和卸载</li>
  * </ul>
  */
 public class CompactionConfig {
@@ -232,19 +232,18 @@ public class CompactionConfig {
     // -------------------------------------------------------------------------
 
     /**
-     * Configuration for the lightweight argument-truncation pass that runs before
-     * summarization.
+     * 压缩前运行的轻量级参数截断操作的配置。
      *
-     * <p>When triggered, large string arguments of {@code ToolUseBlock}s in older messages
-     * (before the keep window) are clipped to {@link #getMaxArgLength()} characters.
-     * This is a cheap, non-LLM operation that prevents context ballooning from verbose
-     * tool invocations (e.g., {@code write_file}, {@code edit_file}).
+     * <p>当触发时，旧消息（保留窗口之前）中 {@code ToolUseBlock} 的大字符串参数
+     * 将被裁剪到 {@link #getMaxArgLength()} 个字符。
+     * 这是一个廉价、非 LLM 的操作，可防止冗长的工具调用（例如 {@code write_file}、{@code edit_file}）
+     * 导致上下文膨胀。
      *
-     * <p>Defaults (when enabled via {@link Builder#truncateArgs(TruncateArgsConfig)}):
+     * <p>默认值（通过 {@link Builder#truncateArgs(TruncateArgsConfig)} 启用时）：
      * <ul>
-     *   <li>Trigger at 25 messages or 40 000 tokens</li>
-     *   <li>Keep the 20 most recent messages untouched</li>
-     *   <li>Max argument length: 2 000 characters</li>
+     *   <li>25 条消息或 40,000 个令牌时触发</li>
+     *   <li>保留最近 20 条消息不变</li>
+     *   <li>最大参数长度：2,000 个字符</li>
      * </ul>
      */
     public static class TruncateArgsConfig {

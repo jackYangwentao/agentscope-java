@@ -20,41 +20,46 @@ import io.agentscope.core.message.ContentBlock;
 /**
  * Content accumulator interface for accumulating streaming content blocks.
  *
+ * <p>用于累积流式内容块的内容累积器接口。
+ * 本接口定义了对来自流式响应的内容块进行累积的契约。不同的内容类型
+ * (文本、思考、工具调用)有不同的累积策略。
+ *
  * <p>This interface defines the contract for accumulating content blocks from streaming responses.
  * Different content types (text, thinking, tool calls) have different accumulation strategies.
  *
  * @hidden
- * @param <T> The type of content block to accumulate
+ * @param <T> 要累积的内容块类型
  */
 public interface ContentAccumulator<T extends ContentBlock> {
 
     /**
-     * Add a content block chunk to the accumulator.
+     * 向累积器中添加一个内容块分片。
      *
      * @hidden
-     * @param block The content block chunk to add
+     * @param block 要添加的内容块分片
      */
     void add(T block);
 
     /**
-     * Check if the accumulator has any accumulated content.
+     * 检查累积器是否已有任何已累积的内容。
      *
      * @hidden
-     * @return true if there is accumulated content, false otherwise
+     * @return 如果有已累积的内容则返回 true,否则返回 false
      */
     boolean hasContent();
 
     /**
-     * Build the aggregated content block from all accumulated chunks.
+     * 从所有已累积的分片构建聚合后的内容块。
      *
      * @hidden
-     * @return The aggregated content block, or null if no content
+     * @return 聚合后的内容块,如果没有内容则返回 null
      */
     ContentBlock buildAggregated();
 
     /**
+     * 重置累积器状态,清空所有已累积的内容。
+     *
      * @hidden
-     * Reset the accumulator state, clearing all accumulated content.
      */
     void reset();
 }

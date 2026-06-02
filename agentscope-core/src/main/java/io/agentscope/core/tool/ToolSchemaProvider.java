@@ -21,24 +21,23 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Provides tool schemas in various formats for model consumption.
+ * 以多种格式提供工具 Schema 供模型使用。
  *
- * <p>This class is responsible for generating tool schemas that are sent to LLMs to inform them
- * about available tools. It filters tools based on active tool groups, ensuring that only tools
- * from active groups (or ungrouped tools) are included in the schemas.
+ * <p>该类负责生成发送给 LLM 的工具 Schema，告知其可用的工具。它根据激活的工具组进行过滤，
+ * 确保只有来自激活组的工具（或未分组的工具）包含在 Schema 中。
  *
- * <p><b>Key Responsibilities:</b>
+ * <p><b>核心职责：</b>
  * <ul>
- *   <li>Generate tool schemas in OpenAI format (Map-based representation)</li>
- *   <li>Generate tool schemas as {@link ToolSchema} objects for model APIs</li>
- *   <li>Filter tools based on {@link ToolGroupManager} activation state</li>
- *   <li>Use extended parameters from {@link RegisteredToolFunction} for accurate schemas</li>
+ *   <li>生成 OpenAI 格式的工具 Schema（基于 Map 的表示）</li>
+ *   <li>生成 {@link ToolSchema} 对象格式的工具 Schema 供模型 API 使用</li>
+ *   <li>根据 {@link ToolGroupManager} 激活状态过滤工具</li>
+ *   <li>使用 {@link RegisteredToolFunction} 的扩展参数生成准确的 Schema</li>
  * </ul>
  *
- * <p><b>Filtering Logic:</b> A tool is included in schemas if and only if:
+ * <p><b>过滤逻辑：</b>工具被包含在 Schema 中当且仅当：
  * <ul>
- *   <li>It is ungrouped (not assigned to any tool group), OR</li>
- *   <li>It belongs to at least one group that is currently active</li>
+ *   <li>该工具未分组（未分配给任何工具组），或者</li>
+ *   <li>它属于至少一个当前激活的工具组</li>
  * </ul>
  */
 class ToolSchemaProvider {

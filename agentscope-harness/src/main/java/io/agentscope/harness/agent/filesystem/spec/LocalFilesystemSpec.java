@@ -23,17 +23,17 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Specification for the local filesystem mode (with shell execution).
+ * 本地文件系统模式（支持 Shell 执行）的配置规范。
  *
- * <p>This spec produces a {@link LocalFilesystemWithShell} whose root is the agent workspace and
- * whose shell runs directly on the host as {@code sh -c <command>}. Long-term memory
- * ({@code MEMORY.md}, {@code memory/}) and session logs live on the same local disk.
+ * <p>此规范创建一个 {@link LocalFilesystemWithShell}，其根目录为 Agent 工作区，
+ * Shell 直接在宿主机上以 {@code sh -c <command>} 形式运行。
+ * 长期记忆（{@code MEMORY.md}、{@code memory/}）和会话日志存储在本地磁盘上。
  *
- * <p>Suitable for single-process deployments (personal assistants, CLI tools, local dev loops)
- * where distributed sharing is not required and the agent is trusted to run host shell commands.
+ * <p>适用于单进程部署（个人助手、CLI 工具、本地开发循环），
+ * 不需要分布式共享，且 Agent 被信任可以在宿主机上执行 Shell 命令。
  *
- * <p>For distributed deployments where long-term memory must be shared across replicas, prefer
- * {@link RemoteFilesystemSpec} (no shell) or a sandbox filesystem spec (shell via sandbox).
+ * <p>对于需要跨副本共享长期记忆的分布式部署，建议使用 {@link RemoteFilesystemSpec}
+ * （无 Shell）或沙箱文件系统规范（通过沙箱执行 Shell）。
  */
 public class LocalFilesystemSpec {
 

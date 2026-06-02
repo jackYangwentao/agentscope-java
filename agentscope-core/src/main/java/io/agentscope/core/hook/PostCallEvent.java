@@ -20,31 +20,35 @@ import io.agentscope.core.message.Msg;
 import java.util.Objects;
 
 /**
- * Event fired after agent completes processing.
+ * Agent 完成处理后触发的事件。
  *
- * <p><b>Modifiable:</b> Yes - {@link #setFinalMessage(Msg)}
+ * <p>此事件允许 Hook 检查或修改 Agent 的最终响应。对输出消息所做的更改
+ * 将作为 Agent 调用的返回值返回调用方。
  *
- * <p><b>Context:</b>
- * <ul>
- *   <li>{@link #getAgent()} - The agent instance</li>
- *   <li>{@link #getMemory()} - Agent's memory (includes final message)</li>
- *   <li>{@link #getFinalMessage()} - The final response message (modifiable)</li>
- * </ul>
+ * <p><b>可修改:</b> 是(输出消息)
  *
- * <p><b>Use Cases:</b>
- * <ul>
- *   <li>Post-process the final agent response</li>
- *   <li>Add final metadata or formatting</li>
- *   <li>Filter or sanitize output</li>
- *   <li>Log outgoing responses</li>
- * </ul>
+ * <p>Event fired after an agent completes processing.
+ *
+ * <p>This event allows hooks to inspect or modify the agent's final response.
+ * Changes made to the output message will be returned to the caller as the
+ * result of the agent invocation.
+ *
+ * <p><b>Modifiable:</b> Yes (output message)
+ *
+ * @see PreCallEvent
  */
 public final class PostCallEvent extends HookEvent {
 
     private Msg finalMessage;
 
     /**
-     * Constructor for PostCallEvent.
+     * PostCallEvent 的构造方法。
+     *
+     * @param agent Agent 实例(不能为 null)
+     * @param finalMessage 最终响应消息(不能为 null)
+     * @throws NullPointerException 如果 agent 或 finalMessage 为 null
+     *
+     * <p>Constructor for PostCallEvent.
      *
      * @param agent The agent instance (must not be null)
      * @param finalMessage The final response message (must not be null)
@@ -56,7 +60,11 @@ public final class PostCallEvent extends HookEvent {
     }
 
     /**
-     * Get the final response message returned by the agent.
+     * 获取最终响应消息。
+     *
+     * @return 最终消息
+     *
+     * <p>Get the final response message.
      *
      * @return The final message
      */
@@ -65,7 +73,12 @@ public final class PostCallEvent extends HookEvent {
     }
 
     /**
-     * Modify the final response message.
+     * 修改最终响应消息。
+     *
+     * @param finalMessage 新的最终消息(不能为 null)
+     * @throws NullPointerException 如果 finalMessage 为 null
+     *
+     * <p>Modify the final response message.
      *
      * @param finalMessage The new final message (must not be null)
      * @throws NullPointerException if finalMessage is null

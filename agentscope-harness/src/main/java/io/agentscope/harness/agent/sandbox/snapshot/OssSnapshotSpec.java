@@ -19,29 +19,35 @@ import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClientBuilder;
 
 /**
+ * 阿里云 OSS 快照存储的便捷 {@link SandboxSnapshotSpec} 实现。
+ * <p>
  * Convenience {@link SandboxSnapshotSpec} for Alibaba Cloud OSS snapshot storage.
  */
 public class OssSnapshotSpec extends RemoteSnapshotSpec {
 
     /**
+     * 从已有的 OSS 客户端创建 OSS 快照规范。
+     * <p>
      * Creates an OSS snapshot spec from an existing OSS client.
      *
-     * @param ossClient initialized OSS client
-     * @param bucketName target bucket
-     * @param keyPrefix key prefix (optional, may be null/blank)
+     * @param ossClient  初始化后的 OSS 客户端
+     * @param bucketName 目标存储桶
+     * @param keyPrefix  键前缀（可选，可为 null/空）
      */
     public OssSnapshotSpec(OSS ossClient, String bucketName, String keyPrefix) {
         super(new OssRemoteSnapshotClient(ossClient, bucketName, keyPrefix));
     }
 
     /**
+     * 从端点/凭证设置创建 OSS 快照规范。
+     * <p>
      * Creates an OSS snapshot spec from endpoint/credential settings.
      *
-     * @param endpoint OSS endpoint (e.g. oss-cn-hangzhou.aliyuncs.com)
-     * @param accessKeyId access key id
-     * @param accessKeySecret access key secret
-     * @param bucketName target bucket
-     * @param keyPrefix key prefix (optional, may be null/blank)
+     * @param endpoint       OSS 端点（例如 oss-cn-hangzhou.aliyuncs.com）
+     * @param accessKeyId    访问密钥 ID
+     * @param accessKeySecret 访问密钥 Secret
+     * @param bucketName     目标存储桶
+     * @param keyPrefix      键前缀（可选，可为 null/空）
      */
     public OssSnapshotSpec(
             String endpoint,

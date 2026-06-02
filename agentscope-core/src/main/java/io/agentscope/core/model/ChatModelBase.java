@@ -22,9 +22,9 @@ import java.util.List;
 import reactor.core.publisher.Flux;
 
 /**
- * Abstract base class for all models in the AgentScope framework.
+ * AgentScope 框架中所有模型的抽象基类。
  *
- * <p>This class provides common functionality for model including basic model invocation and tracing.
+ * <p>该类提供模型的通用功能，包括基本的模型调用和链路追踪。
  */
 public abstract class ChatModelBase implements Model {
 

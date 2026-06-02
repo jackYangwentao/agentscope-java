@@ -37,21 +37,20 @@ import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
 /**
- * Gemini Chat Model implementation using the official Google GenAI Java SDK.
+ * 使用官方 Google GenAI Java SDK 的 Gemini Chat Model 实现。
  *
  * <p>
- * This implementation provides complete integration with Gemini's Content
- * Generation API,
- * including tool calling and multi-agent conversation support.
+ * 该实现提供与 Gemini 的 Content Generation API 的完整集成，
+ * 包括工具调用和多智能体对话支持。
  *
  * <p>
- * <b>Supported Features:</b>
+ * <b>支持的特性：</b>
  * <ul>
- * <li>Text generation with streaming and non-streaming modes</li>
- * <li>Tool/function calling support</li>
- * <li>Multi-agent conversation with history merging</li>
- * <li>Vision capabilities (images, audio, video)</li>
- * <li>Thinking mode (extended reasoning)</li>
+ * <li>流式和非流式模式的文本生成</li>
+ * <li>工具/函数调用支持</li>
+ * <li>带历史合并的多智能体对话</li>
+ * <li>视觉能力（图片、音频、视频）</li>
+ * <li>思考模式（扩展推理）</li>
  * </ul>
  */
 public class GeminiChatModel extends ChatModelBase {

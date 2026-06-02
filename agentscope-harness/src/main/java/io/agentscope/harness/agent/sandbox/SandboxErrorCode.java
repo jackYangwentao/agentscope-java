@@ -16,40 +16,41 @@
 package io.agentscope.harness.agent.sandbox;
 
 /**
+ * 沙箱操作的错误码，用于 {@link SandboxException} 及其子类。
  * Error codes for sandbox operations, used in {@link SandboxException} and its subclasses.
  */
 public enum SandboxErrorCode {
 
-    /** Command exited with a non-zero exit code. */
+    /** 命令以非零退出码结束。 */
     EXEC_NONZERO,
 
-    /** Command execution timed out. */
+    /** 命令执行超时。 */
     EXEC_TIMEOUT,
 
-    /** Failed to start the workspace backend. */
+    /** 启动工作空间后端失败。 */
     WORKSPACE_START_ERROR,
 
-    /** Failed to stop/persist the workspace backend. */
+    /** 停止/持久化工作空间后端失败。 */
     WORKSPACE_STOP_ERROR,
 
-    /** Failed to read or parse a workspace archive (tar). */
+    /** 读取或解析工作空间归档（tar）失败。 */
     WORKSPACE_ARCHIVE_READ_ERROR,
 
-    /** Failed to create a workspace archive (tar). */
+    /** 创建工作空间归档（tar）失败。 */
     WORKSPACE_ARCHIVE_WRITE_ERROR,
 
-    /** Failed to persist a snapshot. */
+    /** 持久化快照失败。 */
     SNAPSHOT_PERSIST_ERROR,
 
-    /** Failed to restore a snapshot. */
+    /** 恢复快照失败。 */
     SNAPSHOT_RESTORE_ERROR,
 
-    /** Snapshot does not exist or is not restorable. */
+    /** 快照不存在或无法恢复。 */
     SNAPSHOT_NOT_RESTORABLE,
 
-    /** A manifest entry contains an invalid or unsafe path. */
+    /** 清单条目包含无效或不安全的路径。 */
     INVALID_MANIFEST_PATH,
 
-    /** Invalid or missing sandbox configuration. */
+    /** 无效或缺失的沙箱配置。 */
     CONFIGURATION_ERROR
 }

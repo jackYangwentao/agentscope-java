@@ -16,28 +16,31 @@
 package io.agentscope.harness.agent.sandbox;
 
 /**
+ * 沙箱命令执行的结果。
  * Result of a sandbox command execution.
  *
- * @param exitCode process exit code (0 indicates success)
- * @param stdout captured standard output
- * @param stderr captured standard error
- * @param truncated whether output was truncated due to exceeding the maximum capture size
+ * @param exitCode 进程退出码（0 表示成功）
+ * @param stdout 捕获的标准输出
+ * @param stderr 捕获的标准错误
+ * @param truncated 输出是否因超过最大捕获大小而被截断
  */
 public record ExecResult(int exitCode, String stdout, String stderr, boolean truncated) {
 
     /**
+     * 如果命令以退出码 0 结束则返回 {@code true}。
      * Returns {@code true} if the command exited with code 0.
      *
-     * @return true if exit code is 0
+     * @return 如果退出码为 0 则返回 true
      */
     public boolean ok() {
         return exitCode == 0;
     }
 
     /**
+     * 返回合并的 stdout 和 stderr，如果 stderr 非空则添加 "[stderr]" 前缀。
      * Returns combined stdout and stderr, with stderr prefixed with "[stderr]" if non-empty.
      *
-     * @return combined output string
+     * @return 合并的输出字符串
      */
     public String combinedOutput() {
         if (stderr == null || stderr.isBlank()) {

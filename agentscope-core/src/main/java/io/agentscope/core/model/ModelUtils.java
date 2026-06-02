@@ -23,10 +23,9 @@ import reactor.core.publisher.Flux;
 import reactor.util.retry.Retry;
 
 /**
- * Utility class for common Model operations.
+ * 通用模型操作的工具类。
  *
- * <p>This class provides shared functionality used across different Model implementations,
- * including timeout and retry logic for model API calls.
+ * <p>该类提供跨不同 Model 实现使用的共享功能，包括模型 API 调用的超时和重试逻辑。
  */
 public final class ModelUtils {
 

@@ -23,13 +23,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Thread-safe in-memory implementation of {@link BaseStore}.
+ * 基于内存的 {@link BaseStore} 线程安全实现。
  *
- * <p>Items are stored in a ConcurrentHashMap keyed by the concatenation of
- * namespace components and the item key, separated by {@code '\0'}.
+ * <p>项存储在 ConcurrentHashMap 中，键由命名空间组件和项键通过 {@code '\0'} 分隔拼接而成。
  *
- * <p>Every successful {@link #put} and {@link #putIfVersion} increments the item's
- * {@link StoreItem#version()} counter, enabling optimistic concurrency control.
+ * <p>每次成功的 {@link #put} 和 {@link #putIfVersion} 都会递增项的 {@link StoreItem#version()}
+ * 计数器，实现乐观并发控制。
  */
 public class InMemoryStore implements BaseStore {
 

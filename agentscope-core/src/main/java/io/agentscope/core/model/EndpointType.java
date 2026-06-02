@@ -16,17 +16,16 @@
 package io.agentscope.core.model;
 
 /**
- * Enum representing the endpoint type for DashScope models.
+ * 表示 DashScope 模型的端点类型枚举。
  *
- * <p>This allows developers to explicitly specify which API endpoint to use,
- * overriding the automatic model name-based detection.
+ * <p>允许开发者明确指定要使用的 API 端点，覆盖基于模型名称的自动检测。
  *
- * <p>Usage example:
+ * <p>使用示例：
  * <pre>{@code
  * DashScopeChatModel model = DashScopeChatModel.builder()
  *     .apiKey("sk-xxx")
  *     .modelName("qwen3.5-plus")
- *     .endpointType(EndpointType.MULTIMODAL)  // Explicitly use multimodal API
+ *     .endpointType(EndpointType.MULTIMODAL)  // 明确使用多模态 API
  *     .build();
  * }</pre>
  */

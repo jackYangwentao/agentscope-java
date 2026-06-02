@@ -74,6 +74,12 @@ import reactor.core.publisher.Mono;
  *
  * <p>This hook runs at {@link PreReasoningEvent}; priority matches
  * {@link SubagentsHook#SUBAGENT_HOOK_PRIORITY} (80).
+ *
+ * <p>动态子 agent 钩子，{@link SubagentsHook} 的动态版本。
+ * 在每个推理步骤重新解析已注册的子 agent 集合，通过工作区 {@link AbstractFilesystem}
+ * 支持按用户隔离（例如 {@code CompositeFilesystem} 将用户作用域的写入路由到远程存储）。
+ * 采用两层加载机制：第一层通过 filesystem 进行命名空间感知的覆盖读取，
+ * 第二层从本地工作区子 agent 目录直接加载，合并后动态覆盖静态条目。
  */
 public class DynamicSubagentsHook implements Hook, RuntimeContextAware {
 
@@ -95,19 +101,30 @@ public class DynamicSubagentsHook implements Hook, RuntimeContextAware {
     /**
      * Builds a dynamic subagents hook.
      *
+     * <p>构建动态子 agent 钩子。
+     *
      * @param staticEntries entries from the builder that are <em>not</em> derived from local-disk
      *     scanning (programmatic registrations + {@code general-purpose}). Same-name dynamic
      *     declarations override these.
+     *     <p>来自构建器的条目，<em>不</em>源自本地磁盘扫描（编程注册 + {@code general-purpose}）。
+     *     同名的动态声明会覆盖这些条目。
      * @param filesystem workspace filesystem used for namespaced reads of {@code subagents/}
+     *     <p>用于对 {@code subagents/} 进行命名空间读取的工作区文件系统
      * @param mainWorkspace local workspace root, used for Layer 2 fallback and as the
      *     {@code mainWorkspace} argument when parsing declarations
+     *     <p>本地工作区根目录，用于第二层回退和作为解析声明时的 {@code mainWorkspace} 参数
      * @param factoryBuilder turns a parsed {@link SubagentDeclaration} into a {@link SubagentFactory};
      *     supplied by {@code HarnessAgent.Builder} so this hook can reuse the same captured context
      *     (model resolver, parent toolkit, disable flags, ...)
+     *     <p>将解析后的 {@link SubagentDeclaration} 转换为 {@link SubagentFactory}；
+     *     由 {@code HarnessAgent.Builder} 提供，以便此钩子可以重用相同的捕获上下文
      * @param agentManager target manager that is atomically replaced each reasoning step
+     *     <p>目标管理器，在每个推理步骤原子性地替换
      * @param subagentTool the agent-spawn tool to expose
+     *     <p>要暴露的 agent 生成工具
      * @param taskRepository repository backing {@link TaskTool}; may be {@code null} for a default
      *     in-memory store
+     *     <p>支持 {@link TaskTool} 的仓库；可以为 {@code null}，此时使用默认的内存存储
      */
     public DynamicSubagentsHook(
             List<SubagentEntry> staticEntries,
@@ -166,9 +183,13 @@ public class DynamicSubagentsHook implements Hook, RuntimeContextAware {
     /**
      * Two-layer merge: programmatic static entries first, then dynamic declarations from Layer 1
      * (filesystem, namespaced) overriding Layer 2 (local workspace {@code subagents/} directory).
+     *
+     * <p>两层合并：首先处理编程静态条目，然后第一层（文件系统，命名空间）的动态声明
+     * 覆盖第二层（本地工作区 {@code subagents/} 目录）。
      */
     private List<SubagentEntry> reloadEntries() {
         // ---- Layer 2 (base): local workspace scan ----
+        // ---- 第二层（基础）：本地工作区扫描 ----
         Map<String, SubagentDeclaration> declsByName = new LinkedHashMap<>();
         Path subagentsDir = mainWorkspace != null ? mainWorkspace.resolve(SUBAGENTS_DIR) : null;
         if (subagentsDir != null && Files.isDirectory(subagentsDir)) {
@@ -179,6 +200,7 @@ public class DynamicSubagentsHook implements Hook, RuntimeContextAware {
         }
 
         // ---- Layer 1 (override): filesystem with namespace ----
+        // ---- 第一层（覆盖）：带命名空间的文件系统 ----
         if (filesystem != null) {
             for (SubagentDeclaration d : loadDeclarationsViaFilesystem()) {
                 declsByName.put(d.getName(), d);
@@ -186,6 +208,7 @@ public class DynamicSubagentsHook implements Hook, RuntimeContextAware {
         }
 
         // ---- Materialise factories ----
+        // ---- 物化工厂 ----
         List<SubagentEntry> dynamicEntries = new ArrayList<>(declsByName.size());
         for (SubagentDeclaration decl : declsByName.values()) {
             if (factoryBuilder == null) {
@@ -207,6 +230,7 @@ public class DynamicSubagentsHook implements Hook, RuntimeContextAware {
         }
 
         // ---- Combine: static + dynamic, dynamic wins on name conflict ----
+        // ---- 合并：静态 + 动态，动态在名称冲突时获胜 ----
         Map<String, SubagentEntry> combined = new LinkedHashMap<>();
         for (SubagentEntry e : staticEntries) {
             combined.put(e.name(), e);
@@ -261,6 +285,11 @@ public class DynamicSubagentsHook implements Hook, RuntimeContextAware {
         return decls;
     }
 
+    /**
+     * Extracts the file name (without directory) from a path string.
+     *
+     * <p>从路径字符串中提取文件名（不含目录部分）。
+     */
     private static String extractFileName(String path) {
         int slash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
         return slash < 0 ? path : path.substring(slash + 1);

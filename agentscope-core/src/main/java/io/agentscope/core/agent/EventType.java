@@ -18,77 +18,80 @@ package io.agentscope.core.agent;
 /**
  * Types of events emitted during agent execution.
  *
+ * <p>Agent 执行过程中发出的事件类型。每种事件类型对应 ReAct 推理-执行循环中的一个具体阶段,
+ * 便于监控 Agent 行为并清晰分离关注点。
+ *
  * <p>Each event type represents a specific stage in the agent's reasoning-acting loop.
  * Events provide a clear separation of concerns for monitoring agent behavior.
  */
 public enum EventType {
     /**
-     * Reasoning event - Agent thinking and planning.
+     * 推理事件 - Agent 进行思考和规划。
      *
-     * <p>Characteristics:
+     * <p>特征:
      * <ul>
-     *   <li>Message role: {@link io.agentscope.core.message.MsgRole#ASSISTANT}</li>
-     *   <li>Content: TextBlock, ThinkingBlock, and/or tool call requests</li>
-     *   <li>Streaming: Supported (multiple events with same message ID)</li>
+     *   <li>消息角色: {@link io.agentscope.core.message.MsgRole#ASSISTANT}</li>
+     *   <li>内容: TextBlock、ThinkingBlock 和/或工具调用请求</li>
+     *   <li>流式: 支持(同一 message ID 可对应多个事件)</li>
      * </ul>
      */
     REASONING,
 
     /**
-     * Tool execution result event.
+     * 工具执行结果事件。
      *
-     * <p>Characteristics:
+     * <p>特征:
      * <ul>
-     *   <li>Message role: {@link io.agentscope.core.message.MsgRole#TOOL}</li>
-     *   <li>Content: ToolResultBlock with execution output</li>
-     *   <li>Streaming: Supported for long-running tools</li>
+     *   <li>消息角色: {@link io.agentscope.core.message.MsgRole#TOOL}</li>
+     *   <li>内容: 包含执行输出的 ToolResultBlock</li>
+     *   <li>流式: 长时间运行的工具支持流式输出</li>
      * </ul>
      */
     TOOL_RESULT,
 
     /**
-     * Hint event - Information from RAG, memory, or planning systems.
+     * 提示事件 - 来自 RAG、记忆或计划系统的信息。
      *
-     * <p>Characteristics:
+     * <p>特征:
      * <ul>
-     *   <li>Message role: {@link io.agentscope.core.message.MsgRole#USER} or SYSTEM</li>
-     *   <li>Content: TextBlock with retrieved or contextual information</li>
-     *   <li>Streaming: Not applicable (complete messages only)</li>
+     *   <li>消息角色: {@link io.agentscope.core.message.MsgRole#USER} 或 SYSTEM</li>
+     *   <li>内容: 包含检索到的或上下文信息的 TextBlock</li>
+     *   <li>流式: 不适用(仅完整消息)</li>
      * </ul>
      */
     HINT,
 
     /**
-     * Final result event - The agent's complete response.
+     * 最终结果事件 - Agent 完整的响应。
      *
-     * <p>This is the message returned by {@link Agent#call(io.agentscope.core.message.Msg)}.
-     * By default, this event is NOT included in the stream to avoid duplication since it's the return value.
+     * <p>这就是 {@link Agent#call(io.agentscope.core.message.Msg)} 返回的消息。
+     * 默认情况下,此事件不会包含在流中,以避免与返回值重复。
      *
-     * <p>Characteristics:
+     * <p>特征:
      * <ul>
-     *   <li>Message role: {@link io.agentscope.core.message.MsgRole#ASSISTANT}</li>
-     *   <li>Content: Final response text</li>
-     *   <li>Streaming: Not applicable</li>
+     *   <li>消息角色: {@link io.agentscope.core.message.MsgRole#ASSISTANT}</li>
+     *   <li>内容: 最终响应文本</li>
+     *   <li>流式: 不适用</li>
      * </ul>
      */
     AGENT_RESULT,
 
     /**
-     * Summary event - Generated when max iterations reached.
+     * 总结事件 - 达到最大迭代次数时生成。
      *
-     * <p>Characteristics:
+     * <p>特征:
      * <ul>
-     *   <li>Message role: {@link io.agentscope.core.message.MsgRole#ASSISTANT}</li>
-     *   <li>Content: Summary of what was accomplished</li>
-     *   <li>Streaming: May support streaming</li>
+     *   <li>消息角色: {@link io.agentscope.core.message.MsgRole#ASSISTANT}</li>
+     *   <li>内容: 已完成工作的摘要</li>
+     *   <li>流式: 可能支持流式</li>
      * </ul>
      */
     SUMMARY,
 
     /**
-     * Special value to stream all event types (except {@link #AGENT_RESULT}).
+     * 特殊值:流式输出所有事件类型({@link #AGENT_RESULT} 除外)。
      *
-     * <p>Use this in {@link StreamOptions} to receive all events without filtering.
+     * <p>在 {@link StreamOptions} 中使用,以接收所有事件而不过滤。
      */
     ALL
 }

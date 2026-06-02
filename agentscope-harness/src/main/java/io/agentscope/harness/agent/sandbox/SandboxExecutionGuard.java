@@ -18,60 +18,45 @@ package io.agentscope.harness.agent.sandbox;
 import io.agentscope.harness.agent.IsolationScope;
 
 /**
+ * 沙箱执行槽的可插拔并发守卫。
  * Pluggable concurrency guard for sandbox execution slots.
  *
- * <p>A guard controls how many concurrent executions are allowed for a given
- * {@link SandboxIsolationKey}. The default {@link #noop()} imposes no restriction, preserving
- * existing behaviour.
+ * <p>守卫控制给定 {@link SandboxIsolationKey} 允许的最大并发执行数。
+ * 默认的 {@link #noop()} 不施加任何限制，保持现有行为。
  *
- * <p>This extension point is primarily useful for {@link IsolationScope#USER},
- * {@link IsolationScope#AGENT} and {@link IsolationScope#GLOBAL} scopes, where multiple
- * concurrent callers could otherwise race on the same persistent state slot (last write wins).
- * Providing a guard serialises such callers without requiring changes to the surrounding
- * infrastructure.
+ * <p>此扩展点主要用于 {@link IsolationScope#USER}、{@link IsolationScope#AGENT} 和
+ * {@link IsolationScope#GLOBAL} 作用域，其中多个并发调用者可能在同一持久状态槽上竞争
+ * （最后写入者胜出）。提供守卫可以在不改变周边基础设施的情况下序列化此类调用者。
  *
- * <p>Implementations may use any backend — JVM semaphores, Redis {@code SET NX} leases,
- * ZooKeeper, database advisory locks, etc. — and must be thread-safe.
+ * <p>实现可以使用的任何后端——JVM 信号量、Redis {@code SET NX} 租约、
+ * ZooKeeper、数据库建议锁等——且必须是线程安全的。
  *
- * <h2>Usage</h2>
+ * <h2>生命周期</h2>
  *
- * <pre>{@code
- * SandboxExecutionGuard guard = key -> {
- *     redisClient.set(key.toString(), token, SetArgs.Builder.nx().px(30_000));
- *     return () -> redisClient.eval(LUA_RELEASE_SCRIPT, key.toString(), token);
- * };
- *
- * HarnessAgent.builder()
- *     .filesystem(new DockerFilesystemSpec()
- *         .isolationScope(IsolationScope.AGENT)
- *         .executionGuard(guard))
- *     ...
- *     .build();
- * }</pre>
- *
- * <h2>Lifecycle</h2>
- *
- * <p>The harness calls {@link #tryEnter} before sandbox acquire/resume and closes the returned
- * {@link SandboxLease} after {@link SandboxManager#release} completes, so the guard covers the
- * full call window: {@code acquire → start → (call) → stop → release → lease.close()}.
+ * <p>框架在沙箱获取/恢复之前调用 {@link #tryEnter}，并在 {@link SandboxManager#release}
+ * 完成后关闭返回的 {@link SandboxLease}，因此守卫覆盖完整的调用窗口：
+ * {@code acquire → start → (call) → stop → release → lease.close()}。
  */
 @FunctionalInterface
 public interface SandboxExecutionGuard {
 
     /**
+     * 获取指定隔离键的执行权，阻塞直到槽可用或调用线程被中断。
      * Acquires the execution right for the given isolation key, blocking until the slot becomes
      * available or the calling thread is interrupted.
      *
-     * <p>The returned {@link SandboxLease} must be closed to release the slot. The harness handles
-     * this automatically; callers do not need to close the lease explicitly.
+     * <p>必须关闭返回的 {@link SandboxLease} 以释放槽。框架自动处理此操作；
+     * 调用者无需显式关闭租约。
      *
-     * @param key the isolation key that identifies the sandbox slot to protect
-     * @return a lease that releases the execution right when closed
-     * @throws InterruptedException if interrupted while waiting for the slot
+     * @param key 标识要保护的沙箱槽的隔离键
+     * @return 关闭时释放执行权的租约
+     * @throws InterruptedException 如果在等待槽时被中断
      */
     SandboxLease tryEnter(SandboxIsolationKey key) throws InterruptedException;
 
     /**
+     * 返回默认的空操作守卫：始终立即允许执行，返回的 {@link SandboxLease} 是空操作。
+     * 这是内置默认值——无需配置。
      * Returns the default no-op guard: execution is always allowed immediately and the returned
      * {@link SandboxLease} is a no-op. This is the built-in default — no configuration required.
      */
@@ -79,7 +64,7 @@ public interface SandboxExecutionGuard {
         return NoopSandboxExecutionGuard.INSTANCE;
     }
 
-    /** Singleton no-op implementation. */
+    /** 单例空操作实现。 */
     final class NoopSandboxExecutionGuard implements SandboxExecutionGuard {
 
         static final NoopSandboxExecutionGuard INSTANCE = new NoopSandboxExecutionGuard();

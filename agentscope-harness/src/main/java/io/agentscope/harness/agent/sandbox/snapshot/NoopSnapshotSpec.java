@@ -16,6 +16,11 @@
 package io.agentscope.harness.agent.sandbox.snapshot;
 
 /**
+ * 创建 {@link NoopSandboxSnapshot} 实例的快照规范。
+ * <p>
+ * 使用此规范意味着工作区状态永远不会在会话停止之间持久化。
+ * 每次会话启动都会从完整清单开始，以全新的工作区初始化。
+ * <p>
  * Snapshot spec that creates {@link NoopSandboxSnapshot} instances.
  *
  * <p>Using this spec means workspace state is never persisted between session stops.
@@ -23,13 +28,15 @@ package io.agentscope.harness.agent.sandbox.snapshot;
  */
 public class NoopSnapshotSpec implements SandboxSnapshotSpec {
 
-    /** Creates a noop snapshot spec. */
+    /** 创建空操作快照规范。Creates a noop snapshot spec. */
     public NoopSnapshotSpec() {}
 
     /**
      * {@inheritDoc}
      *
-     * @return a new {@link NoopSandboxSnapshot} (ignores {@code snapshotId})
+     * @return 新的 {@link NoopSandboxSnapshot}（忽略 {@code snapshotId}）
+     * <p>
+     * a new {@link NoopSandboxSnapshot} (ignores {@code snapshotId})
      */
     @Override
     public SandboxSnapshot build(String snapshotId) {

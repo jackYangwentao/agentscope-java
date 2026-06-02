@@ -22,15 +22,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Parameters for tool invocation.
+ * 工具调用的参数封装。
  *
- * <p>This class encapsulates all the information needed to call a tool, including the tool use
- * block (containing metadata like call ID and tool name), input parameters, and the calling agent.
+ * <p>该类封装了调用工具所需的全部信息，包括工具使用块（包含调用 ID 和工具名称等元数据）、
+ * 输入参数以及调用方智能体。
  *
- * <p>Using a parameter object instead of multiple method parameters provides better extensibility
- * - new parameters can be added without breaking existing code.
+ * <p>使用参数对象替代多个方法参数提供了更好的可扩展性——可以在不破坏现有代码的情况下添加新参数。
  *
- * <p><b>Example usage:</b>
+ * <p><b>使用示例：</b>
  * <pre>{@code
  * ToolCallParam param = ToolCallParam.builder()
  *     .toolUseBlock(toolUseBlock)

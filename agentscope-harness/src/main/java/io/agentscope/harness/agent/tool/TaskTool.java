@@ -26,18 +26,18 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 
 /**
+ * 后台任务生命周期管理的统一工具。将任务结果获取、取消和列表功能合并到一个工具类中。
  * Unified tool for background task lifecycle management. Combines task result retrieval,
  * cancellation, and listing into a single tool class.
  *
  * <ul>
- *   <li>{@code task_output} — retrieve result (blocking or non-blocking)
- *   <li>{@code task_cancel} — cancel a running task
- *   <li>{@code task_list} — list all tracked tasks with optional status filter
+ *   <li>{@code task_output} — 获取结果（阻塞或非阻塞）
+ *   <li>{@code task_cancel} — 取消运行中的任务
+ *   <li>{@code task_list} — 列出所有追踪的任务，可选择按状态过滤
  * </ul>
  *
- * <p>All operations are scoped to the current parent session ID via {@link RuntimeContext}. The
- * {@link TaskRepository} handles fallback to workspace-persisted records when no local future
- * exists (cross-node or post-restart scenarios).
+ * <p>所有操作通过 {@link RuntimeContext} 限定在当前父会话 ID 范围内。
+ * {@link TaskRepository} 在没有本地 future 时（跨节点或重启后场景）回退到工作空间持久化记录。
  */
 public class TaskTool {
 
@@ -50,6 +50,14 @@ public class TaskTool {
         this.taskRepository = taskRepository;
     }
 
+    /**
+     * 获取后台子代理任务的输出。当 agent_spawn 或 agent_send 以 timeout_seconds=0 调用时使用。
+     * 优先使用 block=false 在不等待的情况下检查状态。仅在准备好等待结果时使用 block=true（默认值）。
+     * 不要在启动任务后立即调用——对话历史中的任务状态可能已过时；
+     * 始终使用 task_output 或 task_list 获取最新状态。
+     *
+     * @Tool task_output
+     */
     @Tool(
             name = "task_output",
             description =
@@ -99,8 +107,7 @@ public class TaskTool {
         long timeoutMs = timeout != null ? Math.min(timeout, 600_000) : 30_000;
 
         if (shouldBlock && !bgTask.isCompleted()) {
-            // If the task has no local future (cross-node or post-restart), degrade gracefully
-            // instead of blocking indefinitely on an incomplete synthetic future.
+            // 如果任务没有本地 future（跨节点或重启后），优雅降级而不是无限阻塞
             if (bgTask.getTaskStatus() == TaskStatus.PENDING
                     || bgTask.getTaskStatus() == TaskStatus.RUNNING) {
                 try {
@@ -109,7 +116,7 @@ public class TaskTool {
                     Thread.currentThread().interrupt();
                     return "Error: Wait for task interrupted";
                 }
-                // After waiting, if still not complete it may be running on another node
+                // 等待后如果仍未完成，可能正在其他节点上运行
                 if (!bgTask.isCompleted()) {
                     return "task_id: "
                             + taskId
@@ -123,6 +130,11 @@ public class TaskTool {
         return formatTaskDetail(bgTask);
     }
 
+    /**
+     * 取消运行中的后台任务。用于停止不再需要的任务。对已完成的任务无影响。
+     *
+     * @Tool task_cancel
+     */
     @Tool(
             name = "task_cancel",
             description =
@@ -155,6 +167,14 @@ public class TaskTool {
         return "task_id: " + taskId + "\nstatus: cancelled\nCancellation requested successfully.";
     }
 
+    /**
+     * 列出当前会话的所有后台任务及其当前状态。
+     * 从持久化工作空间存储读取——即使在会话压缩或节点迁移后也始终准确。
+     * 可选择按状态过滤（running、completed、failed、cancelled）。
+     * 使用此工具在压缩后恢复任务 ID 和状态。
+     *
+     * @Tool task_list
+     */
     @Tool(
             name = "task_list",
             description =
@@ -198,6 +218,7 @@ public class TaskTool {
         return sb.toString().trim();
     }
 
+    /** 解析可选的状态过滤器参数。 */
     private static TaskStatus parseStatusFilter(String filter) {
         if (filter == null || filter.isBlank() || "all".equalsIgnoreCase(filter.trim())) {
             return null;
@@ -209,6 +230,7 @@ public class TaskTool {
         }
     }
 
+    /** 格式化后台任务的详细信息输出。 */
     private static String formatTaskDetail(BackgroundTask task) {
         StringBuilder sb = new StringBuilder();
         sb.append("task_id: ").append(task.getTaskId()).append('\n');

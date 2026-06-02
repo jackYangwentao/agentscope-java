@@ -22,14 +22,12 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Document class representing a document chunk in the RAG system.
+ * 表示 RAG 系统中文档块的文档类。
  *
- * <p>This is the core data structure for RAG operations. Each document contains
- * metadata, an optional embedding vector, and an optional similarity score.
+ * <p>这是 RAG 操作的核心数据结构。每个文档包含元数据、可选的嵌入向量和可选的相似度分数。
  *
- * <p>The document ID is automatically generated as a deterministic UUID based on
- * the document metadata (doc_id, chunk_id, and content), ensuring consistent IDs
- * for the same content across different runs.
+ * <p>文档 ID 基于文档元数据（doc_id、chunk_id 和 content）自动生成确定性的 UUID，
+ * 确保相同内容在不同运行中具有一致的 ID。
  */
 public class Document {
 

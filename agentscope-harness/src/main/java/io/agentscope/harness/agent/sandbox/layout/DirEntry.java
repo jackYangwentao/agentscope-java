@@ -19,6 +19,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
+ * 创建一个目录的布局条目，可选包含嵌套的子条目。
+ * <p>
+ * 子条目是一个由文件名到 {@link WorkspaceEntry} 的映射，本身可以是嵌套的
+ * {@code DirEntry} 实例，从而实现递归树状工作区结构。
+ * <p>
  * Layout entry that creates a directory, optionally with nested child entries.
  *
  * <p>Child entries are a map of filename to {@link WorkspaceEntry} and may themselves be
@@ -28,42 +33,50 @@ public class DirEntry extends WorkspaceEntry {
 
     private Map<String, WorkspaceEntry> children = new LinkedHashMap<>();
 
-    /** Creates an empty directory entry. */
+    /** 创建空目录条目。Creates an empty directory entry. */
     public DirEntry() {}
 
     /**
+     * 创建包含给定子条目的目录条目。
+     * <p>
      * Creates a directory entry with the given children.
      *
-     * @param children map of child name to child entry
+     * @param children 子条目名称到子条目的映射
      */
     public DirEntry(Map<String, WorkspaceEntry> children) {
         this.children = new LinkedHashMap<>(children);
     }
 
     /**
+     * 返回此目录中的子条目。
+     * <p>
      * Returns the child entries in this directory.
      *
-     * @return mutable map of child name to child entry
+     * @return 子条目名称到子条目的可变映射
      */
     public Map<String, WorkspaceEntry> getChildren() {
         return children;
     }
 
     /**
+     * 设置此目录的子条目。
+     * <p>
      * Sets the child entries for this directory.
      *
-     * @param children map of child name to child entry
+     * @param children 子条目名称到子条目的映射
      */
     public void setChildren(Map<String, WorkspaceEntry> children) {
         this.children = children != null ? children : new LinkedHashMap<>();
     }
 
     /**
+     * 添加子条目到此目录。
+     * <p>
      * Adds a child entry to this directory.
      *
-     * @param name child filename
-     * @param entry child entry
-     * @return this instance for chaining
+     * @param name  子条目标题
+     * @param entry 子条目
+     * @return 此实例（支持链式调用）
      */
     public DirEntry child(String name, WorkspaceEntry entry) {
         this.children.put(name, entry);

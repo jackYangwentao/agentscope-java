@@ -29,9 +29,9 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Minimal HTTP client for the internal AgentScope task protocol ({@code POST/GET /tasks/...}).
+ * 用于内部 AgentScope 任务协议的最小 HTTP 客户端（{@code POST/GET /tasks/...}）。
  *
- * <p>The client-supplied {@code taskId} is used as the remote task identifier (no separate run id).
+ * <p>客户端提供的 {@code taskId} 用作远程任务标识符（无单独的运行 ID）。
  */
 public final class AgentProtocolTaskClient {
 

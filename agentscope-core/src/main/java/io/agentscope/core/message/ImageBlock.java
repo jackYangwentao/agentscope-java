@@ -21,17 +21,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 /**
- * Represents image content in a message with URL or Base64 source.
+ * 表示消息中带有 URL 或 Base64 来源的图片内容。
  *
- * <p>This content block supports images from two sources:
+ * <p>该内容块支持来自两种来源的图片：
  * <ul>
- *   <li>URL source - images accessible via HTTP/HTTPS URLs or local file URLs</li>
- *   <li>Base64 source - images encoded as Base64 strings with MIME type</li>
+ *   <li>URL 来源 - 可通过 HTTP/HTTPS URL 或本地文件 URL 访问的图片</li>
+ *   <li>Base64 来源 - 使用 MIME 类型编码为 Base64 字符串的图片</li>
  * </ul>
  *
- * <p>Image blocks are essential for multimodal AI interactions where agents
- * need to process visual information from images, diagrams, screenshots,
- * or other visual content.
+ * <p>图片块对于多模态 AI 交互至关重要，智能体需要处理来自图片、图表、截图
+ * 或其他视觉内容的视觉信息。
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public final class ImageBlock extends ContentBlock {

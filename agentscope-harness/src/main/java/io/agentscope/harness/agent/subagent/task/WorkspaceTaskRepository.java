@@ -37,30 +37,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Workspace-backed {@link TaskRepository} that uses {@link WorkspaceManager} as the authoritative
- * truth source for task state, while maintaining in-memory {@link BackgroundTask} handles as a
- * local performance overlay for tasks running on the current node.
+ * 工作区支持的 {@link TaskRepository}，使用 {@link WorkspaceManager} 作为任务状态的权威真相源，
+ * 同时维护内存中的 {@link BackgroundTask} 句柄作为当前节点上运行任务的本地性能覆盖层。
  *
- * <p>Storage layout: {@code agents/<parentAgentId>/tasks/<sessionId>.json} — a JSON map of
- * {@code taskId → TaskRecord}, consistent with how sessions are stored. In distributed deployments
- * using {@code RemoteFilesystemSpec}, this path is automatically routed to shared storage, making
- * task state visible to any node.
+ * <p>存储布局：{@code agents/<parentAgentId>/tasks/<sessionId>.json} — 一个 {@code taskId → TaskRecord} 的 JSON 映射，
+ * 与会话的存储方式一致。在使用 {@code RemoteFilesystemSpec} 的分布式部署中，
+ * 此路径会自动路由到共享存储，使任务状态对任何节点可见。
  *
- * <p>The in-memory {@code localTasks} map is keyed by {@code "<sessionId>:<taskId>"} to preserve
- * session isolation when multiple sessions coexist in the same process.
+ * <p>内存中的 {@code localTasks} 映射以 {@code "<sessionId>:<taskId>"} 为键，
+ * 以在多个会话共存于同一进程中时保持会话隔离。
  *
- * <p>Distributed semantics:
+ * <p>分布式语义：
  *
  * <ul>
- *   <li>Task execution is sticky to the originating node (the node that called {@link #putTask}).
- *   <li>Any node can read task status via {@link #getTask} or {@link #listTasks} by falling back
- *       to workspace records when no local future exists.
- *   <li>{@code block=true} on a non-originating node degrades gracefully to reading the latest
- *       persisted terminal state without hanging.
- *   <li>Cancellation sets a {@link TaskRecord#isCancelRequested()} flag in workspace storage;
- *       the originating node checks this flag before invoking the subagent for best-effort cancel.
- *   <li>Remote {@link TaskRunSpec.RemoteTaskRunSpec} tasks use {@link AgentProtocolTaskClient} and
- *       persist {@link TaskRecord#getRemoteBaseUrl()} for cross-node resume.
+ *   <li>任务执行粘性绑定到发起节点（调用 {@link #putTask} 的节点）。</li>
+ *   <li>任何节点都可以通过 {@link #getTask} 或 {@link #listTasks} 读取任务状态，
+ *       当没有本地 future 时回退到工作区记录。</li>
+ *   <li>非发起节点上的 {@code block=true} 优雅地降级为读取最新的持久化终止状态，而不会挂起。</li>
+ *   <li>取消在工作区存储中设置 {@link TaskRecord#isCancelRequested()} 标志；
+ *       发起节点在调用子代理前检查此标志以尽力取消。</li>
+ *   <li>远程 {@link TaskRunSpec.RemoteTaskRunSpec} 任务使用 {@link AgentProtocolTaskClient}，
+ *       并持久化 {@link TaskRecord#getRemoteBaseUrl()} 以支持跨节点恢复。</li>
  * </ul>
  */
 public class WorkspaceTaskRepository implements TaskRepository {

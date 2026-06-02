@@ -18,6 +18,11 @@ package io.agentscope.harness.agent.sandbox.snapshot;
 import java.io.InputStream;
 
 /**
+ * 用户实现的接口，用于向/从远程存储（例如 S3、OSS、GCS 或自定义 blob 存储）上传和下载快照归档。
+ * <p>
+ * 实现此接口并将其传递给 {@link RemoteSnapshotSpec} 以启用远程快照存储。
+ * 实现负责认证、重试逻辑和连接管理。
+ * <p>
  * User-implemented interface for uploading and downloading snapshot archives to/from remote
  * storage (e.g. S3, OSS, GCS, or a custom blob store).
  *
@@ -28,29 +33,35 @@ import java.io.InputStream;
 public interface RemoteSnapshotClient {
 
     /**
+     * 将快照归档上传到远程存储。
+     * <p>
      * Uploads a snapshot archive to remote storage.
      *
-     * @param snapshotId unique identifier for this snapshot
-     * @param data the workspace tar archive stream to upload
-     * @throws Exception if the upload fails
+     * @param snapshotId 此快照的唯一标识符
+     * @param data       要上传的工作区 tar 归档流
+     * @throws Exception 如果上传失败
      */
     void upload(String snapshotId, InputStream data) throws Exception;
 
     /**
+     * 从远程存储下载快照归档。
+     * <p>
      * Downloads a snapshot archive from remote storage.
      *
-     * @param snapshotId unique identifier for the snapshot to download
-     * @return an {@link InputStream} over the downloaded tar archive
-     * @throws Exception if the download fails or the snapshot does not exist
+     * @param snapshotId 要下载的快照的唯一标识符
+     * @return 下载的 tar 归档的 {@link InputStream}
+     * @throws Exception 如果下载失败或快照不存在
      */
     InputStream download(String snapshotId) throws Exception;
 
     /**
+     * 检查远程存储中是否存在具有指定 ID 的快照。
+     * <p>
      * Checks whether a snapshot with the given ID exists in remote storage.
      *
-     * @param snapshotId unique identifier to check
-     * @return {@code true} if the snapshot exists and can be downloaded
-     * @throws Exception if the check fails
+     * @param snapshotId 要检查的唯一标识符
+     * @return 如果快照存在且可下载则返回 {@code true}
+     * @throws Exception 如果检查失败
      */
     boolean exists(String snapshotId) throws Exception;
 }

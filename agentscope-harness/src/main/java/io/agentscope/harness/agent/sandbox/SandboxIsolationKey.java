@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * 不可变键，用于唯一标识给定 {@link IsolationScope} 的沙箱状态槽。
  * Immutable key that uniquely identifies a sandbox state slot for a given
  * {@link IsolationScope}.
  *
@@ -45,23 +46,24 @@ public final class SandboxIsolationKey {
     }
 
     /**
+     * 从给定的隔离范围、运行时上下文和 agent ID 解析隔离键。
      * Resolves an isolation key from the given scope, runtime context, and agent ID.
      *
-     * <p>Resolution rules:
+     * <p>解析规则：
      * <ul>
-     *   <li>{@code SESSION} – requires a non-null {@code sessionKey}; value =
-     *       {@code sessionKey.toIdentifier()}. Returns empty if absent.</li>
-     *   <li>{@code USER} – requires a non-blank {@code userId}; value = {@code userId}.
-     *       Logs a warning and returns empty if absent.</li>
-     *   <li>{@code AGENT} – value = {@code agentId} (always present).</li>
-     *   <li>{@code GLOBAL} – value = {@value #GLOBAL_VALUE} (always present).</li>
-     *   <li>{@code null} scope – treated as {@code SESSION}.</li>
+     *   <li>{@code SESSION} – 需要非 null 的 {@code sessionKey}；值为
+     *       {@code sessionKey.toIdentifier()}。缺失时返回空。</li>
+     *   <li>{@code USER} – 需要非空白的 {@code userId}；值为 {@code userId}。
+     *       缺失时记录警告并返回空。</li>
+     *   <li>{@code AGENT} – 值为 {@code agentId}（始终存在）。</li>
+     *   <li>{@code GLOBAL} – 值为 {@value #GLOBAL_VALUE}（始终存在）。</li>
+     *   <li>{@code null} scope – 视为 {@code SESSION}。</li>
      * </ul>
      *
-     * @param scope     the desired isolation scope; {@code null} defaults to {@code SESSION}
-     * @param ctx       the runtime context for the current call; may be {@code null}
-     * @param agentId   the agent name resolved at build time; must not be null
-     * @return resolved key, or empty if the required context field is absent
+     * @param scope     所需的隔离范围；{@code null} 默认为 {@code SESSION}
+     * @param ctx       当前调用的运行时上下文；可以为 {@code null}
+     * @param agentId   构建时解析的 agent 名称；不能为 null
+     * @return 解析后的键，如果缺少必需的上下文字段则返回空
      */
     public static Optional<SandboxIsolationKey> resolve(
             IsolationScope scope, RuntimeContext ctx, String agentId) {
@@ -95,18 +97,20 @@ public final class SandboxIsolationKey {
     }
 
     /**
+     * 返回隔离范围。
      * Returns the isolation scope.
      *
-     * @return scope
+     * @return 隔离范围
      */
     public IsolationScope getScope() {
         return scope;
     }
 
     /**
+     * 返回范围内的区分值（例如会话 ID、用户 ID、agent 名称）。
      * Returns the discriminating value within the scope (e.g. session id, user id, agent name).
      *
-     * @return value string
+     * @return 值字符串
      */
     public String getValue() {
         return value;

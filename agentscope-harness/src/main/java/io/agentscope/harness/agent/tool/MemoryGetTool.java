@@ -23,6 +23,8 @@ import java.nio.file.Path;
 import java.util.List;
 
 /**
+ * 用于从记忆文件中读取特定行的工具，通常在 {@link MemorySearchTool} 之后使用，
+ * 以获取匹配行周围的上下文内容。
  * Tool for reading specific lines from memory files, typically used after
  * {@link MemorySearchTool} to fetch surrounding context.
  */
@@ -34,6 +36,14 @@ public class MemoryGetTool {
         this.workspaceManager = workspaceManager;
     }
 
+    /**
+     * 从记忆文件中读取指定行范围的内容。在 memory_search 之后使用，
+     * 以获取匹配行周围的完整上下文。路径相对于工作空间。
+     * Read specific lines from a memory file. Use after memory_search to pull
+     * full context around matched lines. Path is relative to workspace.
+     *
+     * @Tool memory_get
+     */
     @Tool(
             name = "memory_get",
             description =
@@ -55,6 +65,7 @@ public class MemoryGetTool {
             return "Error: path is required";
         }
 
+        // 解析并验证路径，防止路径遍历攻击
         Path resolved = workspaceManager.getWorkspace().resolve(path).normalize();
         if (!resolved.startsWith(workspaceManager.getWorkspace())) {
             return "Error: path traversal not allowed";
@@ -74,6 +85,7 @@ public class MemoryGetTool {
             return "Error: startLine " + startLine + " exceeds file length " + lines.size();
         }
 
+        // 构建带行号的结果输出
         StringBuilder sb = new StringBuilder();
         for (int i = start; i < end; i++) {
             sb.append(String.format("%d|%s%n", i + 1, lines.get(i)));

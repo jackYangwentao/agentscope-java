@@ -16,11 +16,9 @@
 package io.agentscope.core.model;
 
 /**
- * Configuration for how to ensure the model calls generate_response tool in structured output
- * mode.
+ * 确保模型在结构化输出模式下调用 generate_response 工具的配置。
  *
- * <p>This enum controls the mechanism used to enforce that the model calls the temporary
- * generate_response tool when generating structured output.
+ * <p>该枚举控制用于强制模型在生成结构化输出时调用临时 generate_response 工具的机制。
  */
 public enum StructuredOutputReminder {
     /**

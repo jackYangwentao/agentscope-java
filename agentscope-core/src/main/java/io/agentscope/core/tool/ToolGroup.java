@@ -20,12 +20,11 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Represents a named group of tools with activation state.
+ * 表示一个具有激活状态的具名工具组。
  *
- * <p>Tool groups allow organizing tools into logical categories and controlling their availability
- * dynamically. Only tools from active groups are made available to agents.
+ * <p>工具组允许将工具组织为逻辑分类，并动态控制其可用性。只有来自激活工具组的工具才对智能体可用。
  *
- * <p><b>Usage Example:</b>
+ * <p><b>使用示例：</b>
  *
  * <pre>{@code
  * ToolGroup adminGroup = ToolGroup.builder()

@@ -32,6 +32,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * 用于搜索历史会话记录和查看会话历史的工具。
+ * 仅操作本地会话缓存。远程同步由写入路径中的
+ * {@link io.agentscope.harness.agent.memory.session.SessionTree#load()} 处理，
+ * 使此工具轻量且快速，适合进程内搜索。
  * Tool for searching past session transcripts and viewing session history.
  *
  * <p>Operates exclusively on the local session cache. Remote synchronisation is handled by
@@ -49,6 +53,11 @@ public class SessionSearchTool {
         this.workspaceManager = workspaceManager;
     }
 
+    /**
+     * 搜索历史会话记录中的关键字或短语。返回匹配的条目及其会话上下文。
+     *
+     * @Tool session_search
+     */
     @Tool(
             name = "session_search",
             description =
@@ -99,6 +108,11 @@ public class SessionSearchTool {
         return sb.toString();
     }
 
+    /**
+     * 列出指定代理的可用会话，显示会话 ID 和元数据。
+     *
+     * @Tool session_list
+     */
     @Tool(
             name = "session_list",
             description = "List available sessions for an agent, showing session IDs and metadata.")
@@ -112,7 +126,7 @@ public class SessionSearchTool {
 
         RuntimeContext rc = runtimeContext != null ? runtimeContext : RuntimeContext.empty();
 
-        // Prefer the structured session-store index (already two-layer: remote then local).
+        // 优先使用结构化的会话存储索引（双层：远程后本地）
         String storeContent =
                 workspaceManager.readManagedWorkspaceFileUtf8(
                         rc,
@@ -127,7 +141,7 @@ public class SessionSearchTool {
             return storeContent;
         }
 
-        // List sessions from local cache only — remote sync is handled at write time.
+        // 仅从本地缓存列出会话 — 远程同步在写入时处理
         Path sessionDir = workspaceManager.getSessionDir(rc, agentId);
         if (!Files.isDirectory(sessionDir)) {
             return "No sessions found for agent: " + agentId;
@@ -160,6 +174,11 @@ public class SessionSearchTool {
         return sb.toString();
     }
 
+    /**
+     * 获取特定会话的对话历史。返回会话中的消息。
+     *
+     * @Tool session_history
+     */
     @Tool(
             name = "session_history",
             description =
@@ -219,9 +238,8 @@ public class SessionSearchTool {
     // -------------------------------------------------------------------------
 
     /**
-     * Collects all {@code .log.jsonl} files under the sessions directory for the given agent
-     * (or all agents when {@code agentId} is {@code null}).
-     * Only scans the local disk; remote-only sessions are handled via sessionList / sessionHistory.
+     * 收集指定代理（或所有代理，当 agentId 为 null 时）会话目录下的所有 {@code .log.jsonl} 文件。
+     * 仅扫描本地磁盘；仅远程的会话通过 sessionList/sessionHistory 处理。
      */
     private List<Path> listLogFiles(RuntimeContext rc, String agentId) {
         List<Path> files = new ArrayList<>();
@@ -249,6 +267,7 @@ public class SessionSearchTool {
         return files;
     }
 
+    /** 收集会话目录中的日志文件。 */
     private void collectLogFiles(Path sessionDir, List<Path> collector) {
         if (!Files.isDirectory(sessionDir)) {
             return;
@@ -262,6 +281,9 @@ public class SessionSearchTool {
         }
     }
 
+    /**
+     * 在单个会话日志文件中搜索关键字，并收集匹配结果。
+     */
     private void searchInSessionFile(
             Path logFile, String lowerQuery, List<String> results, int limit) {
         try {
@@ -295,6 +317,9 @@ public class SessionSearchTool {
         }
     }
 
+    /**
+     * 读取旧版 .json 格式的会话文件（向后兼容）。
+     */
     private String readLegacySession(Path file, int limit) {
         try {
             String content = Files.readString(file);

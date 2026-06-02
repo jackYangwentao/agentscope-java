@@ -58,10 +58,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * {@link AbstractFilesystem} implementation that reads and writes files on the local disk.
+ * 本地磁盘文件读写的 {@link AbstractFilesystem} 实现。
  *
- * <p>When {@code virtualMode} is enabled, paths are anchored to {@code rootDir} and traversal is
- * blocked.
+ * <p>当启用 {@code virtualMode} 时，路径锚定在 {@code rootDir} 下，并阻止路径穿越。
  */
 public class LocalFilesystem implements AbstractFilesystem {
 
@@ -75,62 +74,61 @@ public class LocalFilesystem implements AbstractFilesystem {
     private final NamespaceFactory namespaceFactory;
 
     /**
-     * Per-path locks for the read-modify-write cycle inside {@link #edit}.
-     * Keyed by the absolute, normalized path string so that two callers operating on
-     * the same file (even with different input paths) always share the same lock.
+     * 在 {@link #edit} 内部用于读-改-写循环的基于路径的锁。
+     * 以绝对规范化的路径字符串为键，使得操作同一文件的两个调用方（即使输入路径不同）始终共享同一个锁。
      */
     private final ConcurrentHashMap<String, ReentrantLock> fileLocks = new ConcurrentHashMap<>();
 
     /**
-     * Same as {@link #LocalFilesystem(Path)} with {@link Path#of(String, String...) Path.of(path)}
-     * after {@link String#strip()}. Pass {@code null} for the same CWD semantics as a {@code null}
-     * {@link Path}. Blank strings are rejected.
+     * 与 {@link #LocalFilesystem(Path)} 相同，但使用 {@link Path#of(String, String...) Path.of(path)}
+     * 并对字符串执行 {@link String#strip()}。传 {@code null} 则与 {@code null} {@link Path} 具有相同的 CWD 语义。
+     * 空白字符串会被拒绝。
      *
-     * @param rootDir filesystem root as a path string, or {@code null} for process working directory
+     * @param rootDir 文件系统根路径字符串，或 {@code null} 表示进程工作目录
      */
     public LocalFilesystem(String rootDir) {
         this(rootDirFromString(rootDir), false, DEFAULT_MAX_FILE_SIZE_MB, null);
     }
 
     /**
-     * Creates a abstract filesystem rooted at the given directory.
+     * 创建一个以给定目录为根的文件系统。
      *
-     * @param rootDir root directory for all operations ({@code null} means CWD)
+     * @param rootDir 所有操作的根目录（{@code null} 表示 CWD）
      */
     public LocalFilesystem(Path rootDir) {
         this(rootDir, false, DEFAULT_MAX_FILE_SIZE_MB, null);
     }
 
     /**
-     * Creates a abstract filesystem with explicit configuration.
+     * 创建具有显式配置的文件系统。
      *
-     * @param rootDir root directory for all operations ({@code null} means CWD)
-     * @param virtualMode when true, all paths are anchored to rootDir and traversal is blocked
-     * @param maxFileSizeMb maximum file size in megabytes for search operations
+     * @param rootDir 所有操作的根目录（{@code null} 表示 CWD）
+     * @param virtualMode 为 true 时，所有路径锚定到 rootDir 并阻止路径穿越
+     * @param maxFileSizeMb 搜索操作的最大文件大小（MB）
      */
     public LocalFilesystem(Path rootDir, boolean virtualMode, int maxFileSizeMb) {
         this(rootDir, virtualMode, maxFileSizeMb, null);
     }
 
     /**
-     * Same as {@link #LocalFilesystem(Path, boolean, int)} with a path string; see
-     * {@link #LocalFilesystem(String)} for {@code null} / blank rules.
+     * 与 {@link #LocalFilesystem(Path, boolean, int)} 相同，但使用路径字符串；
+     * 关于 {@code null} / 空白规则，请参见 {@link #LocalFilesystem(String)}。
      */
     public LocalFilesystem(String rootDir, boolean virtualMode, int maxFileSizeMb) {
         this(rootDirFromString(rootDir), virtualMode, maxFileSizeMb, null);
     }
 
     /**
-     * Creates a abstract filesystem with explicit configuration and namespace support.
+     * 创建具有显式配置和命名空间支持的文件系统。
      *
-     * <p>When a {@link NamespaceFactory} is provided, all paths are prefixed with the
-     * namespace segments joined as subdirectories. For example, with namespace {@code ["user123"]},
-     * a read of {@code "MEMORY.md"} resolves to {@code {rootDir}/user123/MEMORY.md}.
+     * <p>当提供 {@link NamespaceFactory} 时，所有路径会以命名空间段作为子目录前缀。
+     * 例如，使用命名空间 {@code ["user123"]}，读取 {@code "MEMORY.md"} 将解析为
+     * {@code {rootDir}/user123/MEMORY.md}。
      *
-     * @param rootDir root directory for all operations ({@code null} means CWD)
-     * @param virtualMode when true, all paths are anchored to rootDir and traversal is blocked
-     * @param maxFileSizeMb maximum file size in megabytes for search operations
-     * @param namespaceFactory optional namespace factory for path scoping ({@code null} for none)
+     * @param rootDir 所有操作的根目录（{@code null} 表示 CWD）
+     * @param virtualMode 为 true 时，所有路径锚定到 rootDir 并阻止路径穿越
+     * @param maxFileSizeMb 搜索操作的最大文件大小（MB）
+     * @param namespaceFactory 可选的路径作用域命名空间工厂（{@code null} 表示不使用）
      */
     public LocalFilesystem(
             Path rootDir,
@@ -147,8 +145,8 @@ public class LocalFilesystem implements AbstractFilesystem {
     }
 
     /**
-     * Same as {@link #LocalFilesystem(Path, boolean, int, NamespaceFactory)} with a path string;
-     * see {@link #LocalFilesystem(String)} for {@code null} / blank rules.
+     * 与 {@link #LocalFilesystem(Path, boolean, int, NamespaceFactory)} 相同，但使用路径字符串；
+     * 关于 {@code null} / 空白规则，请参见 {@link #LocalFilesystem(String)}。
      */
     public LocalFilesystem(
             String rootDir,
@@ -159,8 +157,8 @@ public class LocalFilesystem implements AbstractFilesystem {
     }
 
     /**
-     * Converts a root path string to {@link Path}. {@code null} yields {@code null} (CWD). Non-null
-     * values must be non-blank after {@link String#strip()}.
+     * 将根路径字符串转换为 {@link Path}。{@code null} 返回 {@code null}（CWD）。
+     * 非 null 值在经过 {@link String#strip()} 后不能为空白。
      */
     static Path rootDirFromString(String rootDir) {
         if (rootDir == null) {
@@ -174,7 +172,7 @@ public class LocalFilesystem implements AbstractFilesystem {
     }
 
     /**
-     * Returns the root directory for this filesystem.
+     * 返回此文件系统的根目录。
      */
     public Path getCwd() {
         return cwd;
@@ -534,7 +532,7 @@ public class LocalFilesystem implements AbstractFilesystem {
         }
     }
 
-    // ==================== Path resolution ====================
+    // ==================== 路径解析 ====================
 
     protected NamespaceFactory getNamespaceFactory() {
         return namespaceFactory;
@@ -617,7 +615,7 @@ public class LocalFilesystem implements AbstractFilesystem {
         return relPath;
     }
 
-    // ==================== Grep implementations ====================
+    // ==================== Grep 搜索实现 ====================
 
     private List<GrepMatch> ripgrepSearch(
             RuntimeContext rc, String pattern, Path basePath, String includeGlob) {

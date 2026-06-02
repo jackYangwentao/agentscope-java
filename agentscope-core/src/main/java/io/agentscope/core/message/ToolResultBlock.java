@@ -24,13 +24,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Represents the result of a tool execution.
+ * 表示工具执行的结果。
  *
- * This class serves two purposes:
- * 1. As a return value from tool methods (id and name are null)
- * 2. As a ContentBlock in messages (id and name are required)
+ * 该类有两个用途：
+ * 1. 作为工具方法的返回值（id 和 name 为 null）
+ * 2. 作为消息中的 ContentBlock（id 和 name 为必填）
  *
- * Supports metadata for passing additional execution information.
+ * 支持通过元数据传递额外的执行信息。
  */
 public final class ToolResultBlock extends ContentBlock {
 

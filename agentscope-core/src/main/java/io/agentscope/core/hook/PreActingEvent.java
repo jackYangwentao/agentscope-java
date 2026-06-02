@@ -21,33 +21,35 @@ import io.agentscope.core.tool.Toolkit;
 import java.util.Objects;
 
 /**
- * Event fired before tool execution.
+ * 工具执行前触发的事件。
  *
- * <p><b>Modifiable:</b> Yes - {@link #setToolUse(ToolUseBlock)}
+ * <p>此事件允许 Hook 在工具被调用之前检查或修改工具调用参数。
+ * 这可用于注入认证令牌、修改参数或实现基于策略的访问控制。
  *
- * <p><b>Context:</b>
- * <ul>
- *   <li>{@link #getAgent()} - The agent instance</li>
- *   <li>{@link #getMemory()} - Agent's memory</li>
- *   <li>{@link #getToolkit()} - The toolkit instance</li>
- *   <li>{@link #getToolUse()} - The tool call to execute (modifiable)</li>
- * </ul>
+ * <p><b>可修改:</b> 是(工具调用)
  *
- * <p><b>Note:</b> This is called once per tool. If the reasoning result contains
- * multiple tool calls, this event fires multiple times.
+ * <p>Event fired before tool execution.
  *
- * <p><b>Use Cases:</b>
- * <ul>
- *   <li>Validate or modify tool parameters for each tool call</li>
- *   <li>Add authentication or context to individual tool calls</li>
- *   <li>Implement per-tool authorization checks</li>
- *   <li>Log or monitor individual tool invocations</li>
- * </ul>
+ * <p>This event allows hooks to inspect or modify the tool call parameters before
+ * the tool is invoked. This can be used to inject authentication tokens, modify
+ * parameters, or implement policy-based access control.
+ *
+ * <p><b>Modifiable:</b> Yes (tool use)
+ *
+ * @see PostActingEvent
+ * @see ActingChunkEvent
  */
 public final class PreActingEvent extends ActingEvent {
 
     /**
-     * Constructor for PreActingEvent.
+     * PreActingEvent 的构造方法。
+     *
+     * @param agent Agent 实例(不能为 null)
+     * @param toolkit Toolkit 实例(不能为 null)
+     * @param toolUse 要执行的工具调用(不能为 null)
+     * @throws NullPointerException 如果 agent、toolkit 或 toolUse 为 null
+     *
+     * <p>Constructor for PreActingEvent.
      *
      * @param agent The agent instance (must not be null)
      * @param toolkit The toolkit instance (must not be null)
@@ -59,9 +61,14 @@ public final class PreActingEvent extends ActingEvent {
     }
 
     /**
-     * Modify the tool call (e.g., change parameters).
+     * 修改要执行的工具调用参数。
      *
-     * @param toolUse The new tool use block (must not be null)
+     * @param toolUse 新的工具调用(不能为 null)
+     * @throws NullPointerException 如果 toolUse 为 null
+     *
+     * <p>Modify the tool call parameters before execution.
+     *
+     * @param toolUse The new tool use (must not be null)
      * @throws NullPointerException if toolUse is null
      */
     public void setToolUse(ToolUseBlock toolUse) {

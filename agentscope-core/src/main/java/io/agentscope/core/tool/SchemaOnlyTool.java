@@ -24,17 +24,16 @@ import java.util.Objects;
 import reactor.core.publisher.Mono;
 
 /**
- * An external tool implementation that only contains schema definition without execution logic.
+ * 仅包含 Schema 定义而无执行逻辑的外部工具实现。
  *
- * <p>This class is used for registering external tools that will be executed outside the framework.
- * When a model returns a call to a SchemaOnlyTool, the framework will catch the
- * {@link ToolSuspendException} thrown by {@link #callAsync(ToolCallParam)} and convert it to a
- * pending {@link ToolResultBlock}, then return a suspended message to the user.
+ * <p>该类用于注册将在框架外执行的外部工具。当模型返回对 SchemaOnlyTool 的调用时，
+ * 框架将捕获 {@link #callAsync(ToolCallParam)} 抛出的 {@link ToolSuspendException}，
+ * 并将其转换为待处理的 {@link ToolResultBlock}，然后向用户返回挂起消息。
  *
- * <p>The {@link #callAsync(ToolCallParam)} method throws a {@link ToolSuspendException}
- * to signal that this tool requires external execution.
+ * <p>{@link #callAsync(ToolCallParam)} 方法抛出 {@link ToolSuspendException}
+ * 以表明此工具需要外部执行。
  *
- * <p>Example usage:
+ * <p>使用示例：
  * <pre>{@code
  * // Register an external tool using ToolSchema
  * ToolSchema schema = ToolSchema.builder()

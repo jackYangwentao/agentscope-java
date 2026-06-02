@@ -16,18 +16,18 @@
 package io.agentscope.harness.agent.subagent;
 
 /**
- * Controls how a declared subagent's runtime workspace root is determined.
+ * 控制如何确定声明的子代理的运行时工作区根目录。
  *
- * <p>The five-row decision table:
+ * <p>五行决策表：
  *
  * <pre>
  * workspacePath  mode      runtime-workspace-root
  * ─────────────────────────────────────────────────────────────────────────────
- * set            ISOLATED  workspacePath  (definition dir is also the runtime root)
- * set            SHARED    mainWorkspace  (definition skills/knowledge ignored)
- * null           ISOLATED  mainWorkspace/agents/&lt;name&gt;/workspace/  (auto-created)
+ * set            ISOLATED  workspacePath  (定义目录也是运行时根目录)
+ * set            SHARED    mainWorkspace  (定义技能/知识被忽略)
+ * null           ISOLATED  mainWorkspace/agents/&lt;name&gt;/workspace/  (自动创建)
  * null           SHARED    mainWorkspace
- * (general-purpose, always SHARED)       mainWorkspace  (fully mirrors main agent)
+ * (通用目的，始终 SHARED)  mainWorkspace  (完全镜像主代理)
  * </pre>
  */
 public enum WorkspaceMode {

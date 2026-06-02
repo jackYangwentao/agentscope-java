@@ -32,12 +32,13 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 
 /**
+ * 为工作空间投影条目构建确定性归档载荷。
  * Builds a deterministic archive payload for workspace projection entries.
  *
- * <p>The payload contains:
+ * <p>载荷包含：The payload contains:
  * <ul>
- *   <li>projected files as a tar archive (for sandbox hydration)</li>
- *   <li>a content hash used to skip unchanged projections across calls</li>
+ *   <li>投影文件作为 tar 归档（用于沙箱初始化）</li>
+ *   <li>内容哈希，用于在多次调用之间跳过未更改的投影</li>
  * </ul>
  */
 public final class WorkspaceProjectionApplier {
@@ -45,6 +46,7 @@ public final class WorkspaceProjectionApplier {
     private WorkspaceProjectionApplier() {}
 
     /**
+     * 从规范中的所有 {@link WorkspaceProjectionEntry} 项构建投影载荷。
      * Builds projection payload from all {@link WorkspaceProjectionEntry} items in the spec.
      */
     public static ProjectionPayload build(WorkspaceSpec spec) throws Exception {

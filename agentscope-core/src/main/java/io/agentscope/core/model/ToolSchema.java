@@ -22,8 +22,8 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Immutable tool schema definition.
- * Describes a tool's interface using JSON Schema for parameters.
+ * 不可变的工具 Schema 定义。
+ * 使用 JSON Schema 描述工具的接口和参数。
  */
 public class ToolSchema {
     private final String name;

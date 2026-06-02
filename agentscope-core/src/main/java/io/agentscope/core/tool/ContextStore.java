@@ -16,26 +16,24 @@
 package io.agentscope.core.tool;
 
 /**
- * Storage layer abstraction for tool execution context.
+ * 工具执行上下文的存储层抽象。
  *
- * <p>This interface defines the storage contract for context objects. It supports two retrieval
- * modes:
+ * <p>该接口定义了上下文对象的存储契约。支持两种检索模式：
  * <ol>
- *   <li><b>By type only</b>: {@code get(Class<T>)} - suitable for singleton scenarios</li>
- *   <li><b>By key + type</b>: {@code get(String, Class<T>)} - suitable for multi-instance
- *       scenarios</li>
+ *   <li><b>仅按类型</b>：{@code get(Class<T>)} - 适用于单例场景</li>
+ *   <li><b>按键+类型</b>：{@code get(String, Class<T>)} - 适用于多实例场景</li>
  * </ol>
  *
- * <p>This design allows handling both simple cases (one UserContext) and complex cases
- * (multiple UserContext instances for different users).
+ * <p>这种设计允许同时处理简单情况（一个 UserContext）和复杂情况
+ * （不同用户的多个 UserContext 实例）。
  *
- * <p>Implementations can be:
+ * <p>实现方式可以是：
  * <ul>
- *   <li>Simple in-memory Map storage ({@link DefaultContextStore})</li>
- *   <li>Custom storage backends (Redis, database, etc.)</li>
+ *   <li>基于内存的简单 Map 存储（{@link DefaultContextStore}）</li>
+ *   <li>自定义存储后端（Redis、数据库等）</li>
  * </ul>
  *
- * <p>Example usage:
+ * <p>使用示例：
  * <pre>{@code
  * // Single instance per type
  * DatabaseConfig config = store.get(DatabaseConfig.class);

@@ -30,8 +30,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * Manages MCP (Model Context Protocol) client registration and lifecycle.
- * Handles MCP client initialization, tool registration, and cleanup.
+ * 管理 MCP（模型上下文协议）客户端的注册和生命周期。
+ * 处理 MCP 客户端的初始化、工具注册和资源清理。
  */
 class McpClientManager {
 

@@ -19,24 +19,24 @@ import io.agentscope.core.agent.RuntimeContext;
 import java.io.InputStream;
 
 /**
+ * 具有完全隔离工作空间的活跃沙箱。
  * An active sandbox with a fully isolated workspace.
  *
- * <p>Lifecycle:
+ * <p>生命周期：Lifecycle:
  * <ol>
- *   <li>Acquire via {@link SandboxClient#create} (new) or {@link SandboxClient#resume} (existing)
- *   <li>Call {@link #start()} — initializes or restores the workspace
- *   <li>Use {@link #exec} for command execution, {@link #persistWorkspace}/{@link #hydrateWorkspace}
- *       for archive operations
- *   <li>Call {@link #stop()} — persists the snapshot (does NOT destroy resources)
- *   <li>Call {@link #shutdown()} — destroys backend resources (tmpdir, container)
- *   <li>Or use {@link #close()} which calls stop + shutdown in sequence
+ *   <li>通过 {@link SandboxClient#create}（新建）或 {@link SandboxClient#resume}（恢复）获取
+ *   <li>调用 {@link #start()} — 初始化或恢复工作空间
+ *   <li>使用 {@link #exec} 执行命令，{@link #persistWorkspace}/{@link #hydrateWorkspace} 进行归档操作
+ *   <li>调用 {@link #stop()} — 持久化快照（不会销毁资源）
+ *   <li>调用 {@link #shutdown()} — 销毁后端资源（临时目录、容器）
+ *   <li>或使用 {@link #close()} 依次调用 stop + shutdown
  * </ol>
  *
- * <p>The distinction between {@code stop()} and {@code shutdown()} is critical:
+ * <p>{@code stop()} 和 {@code shutdown()} 的区别至关重要：
+ * The distinction between {@code stop()} and {@code shutdown()} is critical:
  * <ul>
- *   <li>{@code stop()}: persist snapshot only — safe for both self-managed and user-managed
- *       sandboxes</li>
- *   <li>{@code shutdown()}: destroy backend resources — only called on self-managed sandboxes</li>
+ *   <li>{@code stop()}: 仅持久化快照 — 对自管理和用户管理的沙箱都安全</li>
+ *   <li>{@code shutdown()}: 销毁后端资源 — 仅在自管理沙箱上调用</li>
  * </ul>
  */
 public interface Sandbox extends AutoCloseable {
@@ -55,18 +55,20 @@ public interface Sandbox extends AutoCloseable {
     boolean isRunning();
 
     /**
+     * 返回此沙箱的当前可序列化状态。
      * Returns the current serializable state of this sandbox.
      *
-     * @return state (may be modified by lifecycle methods)
+     * @return 状态（可能被生命周期方法修改）
      */
     SandboxState getState();
 
     /**
+     * 在沙箱工作空间中运行 shell 命令。
      * Runs a shell command in the sandbox workspace.
      *
-     * @param runtimeContext per-call agent context (session, user, attributes); may be {@code null}
-     * @param command shell command
-     * @param timeoutSeconds max wait; {@code null} for implementation default
+     * @param runtimeContext 每次调用的代理上下文（会话、用户、属性）；可为 {@code null}
+     * @param command shell 命令
+     * @param timeoutSeconds 最大等待时间；{@code null} 表示使用实现默认值
      */
     ExecResult exec(RuntimeContext runtimeContext, String command, Integer timeoutSeconds)
             throws Exception;

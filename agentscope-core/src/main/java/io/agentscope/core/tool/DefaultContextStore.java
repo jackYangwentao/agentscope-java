@@ -21,10 +21,9 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * In-memory {@link ContextStore} using two-level Map: Class → (Key → Object).
+ * 基于两层 Map 的内存型 {@link ContextStore}：Class → (Key → Object)。
  *
- * <p>Supports singleton (one per type) and multi-instance (keyed) patterns. Immutable and
- * thread-safe.
+ * <p>支持单例（每类型一个）和多实例（键控）模式。不可变且线程安全。
  */
 class DefaultContextStore implements ContextStore {
 

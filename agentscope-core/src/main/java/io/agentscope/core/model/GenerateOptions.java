@@ -22,11 +22,11 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 /**
- * Immutable generation options for LLM models.
- * Use the builder pattern to construct instances.
+ * 不可变的 LLM 模型生成选项。
+ * 使用构建器模式构造实例。
  *
- * <p>This class holds both per-request generation parameters (temperature, maxTokens, etc.)
- * and connection-level configuration (apiKey, baseUrl, modelName, stream).
+ * <p>该类同时包含每次请求的生成参数（temperature、maxTokens 等）和连接级别配置
+ * （apiKey、baseUrl、modelName、stream）。
  */
 public class GenerateOptions {
     // Connection-level configuration

@@ -42,6 +42,11 @@ import reactor.core.publisher.Mono;
  *
  * <p>Priority is 5 — runs early so state is persisted before the session-persistence hook
  * (priority 900) saves the overall agent state.
+ *
+ * <p>内存刷出钩子，在每次 agent 调用结束时触发内存刷出和消息卸载。
+ * 在 {@link PostCallEvent} 上触发，确保每次调用后长时记忆被提取并持久化，
+ * 即使在该次调用期间未触发对话压缩也是如此。
+ * 优先级为 5 — 提前运行，以便在会话持久化钩子（优先级 900）保存整体 agent 状态之前持久化状态。
  */
 public class MemoryFlushHook implements Hook, RuntimeContextAware {
 

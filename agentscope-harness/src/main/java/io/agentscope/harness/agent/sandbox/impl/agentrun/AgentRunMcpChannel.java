@@ -28,35 +28,55 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
+ * 基于 AgentScope MCP 客户端的 AgentRun 沙箱执行通道。
+ * <p>
+ * 复用 {@link McpClientBuilder#streamableHttpTransport(String)} 和 AgentRun API-Key 头，
+ * 并公开 AgentRun 沙箱模板为 AgentScope 启用的三个工具名称：
+ * {@code process_exec_cmd}、{@code read_file}、{@code write_file}。
+ * <p>
  * Execution channel for an AgentRun sandbox built on the AgentScope MCP client.
- *
- * <p>Reuses {@link McpClientBuilder#streamableHttpTransport(String)} with the AgentRun API-key
+ * Reuses {@link McpClientBuilder#streamableHttpTransport(String)} with the AgentRun API-key
  * header, and exposes the three tool names that an AgentRun sandbox template enables for
  * AgentScope: {@code process_exec_cmd}, {@code read_file}, {@code write_file}.
  */
 final class AgentRunMcpChannel implements AutoCloseable {
 
-    /** MCP tool name for shell-style command execution. */
+    /** shell 风格命令执行的 MCP 工具名称。MCP tool name for shell-style command execution. */
     static final String TOOL_EXEC = "process_exec_cmd";
 
-    /** MCP tool name for reading a file from the sandbox filesystem. */
+    /** 从沙箱文件系统读取文件的 MCP 工具名称。MCP tool name for reading a file from the sandbox filesystem. */
     static final String TOOL_READ_FILE = "read_file";
 
-    /** MCP tool name for writing a file to the sandbox filesystem. */
+    /** 向沙箱文件系统写入文件的 MCP 工具名称。MCP tool name for writing a file to the sandbox filesystem. */
     static final String TOOL_WRITE_FILE = "write_file";
 
+    /** Jackson JSON 对象映射器。Jackson JSON object mapper. */
     private static final ObjectMapper JSON = new ObjectMapper();
 
+    /** AgentRun 沙箱客户端选项。AgentRun sandbox client options. */
     private final AgentRunSandboxClientOptions opt;
+
+    /** MCP 端点 URL。MCP endpoint URL. */
     private final String url;
+
+    /** MCP 客户端包装器（volatile 保证可见性）。MCP client wrapper (volatile for visibility). */
     private volatile McpClientWrapper client;
 
+    /**
+     * 使用给定选项构造 AgentRunMcpChannel 实例。
+     * Constructs an AgentRunMcpChannel instance with the given options.
+     *
+     * @param opt AgentRun 沙箱客户端选项 / AgentRun sandbox client options
+     */
     AgentRunMcpChannel(AgentRunSandboxClientOptions opt) {
         this.opt = Objects.requireNonNull(opt, "opt");
         this.url = resolveUrl(opt);
     }
 
-    /** Connects the MCP client. Idempotent — repeated calls are a no-op. */
+    /**
+     * 连接 MCP 客户端。幂等操作——重复调用为无操作。
+     * Connects the MCP client. Idempotent — repeated calls are a no-op.
+     */
     void connect() {
         if (client != null) {
             return;
@@ -73,7 +93,10 @@ final class AgentRunMcpChannel implements AutoCloseable {
         this.client = c;
     }
 
-    /** Result of a shell command executed in the sandbox. */
+    /**
+     * 在沙箱中执行的 shell 命令结果。
+     * Result of a shell command executed in the sandbox.
+     */
     static final class ExecResult {
         final int exitCode;
         final String stdout;
@@ -86,7 +109,10 @@ final class AgentRunMcpChannel implements AutoCloseable {
         }
     }
 
-    /** Runs {@code command} via the AgentRun {@code process_exec_cmd} MCP tool. */
+    /**
+     * 通过 AgentRun {@code process_exec_cmd} MCP 工具运行 {@code command}。
+     * Runs {@code command} via the AgentRun {@code process_exec_cmd} MCP tool.
+     */
     ExecResult exec(String command, String cwd, int timeoutSeconds) {
         ensureConnected();
         Map<String, Object> args = new LinkedHashMap<>();
@@ -111,7 +137,10 @@ final class AgentRunMcpChannel implements AutoCloseable {
         return parseExecPayload(extractText(result));
     }
 
-    /** Reads a file via the AgentRun {@code read_file} MCP tool, returning its text content. */
+    /**
+     * 通过 AgentRun {@code read_file} MCP 工具读取文件，返回文本内容。
+     * Reads a file via the AgentRun {@code read_file} MCP tool, returning its text content.
+     */
     String readFile(String absolutePath) {
         ensureConnected();
         Map<String, Object> args = new LinkedHashMap<>();
@@ -131,7 +160,10 @@ final class AgentRunMcpChannel implements AutoCloseable {
         return extractText(result);
     }
 
-    /** Writes a file via the AgentRun {@code write_file} MCP tool. */
+    /**
+     * 通过 AgentRun {@code write_file} MCP 工具写入文件。
+     * Writes a file via the AgentRun {@code write_file} MCP tool.
+     */
     void writeFile(String absolutePath, String content) {
         ensureConnected();
         Map<String, Object> args = new LinkedHashMap<>();
@@ -151,7 +183,10 @@ final class AgentRunMcpChannel implements AutoCloseable {
         }
     }
 
-    /** Returns the MCP endpoint URL this channel uses. */
+    /**
+     * 返回此通道使用的 MCP 端点 URL。
+     * Returns the MCP endpoint URL this channel uses.
+     */
     String getUrl() {
         return url;
     }
@@ -163,18 +198,26 @@ final class AgentRunMcpChannel implements AutoCloseable {
             try {
                 c.close();
             } catch (Exception ignore) {
-                // best-effort
+                // 尽力而为 / best-effort
             }
             client = null;
         }
     }
 
+    /**
+     * 确保 MCP 客户端已连接。
+     * Ensures the MCP client is connected.
+     */
     private void ensureConnected() {
         if (client == null) {
             connect();
         }
     }
 
+    /**
+     * 获取 API 密钥，如果未设置则抛出异常。
+     * Gets the API key or throws if not set.
+     */
     private String requireApiKey() {
         String key = opt.getApiKey();
         if (key == null || key.isBlank()) {
@@ -184,10 +227,18 @@ final class AgentRunMcpChannel implements AutoCloseable {
         return key;
     }
 
+    /**
+     * 将 null 转换为空字符串。
+     * Converts null to empty string.
+     */
     private static String nullToEmpty(String s) {
         return s == null ? "" : s;
     }
 
+    /**
+     * 解析 MCP 服务器 URL，如有必要则附加 MCP 端点路径。
+     * Resolves the MCP server URL, appending the MCP endpoint path if needed.
+     */
     private static String resolveUrl(AgentRunSandboxClientOptions opt) {
         String base = opt.getMcpServerUrl();
         if (base == null || base.isBlank()) {
@@ -198,6 +249,7 @@ final class AgentRunMcpChannel implements AutoCloseable {
         if (endpoint == null || endpoint.isBlank()) {
             return base;
         }
+        // 将 base 视为主机根路径或已包含端点的情况。
         // Treat base as either a host root or already including the endpoint.
         if (base.endsWith(endpoint) || base.contains(endpoint + "?")) {
             return base;
@@ -207,6 +259,10 @@ final class AgentRunMcpChannel implements AutoCloseable {
         return trimmed + tail;
     }
 
+    /**
+     * 从 MCP 调用工具结果中提取文本内容。
+     * Extracts text content from an MCP call tool result.
+     */
     private static String extractText(McpSchema.CallToolResult result) {
         if (result == null || result.content() == null) {
             return "";
@@ -224,6 +280,9 @@ final class AgentRunMcpChannel implements AutoCloseable {
     }
 
     /**
+     * 解析 AgentRun exec MCP 响应。AgentRun 返回 JSON 对象
+     * （如 {@code {"exitCode":0,"stdout":"...","stderr":"..."}}）或纯文本 stdout/stderr 字符串。
+     * 两种格式均支持。
      * Parses an AgentRun exec MCP response. AgentRun returns either a JSON object such as
      * {@code {"exitCode":0,"stdout":"...","stderr":"..."}} or a plain stdout/stderr string. We
      * accept both shapes.
@@ -247,7 +306,7 @@ final class AgentRunMcpChannel implements AutoCloseable {
                 String stderr = node.path("stderr").asText("");
                 return new ExecResult(exit, stdout, stderr);
             } catch (Exception ignore) {
-                // fall through to plain-text handling
+                // 回退到纯文本处理 / fall through to plain-text handling
             }
         }
         return new ExecResult(0, text, "");

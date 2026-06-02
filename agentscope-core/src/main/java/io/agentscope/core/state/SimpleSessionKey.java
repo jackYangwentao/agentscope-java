@@ -18,12 +18,11 @@ package io.agentscope.core.state;
 import java.util.Objects;
 
 /**
- * Default simple session identifier implementation using a single string.
+ * 使用单个字符串的默认简单会话标识符实现。
  *
- * <p>This is the recommended session key for most use cases where a simple string identifier is
- * sufficient.
+ * <p>对于大多数使用简单字符串标识符即可满足的场景，这是推荐的会话键。
  *
- * <p>Example usage:
+ * <p>使用示例：
  *
  * <pre>{@code
  * SessionKey sessionKey = SimpleSessionKey.of("user_123");
@@ -31,7 +30,7 @@ import java.util.Objects;
  * agent.saveTo(session, sessionKey);
  * }</pre>
  *
- * @param sessionId the unique session identifier string
+ * @param sessionId 唯一的会话标识符字符串
  * @see SessionKey
  */
 public record SimpleSessionKey(String sessionId) implements SessionKey {

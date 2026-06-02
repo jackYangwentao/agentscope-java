@@ -16,13 +16,12 @@
 package io.agentscope.core.state;
 
 /**
- * Configuration for which components ReActAgent should manage state persistence.
+ * 配置 ReActAgent 应为哪些组件管理状态持久化。
  *
- * <p>By default, ReActAgent manages state persistence for all its components (memory, toolkit,
- * planNotebook, stateful tools). Users can selectively disable management for specific components
- * to handle their state independently.
+ * <p>默认情况下，ReActAgent 为其所有组件（memory、toolkit、planNotebook、有状态工具）管理状态持久化。
+ * 用户可以选择性地对特定组件禁用管理，以独立处理其状态。
  *
- * <p>Example usage:
+ * <p>使用示例：
  *
  * <pre>{@code
  * // Default: manage all components

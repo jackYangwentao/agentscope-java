@@ -21,7 +21,43 @@ import io.agentscope.core.model.GenerateOptions;
 import java.util.Objects;
 
 /**
- * Event fired during reasoning streaming.
+ * LLM 推理流式传输期间触发的事件。
+ *
+ * <p><b>不可修改:</b> 通知型事件
+ *
+ * <p><b>上下文:</b>
+ * <ul>
+ *   <li>{@link #getAgent()} — Agent 实例</li>
+ *   <li>{@link #getMemory()} — Agent 的 memory</li>
+ *   <li>{@link #getModelName()} — 模型名称</li>
+ *   <li>{@link #getGenerateOptions()} — 生成选项</li>
+ *   <li>{@link #getIncrementalChunk()} — 仅此块的增量内容</li>
+ *   <li>{@link #getAccumulated()} — 迄今为止的完整累积消息</li>
+ * </ul>
+ *
+ * <p><b>典型用途:</b>
+ * <ul>
+ *   <li>使用 {@link #getIncrementalChunk()} 进行增量显示(追加模式)</li>
+ *   <li>使用 {@link #getAccumulated()} 进行全量显示(替换整个文本)</li>
+ *   <li>实时显示流式输出</li>
+ *   <li>监控推理进度</li>
+ *   <li>记录流式内容</li>
+ * </ul>
+ *
+ * <p><b>示例:</b>
+ * <pre>{@code
+ * case ReasoningChunkEvent e -> {
+ *     // 增量模式:仅打印新内容
+ *     System.out.print(extractText(e.getIncrementalChunk()));
+ *
+ *     // 或全量模式:更新整个显示
+ *     ui.setText(extractText(e.getAccumulated()));
+ *
+ *     yield Mono.just(e);
+ * }
+ * }</pre>
+ *
+ * <p>Event fired during reasoning streaming.
  *
  * <p><b>Modifiable:</b> No (notification-only)
  *
@@ -63,7 +99,16 @@ public final class ReasoningChunkEvent extends ReasoningEvent {
     private final Msg accumulated;
 
     /**
-     * Constructor for ReasoningChunkEvent.
+     * ReasoningChunkEvent 的构造方法。
+     *
+     * @param agent Agent 实例(不能为 null)
+     * @param modelName 模型名称(不能为 null)
+     * @param generateOptions 生成选项(可为 null)
+     * @param incrementalChunk 此流式事件中新增的增量内容(不能为 null)
+     * @param accumulated 包含至今所有内容的完整累积消息(不能为 null)
+     * @throws NullPointerException 如果 agent、modelName、incrementalChunk 或 accumulated 为 null
+     *
+     * <p>Constructor for ReasoningChunkEvent.
      *
      * @param agent The agent instance (must not be null)
      * @param modelName The model name (must not be null)
@@ -87,7 +132,11 @@ public final class ReasoningChunkEvent extends ReasoningEvent {
     }
 
     /**
-     * Get only the new content generated in this streaming event.
+     * 获取此流式事件中新增的增量内容。
+     *
+     * @return 增量块
+     *
+     * <p>Get only the new content generated in this streaming event.
      *
      * @return The incremental chunk
      */
@@ -96,7 +145,11 @@ public final class ReasoningChunkEvent extends ReasoningEvent {
     }
 
     /**
-     * Get the full accumulated message containing all content generated so far.
+     * 获取包含至今所有内容的完整累积消息。
+     *
+     * @return 累积消息
+     *
+     * <p>Get the full accumulated message containing all content generated so far.
      *
      * @return The accumulated message
      */

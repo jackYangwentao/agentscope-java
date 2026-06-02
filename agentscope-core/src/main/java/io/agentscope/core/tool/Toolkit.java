@@ -35,29 +35,29 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 /**
- * Toolkit manages the registration, retrieval, and execution of agent tools.
- * This class acts as a facade, delegating specific responsibilities to specialized managers:
+ * 工具集管理智能体工具的注册、检索和执行。
+ * 该类作为外观类，将具体职责委托给专门的子管理器：
  *
- * <p><b>Managers:</b>
+ * <p><b>子管理器：</b>
  * <ul>
- *   <li>ToolRegistry: Tool registration and lookup</li>
- *   <li>ToolGroupManager: Tool group CRUD operations and active group management</li>
- *   <li>ToolSchemaProvider: Tool schema generation with group filtering</li>
- *   <li>McpClientManager: MCP client lifecycle and tool registration</li>
- *   <li>MetaToolFactory: Creates meta tools for dynamic group control</li>
+ *   <li>ToolRegistry：工具注册与查找</li>
+ *   <li>ToolGroupManager：工具组 CRUD 操作与激活组管理</li>
+ *   <li>ToolSchemaProvider：带组过滤的工具 Schema 生成</li>
+ *   <li>McpClientManager：MCP 客户端生命周期与工具注册</li>
+ *   <li>MetaToolFactory：创建用于动态组控制的元工具</li>
  * </ul>
  *
- * <p><b>Core Components:</b>
+ * <p><b>核心组件：</b>
  * <ul>
- *   <li>ToolSchemaGenerator: Generates JSON schemas for tool parameters</li>
- *   <li>ToolMethodInvoker: Handles method invocation and parameter conversion</li>
- *   <li>ToolResultConverter: Converts method results to ToolResultBlock</li>
- *   <li>ToolExecutor: Handles parallel/sequential tool execution with validation</li>
+ *   <li>ToolSchemaGenerator：生成工具参数的 JSON Schema</li>
+ *   <li>ToolMethodInvoker：处理方法调用和参数类型转换</li>
+ *   <li>ToolResultConverter：将方法结果转换为 ToolResultBlock</li>
+ *   <li>ToolExecutor：处理带验证的并行/串行工具执行</li>
  * </ul>
  *
- * <p><b>Features:</b>
+ * <p><b>特性：</b>
  * <ul>
- *   <li>Tool group management for dynamic tool activation</li>
+ *   <li>工具组管理，支持动态工具激活</li>
  *   <li>State management via StateModule interface (activeGroups persistence)</li>
  *   <li>Meta tool for runtime tool group control (reset_equipped_tools)</li>
  *   <li>MCP (Model Context Protocol) client support for external tool providers</li>

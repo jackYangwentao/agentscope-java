@@ -19,14 +19,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Represents plain text content in a message.
+ * 表示消息中的纯文本内容。
  *
- * <p>This is the most basic content block type, containing simple text content.
- * Text blocks are commonly used for user messages, assistant responses,
- * and any other textual communication.
+ * <p>这是最基本的内容块类型，包含简单的文本内容。文本块通常用于用户消息、助手响应
+ * 以及任何其他文本通信。
  *
- * <p>The text content can be empty but never null. The toString() method
- * returns the text content for convenience.
+ * <p>文本内容可以为空但绝不能为 null。toString() 方法直接返回文本内容以方便使用。
  */
 public final class TextBlock extends ContentBlock {
 

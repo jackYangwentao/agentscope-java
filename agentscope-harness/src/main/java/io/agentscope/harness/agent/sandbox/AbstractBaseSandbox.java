@@ -25,31 +25,33 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * {@link Sandbox} 的抽象基础实现，具有 4 分支工作空间启动逻辑。
  * Abstract base implementation of {@link Sandbox} with the 4-branch workspace start logic.
  *
- * <h2>4-Branch Start Logic</h2>
+ * <h2>4 分支启动逻辑</h2>
  * <pre>
- * Branch A: workspaceRootReady=true  &amp; workspace dir exists   → apply ephemeral-only entries
- * Branch B: workspaceRootReady=true  &amp; workspace dir missing  → restore from snapshot + ephemeral entries
- * Branch C: workspaceRootReady=false &amp; snapshot is restorable → hydrate from snapshot + all entries
- * Branch D: workspaceRootReady=false &amp; no restorable snapshot → fresh init from full workspace spec
+ * 分支 A: workspaceRootReady=true  &amp; 工作空间目录存在   → 仅应用临时条目
+ * 分支 B: workspaceRootReady=true  &amp; 工作空间目录缺失  → 从快照恢复 + 临时条目
+ * 分支 C: workspaceRootReady=false &amp; 快照可恢复 → 从快照初始化 + 所有条目
+ * 分支 D: workspaceRootReady=false &amp; 无可恢复快照 → 从完整工作空间规范全新初始化
  * </pre>
  *
- * <p>Subclasses implement the backend-specific operations:
+ * <p>子类实现后端特定的操作：
+ * Subclasses implement the backend-specific operations:
  * <ul>
- *   <li>{@link #doExec(RuntimeContext, String, int)} — execute a shell command in the workspace</li>
- *   <li>{@link #doPersistWorkspace()} — create a tar archive of the workspace</li>
- *   <li>{@link #doHydrateWorkspace(InputStream)} — extract a tar archive into the workspace</li>
- *   <li>{@link #doSetupWorkspace()} — create the workspace root directory</li>
- *   <li>{@link #doDestroyWorkspace()} — delete the workspace root directory (on shutdown)</li>
- *   <li>{@link #getWorkspaceRoot()} — return the workspace root path string</li>
+ *   <li>{@link #doExec(RuntimeContext, String, int)} — 在工作空间中执行 shell 命令</li>
+ *   <li>{@link #doPersistWorkspace()} — 创建工作空间的 tar 归档</li>
+ *   <li>{@link #doHydrateWorkspace(InputStream)} — 将 tar 归档解压到工作空间</li>
+ *   <li>{@link #doSetupWorkspace()} — 创建工作空间根目录</li>
+ *   <li>{@link #doDestroyWorkspace()} — 删除工作空间根目录（关闭时）</li>
+ *   <li>{@link #getWorkspaceRoot()} — 返回工作空间根路径字符串</li>
  * </ul>
  */
 public abstract class AbstractBaseSandbox implements Sandbox {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractBaseSandbox.class);
 
-    /** Default timeout in seconds for workspace probing commands. */
+    /** 工作空间探测命令的默认超时时间（秒）。 */
     private static final int PROBE_TIMEOUT_SECONDS = 10;
 
     private final SandboxState state;
@@ -62,9 +64,10 @@ public abstract class AbstractBaseSandbox implements Sandbox {
     }
 
     /**
+     * 执行 4 分支工作空间启动逻辑。
      * Executes the 4-branch workspace start logic.
      *
-     * @throws Exception if the workspace fails to start
+     * @throws Exception 如果工作空间启动失败
      */
     @Override
     public void start() throws Exception {
@@ -124,9 +127,10 @@ public abstract class AbstractBaseSandbox implements Sandbox {
     }
 
     /**
+     * 持久化工作空间快照并将工作空间根标记为就绪。
      * Persists the workspace snapshot and marks the workspace root as ready.
      *
-     * @throws Exception if snapshot persistence fails
+     * @throws Exception 如果快照持久化失败
      */
     @Override
     public void stop() throws Exception {
@@ -143,8 +147,8 @@ public abstract class AbstractBaseSandbox implements Sandbox {
     /**
      * {@inheritDoc}
      *
-     * <p>Calls {@link #stop()} then {@link #shutdown()}.
-     * Stop failures are logged but do not prevent shutdown.
+     * <p>调用 {@link #stop()} 然后 {@link #shutdown()}。
+     * 停止失败会被记录但不会阻止关闭。
      */
     @Override
     public void close() throws Exception {
@@ -167,7 +171,7 @@ public abstract class AbstractBaseSandbox implements Sandbox {
     }
 
     /**
-     * Delegates to {@link #doExec(RuntimeContext, String, int)} with a fallback timeout.
+     * 委托给 {@link #doExec(RuntimeContext, String, int)} 并使用回退超时。
      */
     @Override
     public ExecResult exec(RuntimeContext runtimeContext, String command, Integer timeoutSeconds)
@@ -187,12 +191,13 @@ public abstract class AbstractBaseSandbox implements Sandbox {
     }
 
     /**
+     * 使用后端执行探测工作空间根目录是否仍然存在。
      * Probes whether the workspace root directory still exists, using a backend exec.
      *
-     * <p>Uses {@code test -d {workspaceRoot}} with a {@value #PROBE_TIMEOUT_SECONDS}-second
-     * timeout. Returns {@code true} if the command exits with code 0.
+     * <p>使用 {@code test -d {workspaceRoot}} 命令和 {@value #PROBE_TIMEOUT_SECONDS} 秒超时。
+     * 如果命令退出码为 0 则返回 {@code true}。
      *
-     * @return true if the workspace root exists
+     * @return 如果工作空间根存在则返回 true
      */
     protected boolean probeWorkspaceRootForPreservedResume() {
         try {
@@ -207,60 +212,67 @@ public abstract class AbstractBaseSandbox implements Sandbox {
     }
 
     /**
+     * 返回默认的命令执行超时时间（秒）。
      * Returns the default command execution timeout in seconds.
      *
-     * @return default timeout (120 seconds)
+     * @return 默认超时（120 秒）
      */
     protected int getDefaultExecTimeoutSeconds() {
         return 120;
     }
 
     /**
+     * 在工作空间中执行 shell 命令。
      * Executes a shell command within the workspace.
      *
-     * @param runtimeContext per-call context; may be {@code null} for internal probes
-     * @param command shell command string
-     * @param timeoutSeconds maximum execution time
-     * @return execution result
-     * @throws Exception if execution fails
+     * @param runtimeContext 每次调用的上下文；对于内部探测可能为 {@code null}
+     * @param command shell 命令字符串
+     * @param timeoutSeconds 最大执行时间
+     * @return 执行结果
+     * @throws Exception 如果执行失败
      */
     protected abstract ExecResult doExec(
             RuntimeContext runtimeContext, String command, int timeoutSeconds) throws Exception;
 
     /**
+     * 创建当前工作空间内容的 tar 归档。
      * Creates a tar archive of the current workspace contents.
      *
-     * @return an {@link InputStream} over the tar stream; caller must close
-     * @throws Exception if archiving fails
+     * @return tar 流的 {@link InputStream}；调用者必须关闭
+     * @throws Exception 如果归档失败
      */
     protected abstract InputStream doPersistWorkspace() throws Exception;
 
     /**
+     * 将 tar 归档解压到工作空间。
      * Extracts a tar archive into the workspace.
      *
-     * @param archive the tar archive stream to extract
-     * @throws Exception if extraction fails
+     * @param archive 要解压的 tar 归档流
+     * @throws Exception 如果解压失败
      */
     protected abstract void doHydrateWorkspace(InputStream archive) throws Exception;
 
     /**
+     * 创建工作空间根目录。
      * Creates the workspace root directory.
      *
-     * @throws Exception if directory creation fails
+     * @throws Exception 如果目录创建失败
      */
     protected abstract void doSetupWorkspace() throws Exception;
 
     /**
+     * 销毁工作空间根以及所有后端资源。
      * Destroys the workspace root and any backend resources.
      *
-     * @throws Exception if cleanup fails
+     * @throws Exception 如果清理失败
      */
     protected abstract void doDestroyWorkspace() throws Exception;
 
     /**
+     * 返回工作空间根目录的绝对路径。
      * Returns the absolute path of the workspace root directory.
      *
-     * @return workspace root path string
+     * @return 工作空间根路径字符串
      */
     protected abstract String getWorkspaceRoot();
 

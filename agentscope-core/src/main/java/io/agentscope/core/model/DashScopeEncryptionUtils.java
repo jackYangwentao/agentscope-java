@@ -28,16 +28,15 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- * Encryption utilities for secure DashScope API access.
+ * 用于安全 DashScope API 访问的加密工具类。
  *
- * <p>This class provides encryption functionality for DashScope API calls using:
+ * <p>该类提供 DashScope API 调用的加密功能，使用：
  * <ul>
- *   <li>AES-GCM encryption for request/response data</li>
- *   <li>RSA public key encryption for AES key exchange</li>
+ *   <li>AES-GCM 加密请求/响应数据</li>
+ *   <li>RSA 公钥加密用于 AES 密钥交换</li>
  * </ul>
  *
- * <p>This implementation follows Aliyun's encryption protocol requirements for secure
- * cloud model inference, supporting TLS encryption and token-based authentication.
+ * <p>该实现遵循阿里云的安全云模型推理加密协议要求，支持 TLS 加密和基于令牌的身份验证。
  */
 public final class DashScopeEncryptionUtils {
 

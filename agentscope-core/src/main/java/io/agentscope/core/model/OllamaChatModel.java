@@ -36,22 +36,21 @@ import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
 /**
- * AgentScope ChatModel implementation for Ollama.
- * Provides integration with local Ollama instances via HTTP API.
+ * Ollama 的 AgentScope ChatModel 实现。
+ * 通过 HTTP API 提供与本地 Ollama 实例的集成。
  *
- * <p>This class implements the AgentScope {@link ChatModelBase} interface for Ollama models,
- * supporting both synchronous and streaming chat operations, tool usage, and custom Ollama options.
+ * <p>该类实现了 Ollama 模型的 AgentScope {@link ChatModelBase} 接口，
+ * 支持同步和流式聊天操作、工具使用和自定义 Ollama 选项。
  *
- * <p>Key features:
+ * <p>主要特性：
  * <ul>
- *   <li>Support for both {@link GenerateOptions} and Ollama-specific {@link OllamaOptions}</li>
- *   <li>Integration with AgentScope's message formatting system</li>
- *   <li>Streaming response support via Project Reactor's Flux</li>
- *   <li>Tool usage and function calling capabilities</li>
- *   <li>Configurable message formatters (OllamaChatFormatter, OllamaMultiAgentFormatter)</li>
- *   <li>Automatic timeout and retry mechanisms</li>
+ *   <li>支持 {@link GenerateOptions} 和 Ollama 特定的 {@link OllamaOptions}</li>
+ *   <li>与 AgentScope 消息格式化系统集成</li>
+ *   <li>通过 Project Reactor 的 Flux 支持流式响应</li>
+ *   <li>工具使用和函数调用能力</li>
+ *   <li>可配置的消息格式化器（OllamaChatFormatter、OllamaMultiAgentFormatter）</li>
+ *   <li>自动超时和重试机制</li>
  * </ul>
- *
  */
 public class OllamaChatModel extends ChatModelBase {
     private static final Logger log = LoggerFactory.getLogger(OllamaChatModel.class);

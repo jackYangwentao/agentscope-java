@@ -23,14 +23,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Pattern;
 
 /**
- * Registry for resolving {@link Model} instances from string identifiers (named instances or
- * {@code provider:model} patterns). User-registered factories take precedence over built-in
- * providers.
+ * 从字符串标识符（命名实例或 {@code provider:model} 模式）解析 {@link Model} 实例的注册中心。
+ * 用户注册的工厂优先于内置提供者。
  *
- * <p>Built-in providers read API keys from standard environment variables when auto-creating
- * models: {@code OPENAI_API_KEY}, {@code DASHSCOPE_API_KEY}, {@code GEMINI_API_KEY}, {@code
- * ANTHROPIC_API_KEY} (optional for Anthropic SDK), {@code OLLAMA_BASE_URL} (optional, defaults to
- * {@code http://localhost:11434}).
+ * <p>内置提供者在自动创建模型时从标准环境变量读取 API 密钥：
+ * {@code OPENAI_API_KEY}、{@code DASHSCOPE_API_KEY}、{@code GEMINI_API_KEY}、
+ * {@code ANTHROPIC_API_KEY}（Anthropic SDK 可选）、{@code OLLAMA_BASE_URL}（可选，默认为
+ * {@code http://localhost:11434}）。
  */
 public final class ModelRegistry {
 

@@ -27,11 +27,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * In-memory {@link TaskRepository} backed by a cached daemon thread pool.
+ * 由缓存的后台线程池支持的内存中 {@link TaskRepository}。
  *
- * <p>Session IDs are ignored — all tasks share a single flat map. This is suitable for
- * single-node local deployments and testing. For distributed durability, prefer
- * {@code WorkspaceTaskRepository}.
+ * <p>会话 ID 被忽略——所有任务共享一个单一的扁平映射。这适用于单节点本地部署和测试。
+ * 对于分布式持久化，优先使用 {@code WorkspaceTaskRepository}。
  */
 public class DefaultTaskRepository implements TaskRepository {
 

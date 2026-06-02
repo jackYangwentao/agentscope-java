@@ -20,17 +20,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 /**
- * Represents audio content in a message.
+ * 表示消息中的音频内容。
  *
- * <p>This content block supports audio from two sources:
+ * <p>该内容块支持来自两种来源的音频：
  * <ul>
- *   <li>URL source - audio files accessible via HTTP/HTTPS URLs or local file URLs</li>
- *   <li>Base64 source - audio encoded as Base64 strings with MIME type</li>
+ *   <li>URL 来源 - 可通过 HTTP/HTTPS URL 或本地文件 URL 访问的音频文件</li>
+ *   <li>Base64 来源 - 使用 MIME 类型编码为 Base64 字符串的音频</li>
  * </ul>
  *
- * <p>Audio blocks enable multimodal AI interactions where agents need to process
- * or generate audio content such as speech, music, sound effects, or other
- * auditory information.
+ * <p>音频块支持多模态 AI 交互，使智能体能够处理或生成语音、音乐、音效
+ * 或其他听觉信息。
  */
 public final class AudioBlock extends ContentBlock {
 

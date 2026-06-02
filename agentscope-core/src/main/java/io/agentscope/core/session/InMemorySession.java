@@ -26,23 +26,22 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
- * In-memory implementation of the Session interface.
+ * Session 接口的内存实现。
  *
- * <p>This implementation stores session state in memory using a ConcurrentHashMap. It is suitable
- * for single-process applications where persistence across restarts is not required.
+ * <p>该实现使用 ConcurrentHashMap 将会话状态存储在内存中。适用于不需要跨重启持久化的单进程应用。
  *
- * <p><b>Thread Safety:</b> This class is thread-safe. It uses ConcurrentHashMap for session storage
- * and creates defensive copies of state data during save operations.
+ * <p><b>线程安全性：</b>该类是线程安全的。它使用 ConcurrentHashMap 存储会话，
+ * 并在保存操作期间创建状态数据的防御性副本。
  *
- * <p><b>Limitations:</b>
+ * <p><b>限制：</b>
  *
  * <ul>
- *   <li>State is lost when the JVM exits
- *   <li>Not suitable for distributed environments
- *   <li>Memory usage grows with number of sessions
+ *   <li>JVM 退出时状态丢失</li>
+ *   <li>不适用于分布式环境</li>
+ *   <li>内存使用量随会话数量增长</li>
  * </ul>
  *
- * <p>Example usage:
+ * <p>使用示例：
  *
  * <pre>{@code
  * Session session = new InMemorySession();

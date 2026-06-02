@@ -23,30 +23,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Event fired after LLM reasoning completes.
+ * LLM 推理完成后触发的事件。
  *
- * <p><b>Modifiable:</b> Yes - {@link #setReasoningMessage(Msg)}
+ * <p>此事件允许 Hook 在 LLM 响应被 Agent 进一步处理之前检查或修改推理结果。
  *
- * <p><b>Context:</b>
- * <ul>
- *   <li>{@link #getAgent()} - The agent instance</li>
- *   <li>{@link #getMemory()} - Agent's memory</li>
- *   <li>{@link #getModelName()} - The model name</li>
- *   <li>{@link #getGenerateOptions()} - The generation options</li>
- *   <li>{@link #getReasoningMessage()} - The reasoning result (modifiable)</li>
- * </ul>
+ * <p><b>可修改:</b> 是(推理结果)
  *
- * <p><b>Note:</b> Message content may include text blocks, thinking blocks, and tool use blocks.
- * You can modify any of these before the agent processes tool calls.
+ * <p>Event fired after LLM reasoning completes.
  *
- * <p><b>Use Cases:</b>
- * <ul>
- *   <li>Filter or modify tool calls before execution</li>
- *   <li>Add/remove content blocks</li>
- *   <li>Modify text or thinking content</li>
- *   <li>Add metadata</li>
- *   <li>Request to stop the agent for human review via {@link #stopAgent()}</li>
- * </ul>
+ * <p>This event allows hooks to inspect or modify the reasoning result before it is
+ * processed further by the agent.
+ *
+ * <p><b>Modifiable:</b> Yes (reasoning result)
+ *
+ * @see PreReasoningEvent
+ * @see ReasoningChunkEvent
  */
 public final class PostReasoningEvent extends ReasoningEvent {
 
@@ -55,7 +46,14 @@ public final class PostReasoningEvent extends ReasoningEvent {
     private List<Msg> gotoReasoningMsgs = null;
 
     /**
-     * Constructor for PostReasoningEvent.
+     * PostReasoningEvent 的构造方法。
+     *
+     * @param agent Agent 实例(不能为 null)
+     * @param modelName 模型名称(不能为 null)
+     * @param generateOptions 生成选项(可为 null)
+     * @param reasoningMessage 推理结果消息(可为 null)
+     *
+     * <p>Constructor for PostReasoningEvent.
      *
      * @param agent The agent instance (must not be null)
      * @param modelName The model name (must not be null)
@@ -69,7 +67,11 @@ public final class PostReasoningEvent extends ReasoningEvent {
     }
 
     /**
-     * Get the reasoning result message from LLM.
+     * 获取 LLM 的推理结果消息。
+     *
+     * @return 推理消息,可能为 null
+     *
+     * <p>Get the reasoning result message from LLM.
      *
      * @return The reasoning message, may be null
      */
@@ -78,7 +80,11 @@ public final class PostReasoningEvent extends ReasoningEvent {
     }
 
     /**
-     * Modify the reasoning result message.
+     * 修改推理结果消息。
+     *
+     * @param reasoningMessage 新的推理消息
+     *
+     * <p>Modify the reasoning result message.
      *
      * @param reasoningMessage The new reasoning message
      */
@@ -87,7 +93,15 @@ public final class PostReasoningEvent extends ReasoningEvent {
     }
 
     /**
-     * Request to stop the agent after this reasoning phase.
+     * 请求在此推理阶段后停止 Agent。
+     *
+     * <p>调用时,Agent 将返回包含 ToolUseBlock 的当前消息,
+     * 而不是继续执行工具。用户可以审查待处理的工具调用,
+     * 然后通过调用无参的 {@code agent.call()} 恢复执行。
+     *
+     * <p>这实现了需要用户确认的人机协同场景。
+     *
+     * <p>Request to stop the agent after this reasoning phase.
      *
      * <p>When called, the agent will return the current message containing ToolUseBlocks
      * instead of proceeding to execute the tools. The user can then review the pending
@@ -101,7 +115,11 @@ public final class PostReasoningEvent extends ReasoningEvent {
     }
 
     /**
-     * Check if a stop has been requested.
+     * 检查是否已请求停止。
+     *
+     * @return 如果已调用 {@link #stopAgent()} 则返回 true,否则返回 false
+     *
+     * <p>Check if a stop has been requested.
      *
      * @return true if {@link #stopAgent()} has been called, false otherwise
      */
@@ -110,7 +128,15 @@ public final class PostReasoningEvent extends ReasoningEvent {
     }
 
     /**
-     * Request to go back to reasoning phase without adding any messages.
+     * 请求返回推理阶段,不添加任何消息。
+     *
+     * <p>仅在推理消息中没有待处理的 ToolUse 块时有效。
+     * 如果有待处理的 ToolUse 块,将抛出 {@link IllegalStateException},
+     * 因为需要先提供 ToolResult 消息。
+     *
+     * @throws IllegalStateException 如果有待处理的 ToolUse 块
+     *
+     * <p>Request to go back to reasoning phase without adding any messages.
      *
      * <p>This is only valid when there are no pending ToolUse blocks in the reasoning message.
      * If there are pending ToolUse blocks, an {@link IllegalStateException} will be thrown
@@ -123,7 +149,15 @@ public final class PostReasoningEvent extends ReasoningEvent {
     }
 
     /**
-     * Request to go back to reasoning phase with a single message.
+     * 请求返回推理阶段,携带单条消息。
+     *
+     * <p>如果推理消息包含 ToolUse 块,则提供的消息必须包含匹配的 ToolResult 块。
+     * 也可以包含额外消息(如提示或引导)。
+     *
+     * @param msg 返回推理前要添加到 memory 的消息(如 ToolResult 或提示消息)
+     * @throws IllegalStateException 如果 ToolResult 验证失败
+     *
+     * <p>Request to go back to reasoning phase with a single message.
      *
      * <p>If the reasoning message contains ToolUse blocks, the provided message must contain
      * matching ToolResult blocks. Additional messages (like hints or prompts) can also be included.
@@ -136,7 +170,18 @@ public final class PostReasoningEvent extends ReasoningEvent {
     }
 
     /**
-     * Request to go back to reasoning phase with multiple messages.
+     * 请求返回推理阶段,携带多条消息。
+     *
+     * <p>验证规则:
+     * <ul>
+     *   <li>如果无待处理 ToolUse:消息直接添加(可以是提示/引导)</li>
+     *   <li>如果有待处理 ToolUse:消息必须包含匹配的 ToolResult 块</li>
+     * </ul>
+     *
+     * @param msgs 返回推理前要添加到 memory 的消息列表
+     * @throws IllegalStateException 如果 ToolResult 验证失败
+     *
+     * <p>Request to go back to reasoning phase with multiple messages.
      *
      * <p>Validation rules:
      * <ul>
@@ -153,7 +198,11 @@ public final class PostReasoningEvent extends ReasoningEvent {
     }
 
     /**
-     * Check if a goto reasoning has been requested.
+     * 检查是否已请求返回推理。
+     *
+     * @return 如果已调用任何 gotoReasoning 方法则返回 true,否则返回 false
+     *
+     * <p>Check if a goto reasoning has been requested.
      *
      * @return true if any gotoReasoning method has been called, false otherwise
      */
@@ -162,7 +211,11 @@ public final class PostReasoningEvent extends ReasoningEvent {
     }
 
     /**
-     * Get the messages to add before going back to reasoning.
+     * 获取返回推理前要添加的消息。
+     *
+     * @return 要添加的消息列表,如果未调用 gotoReasoning 则返回 null
+     *
+     * <p>Get the messages to add before going back to reasoning.
      *
      * @return The messages to add, or null if gotoReasoning was not called
      */

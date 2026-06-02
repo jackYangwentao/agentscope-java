@@ -31,21 +31,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Filesystem with unrestricted local shell command execution.
+ * 具有无限制本地 shell 命令执行能力的文件系统。
  *
- * <p>This implementation extends {@link LocalFilesystem} to add shell command execution
- * capabilities. Commands are executed directly on the host system without any
- * sandboxing, process isolation, or security restrictions.
+ * <p>该实现扩展了 {@link LocalFilesystem}，增加了 shell 命令执行功能。
+ * 命令直接在宿主机上执行，没有任何沙箱、进程隔离或安全限制。
  *
- * <p><b>WARNING:</b> This implementation grants agents BOTH direct filesystem access AND unrestricted
- * shell execution on your local machine. Use with extreme caution and only in
- * appropriate environments (local dev, CI/CD with proper secret management).
+ * <p><b>警告：</b>此实现授予了代理对本地机器的 BOTH 直接文件系统访问和不受限制的 shell 执行权限。
+ * 请极度谨慎使用，仅在适当的环境中使用（本地开发、具有适当秘密管理的 CI/CD）。
  */
 public class LocalFilesystemWithShell extends LocalFilesystem implements AbstractSandboxFilesystem {
 
     private static final Logger log = LoggerFactory.getLogger(LocalFilesystemWithShell.class);
 
-    /** Default timeout in seconds for shell command execution. */
+    /** Shell 命令执行的默认超时时间（秒）。 */
     public static final int DEFAULT_EXECUTE_TIMEOUT = 120;
 
     private final String sandboxId;
@@ -54,17 +52,17 @@ public class LocalFilesystemWithShell extends LocalFilesystem implements Abstrac
     private final Map<String, String> env;
 
     /**
-     * Creates an abstract filesystem with default settings.
+     * 使用默认设置创建文件系统。
      *
-     * @param rootDir working directory for both filesystem and shell operations
+     * @param rootDir 文件系统和 shell 操作的工作目录
      */
     public LocalFilesystemWithShell(Path rootDir) {
         this(rootDir, false, DEFAULT_EXECUTE_TIMEOUT, 100_000, null, false, null);
     }
 
     /**
-     * Same as {@link #LocalFilesystemWithShell(Path)} with a path string; see
-     * {@link LocalFilesystem#LocalFilesystem(String)} for {@code null} / blank rules.
+     * 与 {@link #LocalFilesystemWithShell(Path)} 相同，但使用路径字符串；
+     * 关于 {@code null} / 空白规则，请参见 {@link LocalFilesystem#LocalFilesystem(String)}。
      */
     public LocalFilesystemWithShell(String rootDir) {
         this(
@@ -78,18 +76,18 @@ public class LocalFilesystemWithShell extends LocalFilesystem implements Abstrac
     }
 
     /**
-     * Creates an abstract filesystem with default settings and namespace support.
+     * 使用默认设置和命名空间支持创建文件系统。
      *
-     * @param rootDir working directory for both filesystem and shell operations
-     * @param namespaceFactory optional namespace factory for path scoping ({@code null} for none)
+     * @param rootDir 文件系统和 shell 操作的工作目录
+     * @param namespaceFactory 可选的路径作用域命名空间工厂（{@code null} 表示不使用）
      */
     public LocalFilesystemWithShell(Path rootDir, NamespaceFactory namespaceFactory) {
         this(rootDir, false, DEFAULT_EXECUTE_TIMEOUT, 100_000, null, false, namespaceFactory);
     }
 
     /**
-     * Same as {@link #LocalFilesystemWithShell(Path, NamespaceFactory)} with a path string; see
-     * {@link LocalFilesystem#LocalFilesystem(String)} for {@code null} / blank rules.
+     * 与 {@link #LocalFilesystemWithShell(Path, NamespaceFactory)} 相同，但使用路径字符串；
+     * 关于 {@code null} / 空白规则，请参见 {@link LocalFilesystem#LocalFilesystem(String)}。
      */
     public LocalFilesystemWithShell(String rootDir, NamespaceFactory namespaceFactory) {
         this(
@@ -103,14 +101,14 @@ public class LocalFilesystemWithShell extends LocalFilesystem implements Abstrac
     }
 
     /**
-     * Creates a abstract filesystem with full configuration.
+     * 使用完整配置创建文件系统。
      *
-     * @param rootDir working directory for both filesystem and shell operations
-     * @param virtualMode enable virtual path mode for filesystem operations
-     * @param timeout default maximum time in seconds for shell command execution
-     * @param maxOutputBytes maximum number of bytes to capture from command output
-     * @param env environment variables for shell commands ({@code null} for empty)
-     * @param inheritEnv whether to inherit the parent process's environment variables
+     * @param rootDir 文件系统和 shell 操作的工作目录
+     * @param virtualMode 启用文件系统操作的虚拟路径模式
+     * @param timeout shell 命令执行的默认最大超时时间（秒）
+     * @param maxOutputBytes 从命令输出中捕获的最大字节数
+     * @param env shell 命令的环境变量（{@code null} 表示空）
+     * @param inheritEnv 是否继承父进程的环境变量
      */
     public LocalFilesystemWithShell(
             Path rootDir,
@@ -123,8 +121,8 @@ public class LocalFilesystemWithShell extends LocalFilesystem implements Abstrac
     }
 
     /**
-     * Same as {@link #LocalFilesystemWithShell(Path, boolean, int, int, Map, boolean)} with a path
-     * string; see {@link LocalFilesystem#LocalFilesystem(String)} for {@code null} / blank rules.
+     * 与 {@link #LocalFilesystemWithShell(Path, boolean, int, int, Map, boolean)} 相同，但使用路径字符串；
+     * 关于 {@code null} / 空白规则，请参见 {@link LocalFilesystem#LocalFilesystem(String)}。
      */
     public LocalFilesystemWithShell(
             String rootDir,
@@ -144,15 +142,15 @@ public class LocalFilesystemWithShell extends LocalFilesystem implements Abstrac
     }
 
     /**
-     * Creates a abstract filesystem with full configuration and namespace support.
+     * 使用完整配置和命名空间支持创建文件系统。
      *
-     * @param rootDir working directory for both filesystem and shell operations
-     * @param virtualMode enable virtual path mode for filesystem operations
-     * @param timeout default maximum time in seconds for shell command execution
-     * @param maxOutputBytes maximum number of bytes to capture from command output
-     * @param env environment variables for shell commands ({@code null} for empty)
-     * @param inheritEnv whether to inherit the parent process's environment variables
-     * @param namespaceFactory optional namespace factory for path scoping ({@code null} for none)
+     * @param rootDir 文件系统和 shell 操作的工作目录
+     * @param virtualMode 启用文件系统操作的虚拟路径模式
+     * @param timeout shell 命令执行的默认最大超时时间（秒）
+     * @param maxOutputBytes 从命令输出中捕获的最大字节数
+     * @param env shell 命令的环境变量（{@code null} 表示空）
+     * @param inheritEnv 是否继承父进程的环境变量
+     * @param namespaceFactory 可选的路径作用域命名空间工厂（{@code null} 表示不使用）
      */
     public LocalFilesystemWithShell(
             Path rootDir,
@@ -184,9 +182,9 @@ public class LocalFilesystemWithShell extends LocalFilesystem implements Abstrac
     }
 
     /**
-     * Same as {@link #LocalFilesystemWithShell(Path, boolean, int, int, Map, boolean,
-     * NamespaceFactory)} with a path string; see {@link LocalFilesystem#LocalFilesystem(String)}
-     * for {@code null} / blank rules.
+     * 与 {@link #LocalFilesystemWithShell(Path, boolean, int, int, Map, boolean, NamespaceFactory)}
+     * 相同，但使用路径字符串；关于 {@code null} / 空白规则，请参见
+     * {@link LocalFilesystem#LocalFilesystem(String)}。
      */
     public LocalFilesystemWithShell(
             String rootDir,

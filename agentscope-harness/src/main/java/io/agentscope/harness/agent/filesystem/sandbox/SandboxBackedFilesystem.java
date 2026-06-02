@@ -33,11 +33,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A {@link BaseSandboxFilesystem} that delegates execution to a live {@link Sandbox}.
+ * 将执行委托给活跃 {@link Sandbox} 的 {@link BaseSandboxFilesystem}。
  *
- * <p>Stable proxy created at agent build time; a fresh {@link Sandbox} is injected on each call
- * via the volatile {@code sandbox} field by {@link
- * io.agentscope.harness.agent.hook.SandboxLifecycleHook}.
+ * <p>在代理构建时创建的稳定代理；每次调用时通过 volatile {@code sandbox} 字段由
+ * {@link io.agentscope.harness.agent.hook.SandboxLifecycleHook} 注入新的 {@link Sandbox}。
  */
 public class SandboxBackedFilesystem extends BaseSandboxFilesystem implements SandboxAware {
 

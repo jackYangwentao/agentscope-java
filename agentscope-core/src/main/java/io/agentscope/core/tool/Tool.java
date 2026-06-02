@@ -22,13 +22,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to mark a method as a tool that can be invoked by AI agents.
+ * 用于将方法标记为可被 AI 智能体调用的工具的注解。
  *
- * <p>Methods annotated with {@code @Tool} are automatically registered with the toolkit and made
- * available to agents for execution. The toolkit uses reflection to discover tool methods and
- * generate appropriate JSON schemas for LLM consumption.
+ * <p>被 {@code @Tool} 注解的方法会自动注册到工具集中，并可供智能体执行。工具集通过反射发现工具方法，
+ * 并生成相应的 JSON Schema 供 LLM 使用。
  *
- * <p><b>Usage Example:</b>
+ * <p><b>使用示例：</b>
  *
  * <pre>{@code
  * public class WeatherTools {
@@ -42,12 +41,12 @@ import java.lang.annotation.Target;
  * }
  * }</pre>
  *
- * <p><b>Requirements:</b>
+ * <p><b>要求：</b>
  * <ul>
- *   <li>All parameters must be annotated with {@link ToolParam} (except {@link ToolEmitter})</li>
- *   <li>Return type must be String, Mono&lt;String&gt;, or other reactive types</li>
- *   <li>Tool names should follow snake_case convention for LLM compatibility</li>
- *   <li>Descriptions should clearly explain what the tool does and when to use it</li>
+ *   <li>所有参数必须使用 {@link ToolParam} 注解（{@link ToolEmitter} 除外）</li>
+ *   <li>返回类型必须为 String、Mono&lt;String&gt; 或其他响应式类型</li>
+ *   <li>工具名称应遵循 snake_case 命名约定以兼容 LLM</li>
+ *   <li>描述应清晰说明工具的功能及使用场景</li>
  * </ul>
  *
  * @see ToolParam

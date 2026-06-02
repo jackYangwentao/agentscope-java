@@ -65,6 +65,10 @@ import reactor.core.publisher.Mono;
  * idempotent on a fresh {@link SkillBox}, so the rebuild stays cheap.
  *
  * <p>Priority matches {@link SkillHook#SKILL_HOOK_PRIORITY} (85).
+ *
+ * <p>动态技能钩子，在每次 {@link PreCallEvent} 上从有序的 {@link AgentSkillRepository} 列表
+ * 动态组装技能，替代静态的 {@link SkillHook}，支持按用户隔离技能和一站式市场集成。
+ * 仓库列表按低优先级优先遍历；当两个仓库提供同名的 {@link AgentSkill} 时，后面的（高优先级）条目获胜。
  */
 public class DynamicSkillHook implements Hook, RuntimeContextAware {
 
@@ -79,7 +83,9 @@ public class DynamicSkillHook implements Hook, RuntimeContextAware {
     /**
      * @param repositories ordered repositories; later entries override earlier ones on name
      *     collisions. May be empty (the hook becomes a no-op).
+     *     <p>有序仓库列表；后面的条目在名称冲突时覆盖前面的。可以为空（钩子变为无操作）。
      * @param toolkit toolkit on which loaded skill tool groups are registered
+     *     <p>在其上注册已加载技能工具组的工具包
      */
     public DynamicSkillHook(List<AgentSkillRepository> repositories, Toolkit toolkit) {
         this.repositories = repositories != null ? List.copyOf(repositories) : List.of();

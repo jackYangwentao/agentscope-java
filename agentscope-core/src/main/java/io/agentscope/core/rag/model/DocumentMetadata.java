@@ -22,21 +22,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Document metadata containing content and chunking information.
+ * 包含内容和分块信息的文档元数据。
  *
- * <p>This class stores metadata about a document chunk, including the content
- * (which can be text, image, video, etc.), document ID, chunk ID, and optional
- * custom payload fields.
+ * <p>该类存储文档块的元数据，包括内容（可以是文本、图片、视频等）、文档 ID、块 ID
+ * 和可选的自定义负载字段。
  *
- * <p>The content field uses {@link ContentBlock} which is a sealed hierarchy
- * supporting different content types (TextBlock, ImageBlock, VideoBlock, etc.).
+ * <p>内容字段使用 {@link ContentBlock}，这是一个支持不同内容类型（TextBlock、ImageBlock、
+ * VideoBlock 等）的密封层次结构。
  *
- * <p>The payload field allows storing custom metadata such as file name,
- * department, author, creation time, tags, and other business-specific fields.
- * These fields are stored as key-value pairs and will be persisted to vector
- * databases along with the document content.
+ * <p>payload 字段允许存储自定义元数据，如文件名、部门、作者、创建时间、标签
+ * 和其他业务特定字段。这些字段以键值对的形式存储，并将与文档内容一起持久化到向量数据库。
  *
- * <p>Example usage with payload:
+ * <p>带有负载的使用示例：
  * <pre>{@code
  * Map<String, Object> payload = new HashMap<>();
  * payload.put("filename", "report.pdf");

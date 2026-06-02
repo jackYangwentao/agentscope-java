@@ -17,7 +17,7 @@
 package io.agentscope.core.skill;
 
 /**
- * Filter for deciding whether a skill resource should be uploaded.
+ * 用于判断技能资源是否应被上传的过滤器。
  */
 @FunctionalInterface
 public interface SkillFileFilter {

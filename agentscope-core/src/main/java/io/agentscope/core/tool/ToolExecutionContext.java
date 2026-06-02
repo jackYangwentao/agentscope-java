@@ -21,13 +21,13 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Facade for passing custom POJOs to tool methods via priority-based resolution.
+ * 通过基于优先级的解析，将自定义 POJO 传递给工具方法的外观类。
  *
- * <p>Two-layer architecture: External interface + Storage layer ({@link ContextStore}).
+ * <p>双层架构：外部接口 + 存储层（{@link ContextStore}）。
  *
- * <p>Priority chain: Call → Agent → Toolkit → Spring (highest to lowest)
+ * <p>优先级链：调用 → 智能体 → 工具集 → Spring（从高到低）
  *
- * <p>Example:
+ * <p>示例：
  *
  * <pre>{@code
  * // Register custom POJO

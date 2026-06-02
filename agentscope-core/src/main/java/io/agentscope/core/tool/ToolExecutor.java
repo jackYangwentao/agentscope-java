@@ -37,15 +37,15 @@ import reactor.core.scheduler.Schedulers;
 import reactor.util.retry.Retry;
 
 /**
- * Unified executor for tool execution with infrastructure concerns.
+ * 统一的工具执行器，处理基础设施相关的执行逻辑。
  *
- * <p>This class consolidates all tool execution logic including:
+ * <p>该类整合了所有工具执行逻辑，包括：
  * <ul>
- *   <li>Single and batch tool execution</li>
- *   <li>Parallel/sequential execution control</li>
- *   <li>Timeout and retry handling</li>
- *   <li>Thread scheduling</li>
- *   <li>Schema validation before execution</li>
+ *   <li>单次和批量工具执行</li>
+ *   <li>并行/串行执行控制</li>
+ *   <li>超时和重试处理</li>
+ *   <li>线程调度</li>
+ *   <li>执行前的 Schema 校验</li>
  * </ul>
  *
  * <p>Execution modes:

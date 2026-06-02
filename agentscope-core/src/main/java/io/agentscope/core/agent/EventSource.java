@@ -21,6 +21,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 /**
  * Identifies the origin of an {@link Event} emitted during streaming agent execution.
  *
+ * <p>标识流式 Agent 执行期间发出 {@link Event} 的来源。
+ *
+ * <p>当子 Agent 在父 Agent 的 {@code stream()} 调用内同步执行时,子 Agent 产出的每条
+ * {@link Event} 都携带一个 {@code EventSource},用于编码到产生事件的 Agent 的完整逻辑路径。
+ * 这与 LangGraph streaming v2 的 <em>namespace / path</em> 概念类似,便于消费者(UI、
+ * 适配器、日志)区分顶层 Agent 与任意嵌套子 Agent 的事件。
+ *
+ * <p>由顶层(父) Agent 发出的事件 {@code source == null}。
+ *
  * <p>When a subagent runs synchronously inside a parent agent's {@code stream()} call, every
  * {@link Event} produced by the subagent carries an {@code EventSource} that encodes the full
  * logical path to the producing agent. This mirrors LangGraph streaming v2's
@@ -105,33 +114,32 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public final class EventSource {
 
-    /** Opaque key identifying the spawned agent instance (e.g. {@code "agent:researcher:uuid"}). */
+    /** 标识被生成 Agent 实例的不透明 key(例如 {@code "agent:researcher:uuid"})。 */
     private final String agentKey;
 
-    /** Registered agent type identifier (e.g. {@code "researcher"}). */
+    /** 已注册的 Agent 类型标识(例如 {@code "researcher"})。 */
     private final String agentId;
 
-    /** Human-readable agent name. */
+    /** 人类可读的 Agent 名称。 */
     private final String agentName;
 
-    /** Session ID used for this subagent invocation. */
+    /** 本次子 Agent 调用所使用的会话 ID。 */
     private final String sessionId;
 
-    /** Session ID of the parent agent that spawned this subagent. */
+    /** 生成该子 Agent 的父 Agent 的会话 ID。 */
     private final String parentSessionId;
 
     /**
-     * Optional task ID when this subagent invocation is associated with a background task
-     * (reserved for future async streaming support).
+     * 可选的任务 ID,仅当本次子 Agent 调用关联到后台任务时非空
+     * (保留供未来异步流式支持使用)。
      */
     private final String taskId;
 
-    /** Nesting depth: 1 = direct child of the top-level agent, 2 = grandchild, etc. */
+    /** 嵌套深度:1 = 顶层 Agent 的直接子 Agent,2 = 孙子 Agent,以此类推。 */
     private final int depth;
 
     /**
-     * Slash-separated path from the top-level agent to this producer, e.g.
-     * {@code "main/researcher"}.
+     * 从顶层 Agent 到本产生者的、以斜杠分隔的路径,例如 {@code "main/researcher"}。
      */
     private final String path;
 
@@ -151,8 +159,8 @@ public final class EventSource {
     }
 
     /**
-     * Returns a new {@code EventSource} with {@code path} extended by {@code segment}, and
-     * {@code depth} incremented by one. All other fields are copied from this instance.
+     * 返回一个 {@code EventSource},其 {@code path} 追加了 {@code segment},
+     * {@code depth} 加 1,其余字段从本实例复制。
      */
     public EventSource withAppendedPath(String segment) {
         String newPath = (path == null || path.isEmpty()) ? segment : path + "/" + segment;
@@ -168,34 +176,42 @@ public final class EventSource {
                 .build();
     }
 
+    /** @return 生成的 Agent 实例的 opaque key */
     public String getAgentKey() {
         return agentKey;
     }
 
+    /** @return 已注册的 Agent 类型标识 */
     public String getAgentId() {
         return agentId;
     }
 
+    /** @return 人类可读的 Agent 名称 */
     public String getAgentName() {
         return agentName;
     }
 
+    /** @return 本次子 Agent 调用的会话 ID */
     public String getSessionId() {
         return sessionId;
     }
 
+    /** @return 父 Agent 的会话 ID */
     public String getParentSessionId() {
         return parentSessionId;
     }
 
+    /** @return 后台任务 ID(尚未启用) */
     public String getTaskId() {
         return taskId;
     }
 
+    /** @return 嵌套深度 */
     public int getDepth() {
         return depth;
     }
 
+    /** @return 从根到本产生者的斜杠分隔路径 */
     public String getPath() {
         return path;
     }

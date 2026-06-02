@@ -20,24 +20,17 @@ import io.agentscope.core.model.GenerateOptions;
 import java.util.Objects;
 
 /**
- * Base class for reasoning-related events.
+ * 与 LLM 推理相关事件的基类。
  *
- * <p>This sealed class provides common context for all reasoning events:
- * <ul>
- *   <li>{@link #getModelName()} - The model name (e.g., "qwen-plus", "gpt-4")</li>
- *   <li>{@link #getGenerateOptions()} - The generation options (temperature, etc.)</li>
- * </ul>
+ * <p>此密封类对所有与模型推理相关的事件进行分组,
+ * 包括推理前({@link PreReasoningEvent})、推理后({@link PostReasoningEvent})
+ * 和流式推理块事件({@link ReasoningChunkEvent})。
  *
- * <p>Subclasses represent different stages of the reasoning process:
- * <ul>
- *   <li>{@link PreReasoningEvent} - Before LLM call</li>
- *   <li>{@link PostReasoningEvent} - After LLM call</li>
- *   <li>{@link ReasoningChunkEvent} - During streaming</li>
- * </ul>
+ * <p>Base class for events related to LLM reasoning.
  *
- * @see PreReasoningEvent
- * @see PostReasoningEvent
- * @see ReasoningChunkEvent
+ * <p>This sealed class groups all events related to model reasoning, including
+ * pre-reasoning ({@link PreReasoningEvent}), post-reasoning ({@link PostReasoningEvent}),
+ * and streaming reasoning chunk events ({@link ReasoningChunkEvent}).
  */
 public abstract sealed class ReasoningEvent extends HookEvent
         permits PreReasoningEvent, PostReasoningEvent, ReasoningChunkEvent {
@@ -46,7 +39,15 @@ public abstract sealed class ReasoningEvent extends HookEvent
     private final GenerateOptions generateOptions;
 
     /**
-     * Constructor for ReasoningEvent.
+     * ReasoningEvent 的构造方法。
+     *
+     * @param type 事件类型(不能为 null)
+     * @param agent Agent 实例(不能为 null)
+     * @param modelName 模型名称(不能为 null)
+     * @param generateOptions 生成选项(如果使用模型默认值可为 null)
+     * @throws NullPointerException 如果 type、agent 或 modelName 为 null
+     *
+     * <p>Constructor for ReasoningEvent.
      *
      * @param type The event type (must not be null)
      * @param agent The agent instance (must not be null)
@@ -62,7 +63,11 @@ public abstract sealed class ReasoningEvent extends HookEvent
     }
 
     /**
-     * Get the model name.
+     * 获取模型名称。
+     *
+     * @return 模型名称(如 "qwen-plus", "gpt-4")
+     *
+     * <p>Get the model name.
      *
      * @return The model name (e.g., "qwen-plus", "gpt-4")
      */
@@ -71,7 +76,11 @@ public abstract sealed class ReasoningEvent extends HookEvent
     }
 
     /**
-     * Get the generation options.
+     * 获取生成选项。
+     *
+     * @return 生成选项(temperature, maxTokens 等),如果使用模型默认值则返回 null
+     *
+     * <p>Get the generation options.
      *
      * @return The generation options (temperature, maxTokens, etc.), or null if using model
      *     defaults

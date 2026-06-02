@@ -21,13 +21,11 @@ import java.util.List;
 import reactor.core.publisher.Mono;
 
 /**
- * Utility class providing functional-style pipeline operations.
+ * 提供函数式风格管道操作的工具类。
  *
- * This class provides static methods offering convenient ways to execute agent
- * pipelines without creating explicit pipeline objects.
+ * 该类提供静态方法，以方便的方式执行智能体管道，无需创建显式的管道对象。
  *
- * These methods are stateless and suitable for one-time use, while the
- * class-based Pipeline implementations are better for reusable configurations.
+ * 这些方法是无状态的，适合一次性使用，而基于类的 Pipeline 实现更适合可重用的配置。
  */
 public class Pipelines {
 

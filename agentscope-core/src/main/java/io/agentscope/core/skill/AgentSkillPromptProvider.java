@@ -22,12 +22,11 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
- * Generates skill system prompts for agents to understand available skills.
+ * 生成技能系统提示词，让智能体了解可用技能。
  *
- * <p>This provider creates system prompts containing information about available skills
- * that the LLM can dynamically load and use.
+ * <p>该提供者创建包含可用技能信息的系统提示词，LLM 可以动态加载和使用这些技能。
  *
- * <p><b>Usage example:</b>
+ * <p><b>使用示例：</b>
  * <pre>{@code
  * AgentSkillPromptProvider provider = new AgentSkillPromptProvider(registry);
  * String prompt = provider.getSkillSystemPrompt();

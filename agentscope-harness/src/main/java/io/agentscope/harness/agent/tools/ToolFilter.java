@@ -25,18 +25,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * 应用 {@code workspace/tools.json} 中 {@link ToolsConfig#getAllow() allow} /
+ * {@link ToolsConfig#getDeny() deny} 列表对 {@link Toolkit} 已注册工具的过滤。
  * Applies the {@link ToolsConfig#getAllow() allow} / {@link ToolsConfig#getDeny() deny} lists from
  * {@code workspace/tools.json} against a {@link Toolkit}'s registered tools.
  *
- * <p>Semantics:
+ * <p>语义：Semantics:
  *
  * <ul>
- *   <li>When {@code allow} is non-empty, only tools whose name appears in it are kept.
- *   <li>{@code deny} entries are always removed, regardless of {@code allow}.
- *   <li>When both are empty/absent the toolkit is left untouched.
+ *   <li>当 {@code allow} 非空时，仅保留名称出现在其中的工具。
+ *   <li>无论 {@code allow} 如何，{@code deny} 中的条目始终被移除。
+ *   <li>两者都为空/不存在时，工具包保持不变。
  * </ul>
  *
- * <p>Names that don't correspond to a currently registered tool are logged at WARN and otherwise
+ * <p>不对应当前注册工具的名称会在 WARN 级别记录，但被忽略——
+ * 工作空间文件中的拼写错误不应中止代理。
+ * Names that don't correspond to a currently registered tool are logged at WARN and otherwise
  * ignored — typos in the workspace file should not abort the agent.
  */
 public final class ToolFilter {
@@ -46,8 +50,8 @@ public final class ToolFilter {
     private ToolFilter() {}
 
     /**
-     * Removes tools from {@code toolkit} that are excluded by {@code cfg}'s allow/deny lists. A
-     * {@code null} {@code cfg} or one with no allow/deny entries is a no-op.
+     * 从 {@code toolkit} 中移除被 {@code cfg} 的 allow/deny 列表排除的工具。
+     * 当 {@code cfg} 为 {@code null} 或没有 allow/deny 条目时无操作。
      */
     public static void apply(Toolkit toolkit, ToolsConfig cfg) {
         if (toolkit == null || cfg == null) {
@@ -72,6 +76,7 @@ public final class ToolFilter {
             warnUnknown(denySetView, registered, "deny");
         }
 
+        // 计算需要移除的工具集合
         Set<String> toRemove = new LinkedHashSet<>();
         for (String name : registered) {
             boolean keep = allowSetView == null || allowSetView.contains(name);
@@ -94,6 +99,7 @@ public final class ToolFilter {
                 remaining);
     }
 
+    /** 记录在 allow/deny 列表中但未注册的工具名称的警告。 */
     private static void warnUnknown(Set<String> declared, Set<String> registered, String which) {
         for (String name : declared) {
             if (!registered.contains(name)) {

@@ -23,10 +23,9 @@ import java.util.List;
 import reactor.core.publisher.Mono;
 
 /**
- * Placeholder {@link io.agentscope.core.agent.Agent} for {@linkplain SubagentDeclaration remote}
- * subagents. Execution is delegated to a remote task HTTP server; this instance is only used for
- * registry bookkeeping and should not receive synchronous {@code invokeAgent} calls in normal
- * async flows.
+ * {@linkplain SubagentDeclaration 远程}子代理的占位符 {@link io.agentscope.core.agent.Agent}。
+ * 执行委托给远程任务 HTTP 服务器；此实例仅用于注册表记账，
+ * 在正常的异步流程中不应接收同步的 {@code invokeAgent} 调用。
  */
 public final class RemoteSubagentStub extends AgentBase {
 

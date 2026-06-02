@@ -23,37 +23,36 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * Docker 沙箱客户端的配置选项。
  * Configuration options for the Docker sandbox client.
  *
- * <p>Describes the Docker container configuration used when creating or resuming
- * a {@link io.agentscope.harness.agent.sandbox.impl.docker.DockerSandbox}. The Docker CLI must be
- * available on the host
- * system's {@code PATH}.
+ * <p>描述创建或恢复 {@link io.agentscope.harness.agent.sandbox.impl.docker.DockerSandbox} 时使用的
+ * Docker 容器配置。Docker CLI 必须在主机系统的 {@code PATH} 中可用。
  */
 public class DockerSandboxClientOptions extends SandboxClientOptions {
 
-    /** Docker image to run. Defaults to {@code ubuntu:22.04}. */
+    /** 要运行的 Docker 镜像。默认值为 {@code ubuntu:22.04}。Docker image to run. Defaults to {@code ubuntu:22.04}. */
     private String image = "ubuntu:22.04";
 
-    /** Workspace root path inside the container. Defaults to {@code /workspace}. */
+    /** 容器内的工作空间根路径。默认值为 {@code /workspace}。Workspace root path inside the container. Defaults to {@code /workspace}. */
     private String workspaceRoot = "/workspace";
 
-    /** Environment variables to inject into the container. */
+    /** 注入到容器中的环境变量。Environment variables to inject into the container. */
     private Map<String, String> environment = new LinkedHashMap<>();
 
-    /** Optional memory limit in bytes (e.g. {@code 512 * 1024 * 1024L} for 512 MB). */
+    /** 可选的内存限制（字节），例如 {@code 512 * 1024 * 1024L} 表示 512 MB。Optional memory limit in bytes (e.g. {@code 512 * 1024 * 1024L} for 512 MB). */
     private Long memorySizeBytes;
 
-    /** Optional CPU count limit (e.g. {@code 2L} for two CPUs). */
+    /** 可选的 CPU 数量限制，例如 {@code 2L} 表示两个 CPU。Optional CPU count limit (e.g. {@code 2L} for two CPUs). */
     private Long cpuCount;
 
-    /** Host ports to expose from the container ({@code hostPort:containerPort} mapping). */
+    /** 要从容器暴露的主机端口（{@code hostPort:containerPort} 映射）。Host ports to expose from the container ({@code hostPort:containerPort} mapping). */
     private int[] exposedPorts = {};
 
-    /** Additional raw arguments appended to {@code docker run} before the image name. */
+    /** 附加到 {@code docker run} 镜像名称之前的原始参数。Additional raw arguments appended to {@code docker run} before the image name. */
     private List<String> additionalRunArgs = new ArrayList<>();
 
-    /** Docker network mode or network name passed to {@code docker run --network}. */
+    /** Docker 网络模式或网络名称，传递给 {@code docker run --network}。Docker network mode or network name passed to {@code docker run --network}. */
     private String network;
 
     @Override
@@ -62,9 +61,10 @@ public class DockerSandboxClientOptions extends SandboxClientOptions {
     }
 
     /**
+     * 为这些选项创建 {@link DockerSandboxClient}。
      * Creates a {@link DockerSandboxClient} for these options.
      *
-     * @return new Docker sandbox client
+     * @return 新的 Docker 沙箱客户端
      */
     @Override
     public SandboxClient<DockerSandboxClientOptions> createClient() {
@@ -72,19 +72,21 @@ public class DockerSandboxClientOptions extends SandboxClientOptions {
     }
 
     /**
+     * 返回 Docker 镜像名称。
      * Returns the Docker image name.
      *
-     * @return Docker image
+     * @return Docker 镜像
      */
     public String getImage() {
         return image;
     }
 
     /**
+     * 设置 Docker 镜像名称。
      * Sets the Docker image name.
      *
-     * @param image Docker image (e.g. {@code python:3.12-slim})
-     * @return this options instance
+     * @param image Docker 镜像（例如 {@code python:3.12-slim}）
+     * @return 此选项实例
      */
     public DockerSandboxClientOptions image(String image) {
         this.image = image;
@@ -92,9 +94,10 @@ public class DockerSandboxClientOptions extends SandboxClientOptions {
     }
 
     /**
+     * 设置 Docker 镜像名称。
      * Sets the Docker image name.
      *
-     * @param image Docker image
+     * @param image Docker 镜像
      */
     public void setImage(String image) {
         this.image = image;

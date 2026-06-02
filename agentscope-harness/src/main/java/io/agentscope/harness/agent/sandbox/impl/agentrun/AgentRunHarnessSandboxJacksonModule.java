@@ -18,9 +18,16 @@ package io.agentscope.harness.agent.sandbox.impl.agentrun;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
-/** Jackson module registering {@link AgentRunSandboxState} under the {@code agentrun} type id. */
+/**
+ * 在 {@code agentrun} 类型 ID 下注册 {@link AgentRunSandboxState} 的 Jackson 模块。
+ * Jackson module registering {@link AgentRunSandboxState} under the {@code agentrun} type id.
+ */
 public final class AgentRunHarnessSandboxJacksonModule extends SimpleModule {
 
+    /**
+     * 构造一个注册了 AgentRunSandboxState 类型的 Jackson 模块。
+     * Constructs a Jackson module with AgentRunSandboxState type registration.
+     */
     public AgentRunHarnessSandboxJacksonModule() {
         super("harness-sandbox-agentrun");
         registerSubtypes(new NamedType(AgentRunSandboxState.class, "agentrun"));

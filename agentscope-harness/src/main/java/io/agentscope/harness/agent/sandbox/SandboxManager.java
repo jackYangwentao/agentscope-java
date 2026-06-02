@@ -22,20 +22,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * 管理当前调用的 {@link Sandbox} 实例生命周期。
  * Manages the lifecycle of {@link Sandbox} instances for the current call.
  *
- * <p>Acquire priority: {@link SandboxContext#getExternalSandbox()} &gt; {@link
- * SandboxContext#getExternalSandboxState()} &gt; persisted {@link SandboxState} &gt; {@link
- * SandboxClient#create}.
+ * <p>获取优先级：{@link SandboxContext#getExternalSandbox()} &gt; {@link
+ * SandboxContext#getExternalSandboxState()} &gt; 持久化的 {@link SandboxState} &gt; {@link
+ * SandboxClient#create}。
  *
- * <p>When a {@link SandboxExecutionGuard} is configured, the manager acquires an execution
- * {@link SandboxLease} before sandbox resume/create for isolation keys that are present. The
- * lease is carried by the {@link SandboxAcquireResult} and closed by the caller
- * ({@link io.agentscope.harness.agent.hook.SandboxLifecycleHook}) after {@link #release},
- * ensuring the full call window is covered.
+ * <p>当配置了 {@link SandboxExecutionGuard} 时，管理器在沙箱恢复/创建之前
+ * 为存在的隔离键获取执行 {@link SandboxLease}。
+ * 租约由 {@link SandboxAcquireResult} 携带，并在 {@link #release} 后由调用者
+ * ({@link io.agentscope.harness.agent.hook.SandboxLifecycleHook}) 关闭，
+ * 确保覆盖完整的调用窗口。
  *
- * <p>Priority 1 (external sandbox) and Priority 2 (external sandbox state) bypass the guard,
- * since the caller is managing that sandbox externally.
+ * <p>优先级 1（外部沙箱）和优先级 2（外部沙箱状态）绕过守卫，
+ * 因为调用者正在外部管理该沙箱。
  */
 public class SandboxManager {
 

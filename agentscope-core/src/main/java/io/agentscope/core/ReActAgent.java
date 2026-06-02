@@ -91,47 +91,46 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * ReAct (Reasoning and Acting) Agent implementation.
+ * ReAct（Reasoning and Acting，推理与行动）智能体实现。
  *
- * <p>ReAct is an agent design pattern that combines reasoning (thinking and planning) with acting
- * (tool execution) in an iterative loop. The agent alternates between these two phases until it
- * either completes the task or reaches the maximum iteration limit.
+ * <p>ReAct 是一种智能体设计模式，将推理（思考和规划）与行动（工具执行）在迭代循环中结合。
+ * 智能体在这两个阶段之间交替进行，直到完成任务或达到最大迭代次数限制。
  *
- * <p><b>Key Features:</b>
+ * <p><b>核心特性：</b>
  * <ul>
- *   <li><b>Reactive Streaming:</b> Uses Project Reactor for non-blocking execution
- *   <li><b>Hook System:</b> Extensible hooks for monitoring and intercepting agent execution
- *   <li><b>HITL Support:</b> Human-in-the-loop via stopAgent() in PostReasoningEvent/PostActingEvent
- *   <li><b>Structured Output:</b> StructuredOutputCapableAgent provides type-safe output generation
+ *   <li><b>响应式流式处理：</b>使用 Project Reactor 实现非阻塞执行
+ *   <li><b>钩子系统：</b>可扩展的钩子用于监控和拦截智能体执行过程
+ *   <li><b>HITL 支持：</b>通过 PostReasoningEvent/PostActingEvent 中的 stopAgent() 实现人机协同
+ *   <li><b>结构化输出：</b>StructuredOutputCapableAgent 提供类型安全的输出生成
  * </ul>
  *
- * <p><b>Usage Example:</b>
+ * <p><b>使用示例：</b>
  * <pre>{@code
- * // Create a model
+ * // 创建模型
  * DashScopeChatModel model = DashScopeChatModel.builder()
  *     .apiKey(System.getenv("DASHSCOPE_API_KEY"))
  *     .modelName("qwen-plus")
  *     .build();
  *
- * // Create a toolkit with tools
+ * // 创建包含工具的工具包
  * Toolkit toolkit = new Toolkit();
  * toolkit.registerObject(new MyToolClass());
  *
- * // Build the agent
+ * // 构建智能体
  * ReActAgent agent = ReActAgent.builder()
- *     .name("Assistant")
- *     .sysPrompt("You are a helpful assistant.")
+ *     .name("助手")
+ *     .sysPrompt("你是一个有用的助手。")
  *     .model(model)
  *     .toolkit(toolkit)
  *     .memory(new InMemoryMemory())
  *     .maxIters(10)
  *     .build();
  *
- * // Use the agent
+ * // 使用智能体
  * Msg response = agent.call(Msg.builder()
  *     .name("user")
  *     .role(MsgRole.USER)
- *     .content(TextBlock.builder().text("What's the weather?").build())
+ *     .content(TextBlock.builder().text("天气怎么样？").build())
  *     .build()).block();
  * }</pre>
  *
@@ -143,7 +142,7 @@ public class ReActAgent extends StructuredOutputCapableAgent {
     private static final GracefulShutdownManager shutdownManager =
             GracefulShutdownManager.getInstance();
 
-    // ==================== Core Dependencies ====================
+    // ==================== 核心依赖 ====================
 
     private final Memory memory;
     private final String sysPrompt;
@@ -158,16 +157,15 @@ public class ReActAgent extends StructuredOutputCapableAgent {
     private RuntimeContext pendingRuntimeContext;
 
     /**
-     * Per-call system message, propagated across PreCallEvent → PreReasoningEvent /
-     * PreSummaryEvent. It is safe to use an {@link java.util.concurrent.atomic.AtomicReference}
-     * here because {@code AgentBase.acquireExecution()} guarantees that only one {@code call()}
-     * runs concurrently per agent instance, so this reference is effectively owned by a single
-     * logical execution at any time.
+     * 每次调用的系统消息，在 PreCallEvent → PreReasoningEvent / PreSummaryEvent 之间传播。
+     * 这里使用 {@link java.util.concurrent.atomic.AtomicReference} 是安全的，因为
+     * {@code AgentBase.acquireExecution()} 保证每个智能体实例同时只有一个 {@code call()} 运行，
+     * 所以这个引用在任何时候实际上只被单个逻辑执行所拥有。
      */
     private final java.util.concurrent.atomic.AtomicReference<Msg> currentSystemMsg =
             new java.util.concurrent.atomic.AtomicReference<>();
 
-    // ==================== Constructor ====================
+    // ==================== 构造函数 ====================
 
     private ReActAgent(Builder builder, Toolkit agentToolkit) {
         super(
@@ -202,8 +200,9 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         if (ctx == null) {
             ctx = RuntimeContext.empty();
         }
+        // 将运行时上下文绑定到钩子
         bindRuntimeContextToHooks(ctx);
-        // Reset per-call system message; will be initialised by consumeSystemMsgAfterPreCall
+        // 重置每次调用的系统消息；将由 consumeSystemMsgAfterPreCall 初始化
         currentSystemMsg.set(null);
     }
 
@@ -236,12 +235,12 @@ public class ReActAgent extends StructuredOutputCapableAgent {
                     ? toolExecutionContext
                     : ToolExecutionContext.empty();
         }
+        // 合并运行时上下文和智能体级别的工具执行上下文
         return ToolExecutionContext.merge(run.asToolExecutionContext(), toolExecutionContext);
     }
 
     /**
-     * Calls the agent with a per-call {@link RuntimeContext} (metadata for hooks and tools, not
-     * persisted).
+     * 使用每次调用的 {@link RuntimeContext} 调用智能体（用于钩子和工具的元数据，不持久化）。
      */
     public Mono<Msg> call(List<Msg> msgs, RuntimeContext context) {
         this.pendingRuntimeContext = context;
@@ -278,23 +277,22 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         return stream(msgs, options, schema);
     }
 
-    // ==================== New StateModule API ====================
+    // ==================== 新的 StateModule API ====================
 
     /**
-     * Save agent state to the session using the new API.
+     * 使用新 API 将智能体状态保存到会话中。
      *
-     * <p>This method saves the state of all managed components according to the StatePersistence
-     * configuration:
+     * <p>此方法根据 StatePersistence 配置保存所有托管组件的状态：
      *
      * <ul>
-     *   <li>Agent metadata (always saved)
-     *   <li>Memory messages (if memoryManaged is true)
-     *   <li>Toolkit activeGroups (if toolkitManaged is true)
-     *   <li>PlanNotebook state (if planNotebookManaged is true)
+     *   <li>智能体元数据（始终保存）
+     *   <li>记忆消息（如果 memoryManaged 为 true）
+     *   <li>Toolkit activeGroups（如果 toolkitManaged 为 true）
+     *   <li>PlanNotebook 状态（如果 planNotebookManaged 为 true）
      * </ul>
      *
-     * @param session the session to save state to
-     * @param sessionKey the session identifier
+     * @param session 要保存状态的会话
+     * @param sessionKey 会话标识符
      */
     @Override
     public void saveTo(Session session, SessionKey sessionKey) {
@@ -324,13 +322,12 @@ public class ReActAgent extends StructuredOutputCapableAgent {
     }
 
     /**
-     * Load agent state from the session using the new API.
+     * 从会话中使用新 API 加载智能体状态。
      *
-     * <p>This method loads the state of all managed components according to the StatePersistence
-     * configuration.
+     * <p>此方法根据 StatePersistence 配置加载所有托管组件的状态。
      *
-     * @param session the session to load state from
-     * @param sessionKey the session identifier
+     * @param session 要加载状态的会话
+     * @param sessionKey 会话标识符
      */
     @Override
     public boolean loadIfExists(Session session, SessionKey sessionKey) {
@@ -358,51 +355,51 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
     }
 
-    // ==================== Protected API ====================
+    // ==================== 受保护的 API ====================
 
     @Override
     protected Mono<Msg> doCall(List<Msg> msgs) {
+        // 获取待处理的工具调用 ID
         Set<String> pendingIds = getPendingToolUseIds();
 
-        // No pending tools -> normal processing
+        // 没有待处理工具 -> 正常处理
         if (pendingIds.isEmpty()) {
             addToMemory(msgs);
             return executeIteration(0);
         }
 
-        // Has pending tools but no input -> resume (execute pending tools directly)
+        // 有待处理工具但没有输入 -> 恢复执行（直接执行待处理工具）
         if (msgs == null || msgs.isEmpty()) {
             return acting(0);
         }
 
-        // Has pending tools + input -> check if user provided tool results
+        // 有待处理工具 + 有输入 -> 检查用户是否提供了工具结果
         List<ToolResultBlock> providedResults =
                 msgs.stream()
                         .flatMap(m -> m.getContentBlocks(ToolResultBlock.class).stream())
                         .toList();
 
         if (!providedResults.isEmpty()) {
-            // User provided tool results -> validate and add
+            // 用户提供了工具结果 -> 验证并添加
             validateAndAddToolResults(msgs, pendingIds);
             return hasPendingToolUse() ? acting(0) : executeIteration(0);
         }
 
-        // If PendingToolRecoveryHook is enabled, pending state should have been
-        // patched during PreCallEvent. If we still reach here, the hook was disabled
-        // and the user did not provide tool results — this is an unrecoverable state.
+        // 如果启用了 PendingToolRecoveryHook，待处理状态应该在 PreCallEvent 期间被修补。
+        // 如果仍然到达这里，说明钩子被禁用且用户未提供工具结果 —— 这是不可恢复的状态。
         throw new IllegalStateException(
-                "Pending tool calls exist without results. "
-                        + "Enable PendingToolRecoveryHook or provide tool results. "
-                        + "Pending IDs: "
+                "存在待处理工具调用但没有结果。"
+                        + "请启用 PendingToolRecoveryHook 或提供工具结果。"
+                        + "待处理 ID: "
                         + pendingIds);
     }
 
     /**
-     * Build a {@link ToolResultBlock} representing a tool execution error.
+     * 构建表示工具执行错误的 {@link ToolResultBlock}。
      *
-     * @param toolId the id of the tool call that failed
-     * @param errorMessage the human-readable error description
-     * @return a {@link ToolResultBlock} containing the formatted error message
+     * @param toolId 失败的工具调用的 ID
+     * @param errorMessage 人类可读的错误描述
+     * @return 包含格式化错误消息的 {@link ToolResultBlock}
      */
     private static ToolResultBlock buildErrorToolResult(String toolId, String errorMessage) {
         return ToolResultBlock.builder()
@@ -412,9 +409,9 @@ public class ReActAgent extends StructuredOutputCapableAgent {
     }
 
     /**
-     * Find the last assistant message in memory.
+     * 在记忆中查找最后一条助手消息。
      *
-     * @return The last assistant message, or null if not found
+     * @return 最后一条助手消息，如果未找到则返回 null
      */
     private Msg findLastAssistantMsg() {
         List<Msg> memoryMsgs = memory.getMessages();
@@ -428,18 +425,18 @@ public class ReActAgent extends StructuredOutputCapableAgent {
     }
 
     /**
-     * Check if there are pending tool calls without corresponding results.
+     * 检查是否存在没有对应结果的待处理工具调用。
      *
-     * @return true if there are pending tool calls
+     * @return 如果存在待处理工具调用则返回 true
      */
     private boolean hasPendingToolUse() {
         return !getPendingToolUseIds().isEmpty();
     }
 
     /**
-     * Get the set of pending tool use IDs from the last assistant message.
+     * 从最后一条助手消息中获取待处理工具调用 ID 集合。
      *
-     * @return Set of tool use IDs that have no corresponding results in memory
+     * @return 在记忆中没有对应结果的待处理工具调用 ID 集合
      */
     private Set<String> getPendingToolUseIds() {
         Msg lastAssistant = findLastAssistantMsg();
@@ -460,20 +457,19 @@ public class ReActAgent extends StructuredOutputCapableAgent {
     }
 
     /**
-     * Validate input messages when there are pending tool calls, then add to memory.
+     * 当存在待处理工具调用时验证输入消息，然后添加到记忆中。
      *
-     * <p>Validation rules:
+     * <p>验证规则：
      * <ul>
-     *   <li>Empty input: no-op (will proceed to acting)</li>
-     *   <li>No tool results: throw error</li>
-     *   <li>Has tool results: validate IDs match pending, no duplicates</li>
-     *   <li>Partial results + text content: throw error (text only allowed when all tools
-     *       completed)</li>
+     *   <li>空输入：无操作（将继续执行 acting）</li>
+     *   <li>没有工具结果：抛出错误</li>
+     *   <li>有工具结果：验证 ID 匹配待处理 ID，无重复</li>
+     *   <li>部分结果 + 文本内容：抛出错误（只有在所有工具完成时才允许文本）</li>
      * </ul>
      *
-     * @param msgs The input messages to validate
-     * @param pendingIds The set of pending tool use IDs
-     * @throws IllegalStateException if validation fails
+     * @param msgs 要验证的输入消息
+     * @param pendingIds 待处理工具调用 ID 集合
+     * @throws IllegalStateException 如果验证失败
      */
     private void validateAndAddToolResults(List<Msg> msgs, Set<String> pendingIds) {
         if (msgs == null || msgs.isEmpty()) {
@@ -531,9 +527,9 @@ public class ReActAgent extends StructuredOutputCapableAgent {
     }
 
     /**
-     * Add messages to memory if not null.
+     * 将消息添加到记忆中（如果不为 null）。
      *
-     * @param msgs The messages to add
+     * @param msgs 要添加的消息
      */
     private void addToMemory(List<Msg> msgs) {
         if (msgs != null) {
@@ -541,21 +537,21 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
     }
 
-    // ==================== Core ReAct Loop ====================
+    // ==================== 核心 ReAct 循环 ====================
 
     private Mono<Msg> executeIteration(int iter) {
         return reasoning(iter, false);
     }
 
     /**
-     * Execute the reasoning phase.
+     * 执行推理阶段。
      *
-     * <p>This method streams from the model, accumulates chunks, notifies hooks, and
-     * decides whether to continue to acting or return early (HITL stop, gotoReasoning, or finished).
+     * <p>此方法从模型流式传输响应，累积块，通知钩子，
+     * 并决定是否继续执行行动阶段或提前返回（HITL 停止、gotoReasoning 或已完成）。
      *
-     * @param iter Current iteration number
-     * @param ignoreMaxIters If true, skip maxIters check (for gotoReasoning)
-     * @return Mono containing the final result message
+     * @param iter 当前迭代次数
+     * @param ignoreMaxIters 如果为 true，跳过 maxIters 检查（用于 gotoReasoning）
+     * @return 包含最终结果消息的 Mono
      */
     private Mono<Msg> reasoning(int iter, boolean ignoreMaxIters) {
         // Check maxIters unless ignoreMaxIters is set
@@ -615,30 +611,30 @@ public class ReActAgent extends StructuredOutputCapableAgent {
                                 memory.addMessage(msg);
                             }
 
-                            // HITL stop
+                            // HITL 停止
                             if (event.isStopRequested()) {
                                 return Mono.just(
                                         msg.withGenerateReason(
                                                 GenerateReason.REASONING_STOP_REQUESTED));
                             }
 
-                            // gotoReasoning requested (e.g., by StructuredOutputHook)
+                            // 请求 gotoReasoning（例如由 StructuredOutputHook 触发）
                             if (event.isGotoReasoningRequested()) {
-                                // Validation already done in PostReasoningEvent.gotoReasoning()
+                                // 验证已在 PostReasoningEvent.gotoReasoning() 中完成
                                 List<Msg> gotoMsgs = event.getGotoReasoningMsgs();
                                 if (gotoMsgs != null) {
                                     gotoMsgs.forEach(memory::addMessage);
                                 }
-                                // Continue to next iteration, ignoring maxIters for this entry
+                                // 继续下一次迭代，忽略此次入口的 maxIters
                                 return reasoning(iter + 1, true);
                             }
 
-                            // Check finish conditions
+                            // 检查完成条件
                             if (isFinished(msg)) {
                                 return Mono.just(msg);
                             }
 
-                            // Continue to acting
+                            // 继续执行行动阶段
                             return checkInterruptedAsync().then(acting(iter));
                         })
                 .switchIfEmpty(
@@ -650,41 +646,41 @@ public class ReActAgent extends StructuredOutputCapableAgent {
     }
 
     /**
-     * Execute the acting phase.
+     * 执行行动阶段。
      *
-     * <p>This method executes only pending tools (those without results in memory),
-     * notifies hooks for successful tool results, and decides whether to continue iteration
-     * or return (HITL stop, suspended tools, or structured output).
+     * <p>此方法仅执行待处理工具（记忆中没有结果的工具），
+     * 为成功的工具结果通知钩子，并决定是否继续迭代或返回
+     * （HITL 停止、挂起工具或结构化输出）。
      *
-     * <p>For tools that throw {@link io.agentscope.core.tool.ToolSuspendException}:
+     * <p>对于抛出 {@link io.agentscope.core.tool.ToolSuspendException} 的工具：
      * <ul>
-     *   <li>The exception is caught by Toolkit and converted to a pending ToolResultBlock</li>
-     *   <li>Successful results are stored in memory, pending results are not</li>
-     *   <li>Returns Msg with {@link GenerateReason#TOOL_SUSPENDED} containing suspended ToolUseBlocks</li>
+     *   <li>Toolkit 捕获异常并将其转换为待处理的 ToolResultBlock</li>
+     *   <li>成功结果存储在记忆中，待处理结果不存储</li>
+     *   <li>返回包含挂起的 ToolUseBlocks 的 Msg，生成原因为 {@link GenerateReason#TOOL_SUSPENDED}</li>
      * </ul>
      *
-     * @param iter Current iteration number
-     * @return Mono containing the final result message
+     * @param iter 当前迭代次数
+     * @return 包含最终结果消息的 Mono
      */
     private Mono<Msg> acting(int iter) {
-        // Extract only pending tool calls (those without results in memory)
+        // 仅提取待处理工具调用（记忆中没有结果的工具）
         List<ToolUseBlock> pendingToolCalls = extractPendingToolCalls();
 
         if (pendingToolCalls.isEmpty()) {
-            // No pending tools have been executed, continue to next iteration
+            // 没有待处理工具已执行，继续下一次迭代
             return executeIteration(iter + 1);
         }
 
-        // Forward tool chunks into ActingChunkEvent hooks without overwriting user callbacks.
+        // 将工具块转发到 ActingChunkEvent 钩子，不覆盖用户回调。
         toolkit.setInternalChunkCallback(
                 (toolUse, chunk) -> notifyActingChunk(toolUse, chunk).subscribe());
 
-        // Execute only pending tools (those without results in memory)
+        // 仅执行待处理工具（记忆中没有结果的工具）
         return notifyPreActingHooks(pendingToolCalls)
                 .flatMap(this::executeToolCalls)
                 .flatMap(
                         results -> {
-                            // Separate success and pending results
+                            // 分离成功和待处理结果
                             List<Map.Entry<ToolUseBlock, ToolResultBlock>> successPairs =
                                     results.stream()
                                             .filter(e -> !e.getValue().isSuspended())
@@ -694,7 +690,7 @@ public class ReActAgent extends StructuredOutputCapableAgent {
                                             .filter(e -> e.getValue().isSuspended())
                                             .toList();
 
-                            // If no success results to process
+                            // 如果没有成功结果要处理
                             if (successPairs.isEmpty()) {
                                 if (!pendingPairs.isEmpty()) {
                                     return Mono.just(buildSuspendedMsg(pendingPairs));
@@ -702,14 +698,13 @@ public class ReActAgent extends StructuredOutputCapableAgent {
                                 return executeIteration(iter + 1);
                             }
 
-                            // Process success results through hooks and add to memory
+                            // 通过钩子处理成功结果并添加到记忆中
                             return Flux.fromIterable(successPairs)
                                     .concatMap(this::notifyPostActingHook)
                                     .last()
                                     .flatMap(
                                             event -> {
-                                                // HITL stop (also triggered by
-                                                // StructuredOutputHook when completed)
+                                                // HITL 停止（也由 StructuredOutputHook 在完成时触发）
                                                 if (event.isStopRequested()) {
                                                     return Mono.just(
                                                             event.getToolResultMsg()
@@ -718,26 +713,25 @@ public class ReActAgent extends StructuredOutputCapableAgent {
                                                                                     .ACTING_STOP_REQUESTED));
                                                 }
 
-                                                // If there are pending results, build suspended Msg
+                                                // 如果存在待处理结果，构建挂起消息
                                                 if (!pendingPairs.isEmpty()) {
                                                     return Mono.just(
                                                             buildSuspendedMsg(pendingPairs));
                                                 }
 
-                                                // Continue next iteration
+                                                // 继续下一次迭代
                                                 return executeIteration(iter + 1);
                                             });
                         });
     }
 
     /**
-     * Build a message containing suspended tool calls for user execution.
+     * 构建包含挂起工具调用的消息以供用户执行。
      *
-     * <p>The message contains both the ToolUseBlocks and corresponding pending ToolResultBlocks
-     * for the suspended tools.
+     * <p>该消息同时包含挂起工具的 ToolUseBlocks 和对应的待处理 ToolResultBlocks。
      *
-     * @param pendingPairs List of (ToolUseBlock, pending ToolResultBlock) pairs
-     * @return Msg with GenerateReason.TOOL_SUSPENDED
+     * @param pendingPairs (ToolUseBlock, 待处理 ToolResultBlock) 对列表
+     * @return 生成原因为 GenerateReason.TOOL_SUSPENDED 的消息
      */
     private Msg buildSuspendedMsg(List<Map.Entry<ToolUseBlock, ToolResultBlock>> pendingPairs) {
         List<ContentBlock> content = new ArrayList<>();
@@ -754,14 +748,13 @@ public class ReActAgent extends StructuredOutputCapableAgent {
     }
 
     /**
-     * Execute tool calls and return paired results.
+     * 执行工具调用并返回配对结果。
      *
-     * <p>If tool execution fails (timeout, error, etc.), this method generates error tool results
-     * for all pending tool calls instead of propagating the error. This ensures the agent can
-     * continue processing and the model receives proper error feedback.
+     * <p>如果工具执行失败（超时、错误等），此方法会为所有待处理工具调用生成错误工具结果，
+     * 而不是传播错误。这确保智能体可以继续处理，模型会收到适当的错误反馈。
      *
-     * @param toolCalls The list of tool calls (potentially modified by PreActingEvent hooks)
-     * @return Mono containing list of (ToolUseBlock, ToolResultBlock) pairs
+     * @param toolCalls 工具调用列表（可能已被 PreActingEvent 钩子修改）
+     * @return 包含 (ToolUseBlock, ToolResultBlock) 对列表的 Mono
      */
     private Mono<List<Map.Entry<ToolUseBlock, ToolResultBlock>>> executeToolCalls(
             List<ToolUseBlock> toolCalls) {
@@ -774,17 +767,15 @@ public class ReActAgent extends StructuredOutputCapableAgent {
                 .onErrorResume(
                         Exception.class,
                         error -> {
-                            // Preserve interruption signal for agent stop policy
+                            // 保留中断信号以用于智能体停止策略
                             if (error instanceof InterruptedException) {
                                 return Mono.error(error);
                             }
-                            // Generate error tool results for all pending tool calls.
-                            // Only catch Exception subclasses; critical JVM errors
-                            // (e.g. OutOfMemoryError) are left to propagate.
+                            // 为所有待处理工具调用生成错误工具结果。
+                            // 仅捕获 Exception 子类；关键 JVM 错误（如 OutOfMemoryError）允许传播。
                             String errorMsg = ExceptionUtils.getErrorMessage(error);
                             log.error(
-                                    "Tool execution failed, generating error results for {} tool"
-                                            + " calls",
+                                    "工具执行失败，为 {} 个工具调用生成错误结果",
                                     toolCalls.size(),
                                     error);
                             List<Map.Entry<ToolUseBlock, ToolResultBlock>> errorResults =
@@ -804,44 +795,44 @@ public class ReActAgent extends StructuredOutputCapableAgent {
     }
 
     /**
-     * Notify PostActingEvent hook for a single tool result, build message and add to memory.
+     * 为单个工具结果通知 PostActingEvent 钩子，构建消息并添加到记忆中。
      */
     private Mono<PostActingEvent> notifyPostActingHook(
             Map.Entry<ToolUseBlock, ToolResultBlock> entry) {
         ToolUseBlock toolUse = entry.getKey();
         ToolResultBlock result = entry.getValue();
 
-        // Build tool result message first so hooks can access it
+        // 首先构建工具结果消息，以便钩子可以访问它
         Msg toolMsg = ToolResultMessageBuilder.buildToolResultMsg(result, toolUse, getName());
 
-        // Create event with toolResultMsg already set
+        // 创建已设置 toolResultMsg 的事件
         PostActingEvent event = new PostActingEvent(this, toolkit, toolUse, result);
         event.setToolResultMsg(toolMsg);
 
-        // Notify hooks and add to memory
+        // 通知钩子并添加到记忆中
         return notifyHooks(event).doOnNext(e -> memory.addMessage(e.getToolResultMsg()));
     }
 
     /**
-     * Generate summary when max iterations reached.
+     * 在达到最大迭代次数时生成摘要。
      */
     protected Mono<Msg> summarizing() {
-        log.debug("Maximum iterations reached. Generating summary...");
+        log.debug("已达到最大迭代次数。正在生成摘要...");
 
-        // Handle pending tool calls that were not completed before max iterations
+        // 处理在达到最大迭代次数之前未完成的待处理工具调用
         if (hasPendingToolUse()) {
             List<ToolUseBlock> pendingTools = extractPendingToolCalls();
             log.warn(
-                    "Max iterations reached with {} pending tool calls. Adding error results.",
+                    "达到最大迭代次数，仍有 {} 个待处理工具调用。正在添加错误结果。",
                     pendingTools.size());
 
             for (ToolUseBlock toolUse : pendingTools) {
                 ToolResultBlock errorResult =
                         buildErrorToolResult(
                                 toolUse.getId(),
-                                "Tool execution cancelled because maximum iterations limit ("
+                                "工具执行已取消，因为已达到最大迭代次数限制 ("
                                         + maxIters
-                                        + ") was reached");
+                                        + ")");
 
                 Msg errorResultMsg =
                         ToolResultMessageBuilder.buildToolResultMsg(
@@ -920,7 +911,7 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         if (error instanceof InterruptedException) {
             return Mono.error(error);
         }
-        log.error("Error generating summary", error);
+        log.error("生成摘要时出错", error);
         Msg errorMsg =
                 Msg.builder()
                         .name(getName())
@@ -929,8 +920,8 @@ public class ReActAgent extends StructuredOutputCapableAgent {
                                 TextBlock.builder()
                                         .text(
                                                 String.format(
-                                                        "Maximum iterations (%d) reached."
-                                                                + " Error generating summary: %s",
+                                                        "已达到最大迭代次数 (%d)。"
+                                                                + "生成摘要时出错: %s",
                                                         maxIters, error.getMessage()))
                                         .build())
                         .build();
@@ -938,13 +929,13 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         return Mono.just(errorMsg);
     }
 
-    // ==================== Helper Methods ====================
+    // ==================== 辅助方法 ====================
 
     /**
-     * Prepends the system message to {@code msgs} if non-null.
+     * 如果系统消息非空，则将其前置到 {@code msgs} 中。
      *
-     * <p>Called immediately before each {@code model.stream()} invocation to build the final
-     * LLM input without contaminating the in-memory message list.
+     * <p>在每次 {@code model.stream()} 调用之前立即调用，以构建最终的 LLM 输入，
+     * 而不污染内存中的消息列表。
      */
     private static List<Msg> prependSystemMsg(List<Msg> msgs, Msg systemMsg) {
         if (systemMsg == null) {
@@ -959,12 +950,12 @@ public class ReActAgent extends StructuredOutputCapableAgent {
     }
 
     /**
-     * Check if the ReAct loop should terminate.
+     * 检查 ReAct 循环是否应该终止。
      *
-     * <p>Note: Structured output retry is now handled by StructuredOutputHook via gotoReasoning().
+     * <p>注意：结构化输出重试现在由 StructuredOutputHook 通过 gotoReasoning() 处理。
      *
-     * @param msg The reasoning message
-     * @return true if should finish, false if should continue to acting
+     * @param msg 推理消息
+     * @return 如果应该完成则返回 true，如果应该继续执行行动阶段则返回 false
      */
     private boolean isFinished(Msg msg) {
         if (msg == null) {
@@ -973,28 +964,26 @@ public class ReActAgent extends StructuredOutputCapableAgent {
 
         List<ToolUseBlock> toolCalls = msg.getContentBlocks(ToolUseBlock.class);
 
-        // No tool calls - finished
-        // If there are tool calls (even non-existent ones), continue to acting phase
-        // where ToolExecutor will return "Tool not found" error for the model to see
+        // 没有工具调用 - 已完成
+        // 如果存在工具调用（即使是不存在的），继续执行行动阶段，
+        // ToolExecutor 将为模型返回“未找到工具”错误
         return toolCalls.isEmpty();
     }
 
     /**
-     * Extract tool calls from the most recent assistant message.
+     * 从最近的助手消息中提取工具调用。
      */
     private List<ToolUseBlock> extractRecentToolCalls() {
         return MessageUtils.extractRecentToolCalls(memory.getMessages(), getName());
     }
 
     /**
-     * Extract only pending tool calls (those without results in memory) from the most recent
-     * assistant message.
+     * 仅从最近的助手消息中提取待处理工具调用（记忆中没有结果的工具）。
      *
-     * <p>This method filters out tool calls that already have corresponding results in memory,
-     * preventing duplicate execution when resuming from HITL or partial tool result scenarios.
+     * <p>此方法过滤掉记忆中已有对应结果的工具调用，
+     * 防止在从 HITL 或部分工具结果场景恢复时重复执行。
      *
-     * @return List of tool use blocks that don't have results yet, or empty list if all tools
-     *     have been executed
+     * @return 尚未有结果的待处理工具使用块列表，如果所有工具都已执行则返回空列表
      */
     private List<ToolUseBlock> extractPendingToolCalls() {
         List<ToolUseBlock> allToolCalls = extractRecentToolCalls();
@@ -1010,10 +999,10 @@ public class ReActAgent extends StructuredOutputCapableAgent {
 
     @Override
     protected GenerateOptions buildGenerateOptions() {
-        // Start with user-configured generateOptions if available
+        // 如果可用，从用户配置的 generateOptions 开始
         GenerateOptions baseOptions = generateOptions;
 
-        // If modelExecutionConfig is set, merge it into the options
+        // 如果设置了 modelExecutionConfig，将其合并到选项中
         if (modelExecutionConfig != null) {
             GenerateOptions execConfigOptions =
                     GenerateOptions.builder().executionConfig(modelExecutionConfig).build();
@@ -1023,10 +1012,10 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         return baseOptions != null ? baseOptions : GenerateOptions.builder().build();
     }
 
-    // ==================== Hook Notification Methods ====================
+    // ==================== 钩子通知方法 ====================
 
     /**
-     * Generic hook notification method.
+     * 通用钩子通知方法。
      */
     private <T extends HookEvent> Mono<T> notifyHooks(T event) {
         Mono<T> result = Mono.just(event);
@@ -1105,7 +1094,7 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         return Mono.empty();
     }
 
-    // ==================== Summary Hook Notification Methods ====================
+    // ==================== 摘要钩子通知方法 ====================
 
     private Mono<PreSummaryEvent> notifyPreSummaryHook(
             List<Msg> msgs, GenerateOptions generateOptions) {
@@ -1182,7 +1171,7 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         return Mono.empty();
     }
 
-    // ==================== Getters ====================
+    // ==================== Getter 方法 ====================
 
     @Override
     public Memory getMemory() {
@@ -1191,8 +1180,8 @@ public class ReActAgent extends StructuredOutputCapableAgent {
 
     public void setMemory(Memory memory) {
         throw new UnsupportedOperationException(
-                "Memory cannot be replaced after agent construction. "
-                        + "Create a new agent instance if you need different memory.");
+                "智能体构建后无法替换记忆。"
+                        + "如果需要不同的记忆，请创建新的智能体实例。");
     }
 
     public String getSysPrompt() {
@@ -1212,9 +1201,9 @@ public class ReActAgent extends StructuredOutputCapableAgent {
     }
 
     /**
-     * Gets the configured generation options for this agent.
+     * 获取此智能体配置的生成选项。
      *
-     * @return The generation options, or null if not configured
+     * @return 生成选项，如果未配置则返回 null
      */
     public GenerateOptions getGenerateOptions() {
         return generateOptions;
@@ -1224,7 +1213,7 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         return new Builder();
     }
 
-    // ==================== Builder ====================
+    // ==================== 构建器 ====================
 
     public static class Builder {
         private String name;
@@ -1264,10 +1253,10 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         private Builder() {}
 
         /**
-         * Sets the name for this agent.
+         * 设置此智能体的名称。
          *
-         * @param name The agent name, must not be null
-         * @return This builder instance for method chaining
+         * @param name 智能体名称，不能为 null
+         * @return 此构建器实例，用于方法链式调用
          */
         public Builder name(String name) {
             this.name = name;
@@ -1285,10 +1274,10 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Sets the system prompt for this agent.
+         * 设置此智能体的系统提示词。
          *
-         * @param sysPrompt The system prompt, can be null or empty
-         * @return This builder instance for method chaining
+         * @param sysPrompt 系统提示词，可以为 null 或空
+         * @return 此构建器实例，用于方法链式调用
          */
         public Builder sysPrompt(String sysPrompt) {
             this.sysPrompt = sysPrompt;
@@ -1296,10 +1285,10 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Sets the language model for this agent.
+         * 设置此智能体使用的语言模型。
          *
-         * @param model The language model to use for reasoning, must not be null
-         * @return This builder instance for method chaining
+         * @param model 用于推理的语言模型，不能为 null
+         * @return 此构建器实例，用于方法链式调用
          */
         public Builder model(Model model) {
             this.model = model;
@@ -1307,10 +1296,10 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Sets the toolkit containing available tools for this agent.
+         * 设置包含此智能体可用工具的工具包。
          *
-         * @param toolkit The toolkit with available tools, must not be null
-         * @return This builder instance for method chaining
+         * @param toolkit 包含可用工具的工具包，不能为 null
+         * @return 此构建器实例，用于方法链式调用
          */
         public Builder toolkit(Toolkit toolkit) {
             this.toolkit = toolkit;
@@ -1318,10 +1307,10 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Sets the memory for storing conversation history.
+         * 设置用于存储对话历史的记忆。
          *
-         * @param memory The memory implementation, can be null (defaults to InMemoryMemory)
-         * @return This builder instance for method chaining
+         * @param memory 记忆实现，可以为 null（默认为 InMemoryMemory）
+         * @return 此构建器实例，用于方法链式调用
          */
         public Builder memory(Memory memory) {
             this.memory = memory;
@@ -1329,10 +1318,10 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Sets the maximum number of reasoning-acting iterations.
+         * 设置推理-行动迭代的最大次数。
          *
-         * @param maxIters Maximum iterations, must be positive
-         * @return This builder instance for method chaining
+         * @param maxIters 最大迭代次数，必须为正数
+         * @return 此构建器实例，用于方法链式调用
          */
         public Builder maxIters(int maxIters) {
             this.maxIters = maxIters;
@@ -1340,14 +1329,13 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Adds a hook for monitoring and intercepting agent execution events.
+         * 添加用于监控和拦截智能体执行事件的钩子。
          *
-         * <p>Hooks can observe or modify events during reasoning, acting, and other phases.
-         * Multiple hooks can be added and will be executed in priority order (lower priority
-         * values execute first).
+         * <p>钩子可以观察或修改推理、行动和其他阶段的事件。
+         * 可以添加多个钩子，它们将按优先级顺序执行（较低的优先级值先执行）。
          *
-         * @param hook The hook to add, must not be null
-         * @return This builder instance for method chaining
+         * @param hook 要添加的钩子，不能为 null
+         * @return 此构建器实例，用于方法链式调用
          * @see Hook
          * @see Hook#tools()
          */
@@ -1357,13 +1345,13 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Adds multiple hooks for monitoring and intercepting agent execution events.
+         * 添加多个用于监控和拦截智能体执行事件的钩子。
          *
-         * <p>Hooks can observe or modify events during reasoning, acting, and other phases.
-         * All hooks will be executed in priority order (lower priority values execute first).
+         * <p>钩子可以观察或修改推理、行动和其他阶段的事件。
+         * 所有钩子将按优先级顺序执行（较低的优先级值先执行）。
          *
-         * @param hooks The list of hooks to add, must not be null
-         * @return This builder instance for method chaining
+         * @param hooks 要添加的钩子列表，不能为 null
+         * @return 此构建器实例，用于方法链式调用
          * @see Hook
          * @see Hook#tools()
          */
@@ -1373,14 +1361,13 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Enables or disables the meta-tool functionality.
+         * 启用或禁用元工具功能。
          *
-         * <p>When enabled, the toolkit will automatically register a meta-tool that provides
-         * information about available tools to the agent. This can help the agent understand
-         * what tools are available without relying solely on the system prompt.
+         * <p>启用时，工具包将自动注册一个元工具，向智能体提供有关可用工具的信息。
+         * 这可以帮助智能体了解有哪些工具可用，而不仅仅依赖系统提示词。
          *
-         * @param enableMetaTool true to enable meta-tool, false to disable
-         * @return This builder instance for method chaining
+         * @param enableMetaTool true 启用元工具，false 禁用
+         * @return 此构建器实例，用于方法链式调用
          */
         public Builder enableMetaTool(boolean enableMetaTool) {
             this.enableMetaTool = enableMetaTool;
@@ -1388,18 +1375,17 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Enables or disables automatic recovery from orphaned pending tool calls.
+         * 启用或禁用从孤立待处理工具调用的自动恢复。
          *
-         * <p>When enabled , a {@link PendingToolRecoveryHook} is automatically
-         * registered to detect and patch orphaned pending tool calls with synthetic error
-         * results before agent processing begins. This prevents {@link IllegalStateException}
-         * when tool execution fails, times out, or is interrupted.
+         * <p>启用时，会自动注册 {@link PendingToolRecoveryHook} 来检测并修补
+         * 孤立的待处理工具调用，在智能体处理开始之前添加合成错误结果。
+         * 这防止了在工具执行失败、超时或被中断时抛出 {@link IllegalStateException}。
          *
-         * <p>Disable this if you prefer to handle pending tool calls manually, for example
-         * through HITL (Human-in-the-loop) mechanisms or custom error handling strategies.
+         * <p>如果您希望通过 HITL（人机协同）机制或自定义错误处理策略手动处理
+         * 待处理工具调用，请禁用此功能。
          *
-         * @param enable true to enable auto-recovery, false to disable
-         * @return This builder instance for method chaining
+         * @param enable true 启用自动恢复，false 禁用
+         * @return 此构建器实例，用于方法链式调用
          * @see PendingToolRecoveryHook
          */
         public Builder enablePendingToolRecovery(boolean enable) {
@@ -1408,14 +1394,13 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Sets the execution configuration for model API calls.
+         * 设置模型 API 调用的执行配置。
          *
-         * <p>This configuration controls timeout, retry behavior, and backoff strategy for
-         * model requests during the reasoning phase. If not set, the agent will use the
-         * model's default execution configuration.
+         * <p>此配置控制推理阶段模型请求的超时、重试行为和退避策略。
+         * 如果未设置，智能体将使用模型的默认执行配置。
          *
-         * @param modelExecutionConfig The execution configuration for model calls, can be null
-         * @return This builder instance for method chaining
+         * @param modelExecutionConfig 模型调用的执行配置，可以为 null
+         * @return 此构建器实例，用于方法链式调用
          * @see ExecutionConfig
          */
         public Builder modelExecutionConfig(ExecutionConfig modelExecutionConfig) {
@@ -1424,14 +1409,13 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Sets the execution configuration for tool executions.
+         * 设置工具执行的执行配置。
          *
-         * <p>This configuration controls timeout, retry behavior, and backoff strategy for
-         * tool calls during the acting phase. If not set, the toolkit will use its default
-         * execution configuration.
+         * <p>此配置控制行动阶段工具调用的超时、重试行为和退避策略。
+         * 如果未设置，工具包将使用其默认执行配置。
          *
-         * @param toolExecutionConfig The execution configuration for tool calls, can be null
-         * @return This builder instance for method chaining
+         * @param toolExecutionConfig 工具调用的执行配置，可以为 null
+         * @return 此构建器实例，用于方法链式调用
          * @see ExecutionConfig
          */
         public Builder toolExecutionConfig(ExecutionConfig toolExecutionConfig) {
@@ -1440,16 +1424,15 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Sets the generation options for model API calls.
+         * 设置模型 API 调用的生成选项。
          *
-         * <p>This configuration controls LLM generation parameters such as temperature, topP,
-         * maxTokens, frequencyPenalty, presencePenalty, etc. These options are passed to the
-         * model during the reasoning phase.
+         * <p>此配置控制 LLM 生成参数，如 temperature、topP、maxTokens、
+         * frequencyPenalty、presencePenalty 等。这些选项在推理阶段传递给模型。
          *
-         * <p><b>Example usage:</b>
+         * <p><b>使用示例：</b>
          * <pre>{@code
          * ReActAgent agent = ReActAgent.builder()
-         *     .name("assistant")
+         *     .name("助手")
          *     .model(model)
          *     .generateOptions(GenerateOptions.builder()
          *         .temperature(0.7)
@@ -1459,12 +1442,12 @@ public class ReActAgent extends StructuredOutputCapableAgent {
          *     .build();
          * }</pre>
          *
-         * <p><b>Note:</b> If both generateOptions and modelExecutionConfig are set,
-         * the modelExecutionConfig's executionConfig will be merged into the generateOptions,
-         * with modelExecutionConfig taking precedence for execution settings.
+         * <p><b>注意：</b>如果同时设置了 generateOptions 和 modelExecutionConfig，
+         * modelExecutionConfig 的 executionConfig 将被合并到 generateOptions 中，
+         * modelExecutionConfig 在执行设置方面具有优先权。
          *
-         * @param generateOptions The generation options for model calls, can be null
-         * @return This builder instance for method chaining
+         * @param generateOptions 模型调用的生成选项，可以为 null
+         * @return 此构建器实例，用于方法链式调用
          * @see GenerateOptions
          */
         public Builder generateOptions(GenerateOptions generateOptions) {
@@ -1473,10 +1456,10 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Sets the structured output enforcement mode.
+         * 设置结构化输出强制模式。
          *
-         * @param reminder The structured output reminder mode, must not be null
-         * @return This builder instance for method chaining
+         * @param reminder 结构化输出提醒模式，不能为 null
+         * @return 此构建器实例，用于方法链式调用
          */
         public Builder structuredOutputReminder(StructuredOutputReminder reminder) {
             this.structuredOutputReminder = reminder;
@@ -1484,16 +1467,16 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Sets the PlanNotebook for plan-based task execution.
+         * 设置用于基于计划的任务执行的 PlanNotebook。
          *
-         * <p>When provided, the PlanNotebook will be integrated into the agent:
+         * <p>当提供时，PlanNotebook 将集成到智能体中：
          * <ul>
-         *   <li>Plan management tools will be automatically registered to the toolkit
-         *   <li>A hook will be added to inject plan hints before each reasoning step
+         *   <li>计划管理工具将自动注册到工具包</li>
+         *   <li>将添加一个钩子，在每个推理步骤之前注入计划提示</li>
          * </ul>
          *
-         * @param planNotebook The configured PlanNotebook instance, can be null
-         * @return This builder instance for method chaining
+         * @param planNotebook 已配置的 PlanNotebook 实例，可以为 null
+         * @return 此构建器实例，用于方法链式调用
          */
         public Builder planNotebook(PlanNotebook planNotebook) {
             this.planNotebook = planNotebook;
@@ -1501,16 +1484,16 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Sets the skill box for this agent.
+         * 设置此智能体的技能盒。
          *
-         * <p>The skill box is used to manage the skills for this agent. It will be used to register the skills to the toolkit.
+         * <p>技能盒用于管理此智能体的技能。它将用于将技能注册到工具包中。
          * <ul>
-         *   <li>Skill loader tools will be automatically registered to the toolkit</li>
-         *   <li>A skill hook will be added to inject skill prompts on {@link io.agentscope.core.hook.PreCallEvent}
-         *       and manage skill activation</li>
+         *   <li>技能加载工具将自动注册到工具包</li>
+         *   <li>将添加一个技能钩子，在 {@link io.agentscope.core.hook.PreCallEvent} 时注入技能提示
+         *       并管理技能激活</li>
          * </ul>
-         * @param skillBox The skill box to use for this agent
-         * @return This builder instance for method chaining
+         * @param skillBox 用于此智能体的技能盒
+         * @return 此构建器实例，用于方法链式调用
          */
         public Builder skillBox(SkillBox skillBox) {
             this.skillBox = skillBox;
@@ -1518,14 +1501,14 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Sets the long-term memory for this agent.
+         * 设置此智能体的长期记忆。
          *
-         * <p>Long-term memory enables the agent to remember information across sessions.
-         * It can be used in combination with {@link #longTermMemoryMode(LongTermMemoryMode)}
-         * to control whether memory management is automatic, agent-controlled, or both.
+         * <p>长期记忆使智能体能够在会话之间记住信息。
+         * 它可以与 {@link #longTermMemoryMode(LongTermMemoryMode)} 结合使用，
+         * 以控制记忆管理是自动的、智能体控制的还是两者兼有。
          *
-         * @param longTermMemory The long-term memory implementation
-         * @return This builder instance for method chaining
+         * @param longTermMemory 长期记忆实现
+         * @return 此构建器实例，用于方法链式调用
          * @see LongTermMemoryMode
          */
         public Builder longTermMemory(LongTermMemory longTermMemory) {
@@ -1534,17 +1517,17 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Sets the long-term memory mode.
+         * 设置长期记忆模式。
          *
-         * <p>This determines how long-term memory is integrated with the agent:
+         * <p>这决定了长期记忆如何与智能体集成：
          * <ul>
-         *   <li><b>AGENT_CONTROL:</b> Memory tools are registered for agent to call</li>
-         *   <li><b>STATIC_CONTROL:</b> Framework automatically retrieves/records memory</li>
-         *   <li><b>BOTH:</b> Combines both approaches (default)</li>
+         *   <li><b>AGENT_CONTROL：</b>注册记忆工具供智能体调用</li>
+         *   <li><b>STATIC_CONTROL：</b>框架自动检索/记录记忆</li>
+         *   <li><b>BOTH：</b>结合两种方法（默认）</li>
          * </ul>
          *
-         * @param mode The long-term memory mode
-         * @return This builder instance for method chaining
+         * @param mode 长期记忆模式
+         * @return 此构建器实例，用于方法链式调用
          * @see LongTermMemoryMode
          */
         public Builder longTermMemoryMode(LongTermMemoryMode mode) {
@@ -1553,22 +1536,20 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Sets whether long-term memory recording should be performed asynchronously.
+         * 设置长期记忆记录是否应异步执行。
          *
-         * <p>When enabled, the framework will record memories to long-term storage
-         * in a fire-and-forget manner, without blocking the agent's main execution flow.
-         * This improves response latency but means memory persistence is not guaranteed
-         * before the agent returns its response.
+         * <p>启用时，框架将以即发即忘的方式将记忆记录到长期存储中，
+         * 而不阻塞智能体的主执行流程。这提高了响应延迟，但意味着
+         * 在智能体返回其响应之前不能保证记忆持久化。
          *
-         * <p>When disabled (default), the framework waits for the recording operation
-         * to complete before returning the agent's response. This ensures memory
-         * persistence is finalized but may increase response latency.
+         * <p>禁用时（默认），框架会等待记录操作完成后再返回智能体的响应。
+         * 这确保记忆持久化已最终确定，但可能会增加响应延迟。
          *
-         * <p>Note: This setting only affects the static control mode (STATIC_CONTROL, BOTH).
-         * Agent-controlled recording through tools is always synchronous.
+         * <p>注意：此设置仅影响静态控制模式（STATIC_CONTROL、BOTH）。
+         * 通过工具进行的智能体控制记录始终是同步的。
          *
-         * @param asyncRecord Whether to record memories asynchronously
-         * @return This builder instance for method chaining
+         * @param asyncRecord 是否异步记录记忆
+         * @return 此构建器实例，用于方法链式调用
          */
         public Builder longTermMemoryAsyncRecord(boolean asyncRecord) {
             this.longTermMemoryAsyncRecord = asyncRecord;
@@ -1576,25 +1557,25 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Sets the state persistence configuration.
+         * 设置状态持久化配置。
          *
-         * <p>Use this to control which components' state is managed by the agent during
-         * saveTo/loadFrom operations. By default, all components are managed.
+         * <p>使用此配置可以控制在 saveTo/loadFrom 操作期间由智能体管理哪些组件的状态。
+         * 默认情况下，所有组件都被管理。
          *
-         * <p>Example usage:
+         * <p>使用示例：
          *
          * <pre>{@code
          * ReActAgent agent = ReActAgent.builder()
-         *     .name("assistant")
+         *     .name("助手")
          *     .model(model)
          *     .statePersistence(StatePersistence.builder()
-         *         .planNotebookManaged(false)  // Let user manage PlanNotebook separately
+         *         .planNotebookManaged(false)  // 让用户单独管理 PlanNotebook
          *         .build())
          *     .build();
          * }</pre>
          *
-         * @param statePersistence The state persistence configuration
-         * @return This builder instance for method chaining
+         * @param statePersistence 状态持久化配置
+         * @return 此构建器实例，用于方法链式调用
          * @see StatePersistence
          */
         public Builder statePersistence(StatePersistence statePersistence) {
@@ -1603,14 +1584,14 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Enables plan functionality with default configuration.
+         * 使用默认配置启用计划功能。
          *
-         * <p>This is a convenience method equivalent to:
+         * <p>这是一个便捷方法，等效于：
          * <pre>{@code
          * planNotebook(PlanNotebook.builder().build())
          * }</pre>
          *
-         * @return This builder instance for method chaining
+         * @return 此构建器实例，用于方法链式调用
          */
         public Builder enablePlan() {
             this.planNotebook = PlanNotebook.builder().build();
@@ -1618,10 +1599,10 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Adds a knowledge base for RAG (Retrieval-Augmented Generation).
+         * 添加用于 RAG（检索增强生成）的知识库。
          *
-         * @param knowledge The knowledge base to add
-         * @return This builder instance for method chaining
+         * @param knowledge 要添加的知识库
+         * @return 此构建器实例，用于方法链式调用
          */
         public Builder knowledge(Knowledge knowledge) {
             if (knowledge != null) {
@@ -1631,10 +1612,10 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Adds multiple knowledge bases for RAG.
+         * 添加多个用于 RAG 的知识库。
          *
-         * @param knowledges The list of knowledge bases to add
-         * @return This builder instance for method chaining
+         * @param knowledges 要添加的知识库列表
+         * @return 此构建器实例，用于方法链式调用
          */
         public Builder knowledges(List<Knowledge> knowledges) {
             if (knowledges != null) {
@@ -1644,10 +1625,10 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Sets the RAG mode.
+         * 设置 RAG 模式。
          *
-         * @param mode The RAG mode (GENERIC, AGENTIC, or NONE)
-         * @return This builder instance for method chaining
+         * @param mode RAG 模式（GENERIC、AGENTIC 或 NONE）
+         * @return 此构建器实例，用于方法链式调用
          */
         public Builder ragMode(RAGMode mode) {
             if (mode != null) {
@@ -1657,10 +1638,10 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Sets the retrieve configuration for RAG.
+         * 设置 RAG 的检索配置。
          *
-         * @param config The retrieve configuration
-         * @return This builder instance for method chaining
+         * @param config 检索配置
+         * @return 此构建器实例，用于方法链式调用
          */
         public Builder retrieveConfig(RetrieveConfig config) {
             if (config != null) {
@@ -1670,15 +1651,14 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Sets the tool execution context for this agent.
+         * 设置此智能体的工具执行上下文。
          *
-         * <p>This context will be passed to all tools invoked by this agent and can include
-         * user identity, session information, permissions, and other metadata. The context
-         * from this agent level will override toolkit-level context but can be overridden by
-         * call-level context.
+         * <p>此上下文将传递给此智能体调用的所有工具，可以包括用户身份、
+         * 会话信息、权限和其他元数据。此智能体级别的上下文将覆盖
+         * 工具包级别的上下文，但可以被调用级别的上下文覆盖。
          *
-         * @param toolExecutionContext The tool execution context
-         * @return This builder instance for method chaining
+         * @param toolExecutionContext 工具执行上下文
+         * @return 此构建器实例，用于方法链式调用
          */
         public Builder toolExecutionContext(ToolExecutionContext toolExecutionContext) {
             this.toolExecutionContext = toolExecutionContext;
@@ -1686,13 +1666,13 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Builds and returns a new ReActAgent instance with the configured settings.
+         * 使用配置的设置构建并返回一个新的 ReActAgent 实例。
          *
-         * @return A new ReActAgent instance
-         * @throws IllegalArgumentException if required parameters are missing or invalid
+         * @return 新的 ReActAgent 实例
+         * @throws IllegalArgumentException 如果缺少必需参数或参数无效
          */
         public ReActAgent build() {
-            // Deep copy toolkit to avoid state interference between agents
+            // 深拷贝工具包以避免智能体之间的状态干扰
             Toolkit agentToolkit = this.toolkit.copy();
 
             registerToolsFromHooks(agentToolkit);
@@ -1701,27 +1681,27 @@ public class ReActAgent extends StructuredOutputCapableAgent {
                 agentToolkit.registerMetaTool();
             }
 
-            // Register PendingToolRecoveryHook if enabled
+            // 如果启用则注册 PendingToolRecoveryHook
             if (enablePendingToolRecovery) {
                 hooks.add(new PendingToolRecoveryHook());
             }
 
-            // Configure long-term memory if provided
+            // 如果提供则配置长期记忆
             if (longTermMemory != null) {
                 configureLongTermMemory(agentToolkit);
             }
 
-            // Configure RAG if knowledge bases are provided
+            // 如果提供知识库则配置 RAG
             if (!knowledgeBases.isEmpty()) {
                 configureRAG(agentToolkit);
             }
 
-            // Configure PlanNotebook if provided
+            // 如果提供则配置 PlanNotebook
             if (planNotebook != null) {
                 configurePlan(agentToolkit);
             }
 
-            // Configure SkillBox if provided
+            // 如果提供则配置 SkillBox
             if (skillBox != null) {
                 configureSkillBox(agentToolkit);
             }
@@ -1730,10 +1710,10 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Registers tool objects declared by hooks ({@link Hook#tools()}) on the agent toolkit.
+         * 在智能体工具包上注册由钩子（{@link Hook#tools()}）声明的工具对象。
          *
-         * <p>Runs after {@link Toolkit#copy()} so hook-supplied tools are scoped to this agent
-         * instance without modifying the builder's original toolkit.
+         * <p>在 {@link Toolkit#copy()} 之后运行，因此钩子提供的工具被限定到此智能体
+         * 实例，而不会修改构建器的原始工具包。
          */
         private void registerToolsFromHooks(Toolkit agentToolkit) {
             for (Hook hook : hooks) {
@@ -1750,13 +1730,13 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Configures long-term memory based on the selected mode.
+         * 根据选择的模式配置长期记忆。
          *
-         * <p>This method sets up long-term memory integration:
+         * <p>此方法设置长期记忆集成：
          * <ul>
-         *   <li>AGENT_CONTROL: Registers memory tools for agent to call</li>
-         *   <li>STATIC_CONTROL: Registers StaticLongTermMemoryHook for automatic retrieval/recording</li>
-         *   <li>BOTH: Combines both approaches (registers tools + hook)</li>
+         *   <li>AGENT_CONTROL：注册记忆工具供智能体调用</li>
+         *   <li>STATIC_CONTROL：注册 StaticLongTermMemoryHook 用于自动检索/记录</li>
+         *   <li>BOTH：结合两种方法（注册工具 + 钩子）</li>
          * </ul>
          */
         private void configureLongTermMemory(Toolkit agentToolkit) {
@@ -1777,17 +1757,17 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Configures RAG (Retrieval-Augmented Generation) based on the selected mode.
+         * 根据选择的模式配置 RAG（检索增强生成）。
          *
-         * <p>This method automatically sets up the appropriate hooks or tools based on the RAG mode:
+         * <p>此方法根据 RAG 模式自动设置适当的钩子或工具：
          * <ul>
-         *   <li>GENERIC: Adds a GenericRAGHook to automatically inject knowledge</li>
-         *   <li>AGENTIC: Registers KnowledgeRetrievalTools for agent-controlled retrieval</li>
-         *   <li>NONE: Does nothing</li>
+         *   <li>GENERIC：添加 GenericRAGHook 以自动注入知识</li>
+         *   <li>AGENTIC：注册 KnowledgeRetrievalTools 供智能体控制检索</li>
+         *   <li>NONE：不执行任何操作</li>
          * </ul>
          */
         private void configureRAG(Toolkit agentToolkit) {
-            // Aggregate knowledge bases if multiple are provided
+            // 如果提供多个知识库则聚合
             Knowledge aggregatedKnowledge;
             if (knowledgeBases.size() == 1) {
                 aggregatedKnowledge = knowledgeBases.iterator().next();
@@ -1795,22 +1775,22 @@ public class ReActAgent extends StructuredOutputCapableAgent {
                 aggregatedKnowledge = buildAggregatedKnowledge();
             }
 
-            // Configure based on mode
+            // 根据模式配置
             switch (ragMode) {
                 case GENERIC -> {
-                    // Create and add GenericRAGHook
+                    // 创建并添加 GenericRAGHook
                     GenericRAGHook ragHook =
                             new GenericRAGHook(aggregatedKnowledge, retrieveConfig);
                     hooks.add(ragHook);
                 }
                 case AGENTIC -> {
-                    // Register knowledge retrieval tools
+                    // 注册知识检索工具
                     KnowledgeRetrievalTools tools =
                             new KnowledgeRetrievalTools(aggregatedKnowledge, retrieveConfig);
                     agentToolkit.registerTool(tools);
                 }
                 case NONE -> {
-                    // Do nothing
+                    // 不执行任何操作
                 }
             }
         }
@@ -1859,19 +1839,19 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Configures PlanNotebook integration.
+         * 配置 PlanNotebook 集成。
          *
-         * <p>This method automatically:
+         * <p>此方法自动：
          * <ul>
-         *   <li>Registers plan management tools to the toolkit
-         *   <li>Adds a hook to inject plan hints before each reasoning step
+         *   <li>将计划管理工具注册到工具包</li>
+         *   <li>添加一个钩子，在每个推理步骤之前注入计划提示</li>
          * </ul>
          */
         private void configurePlan(Toolkit agentToolkit) {
-            // Register plan tools to toolkit
+            // 将计划工具注册到工具包
             agentToolkit.registerTool(planNotebook);
 
-            // Add plan hint hook
+            // 添加计划提示钩子
             Hook planHintHook =
                     new Hook() {
                         @Override
@@ -1898,23 +1878,22 @@ public class ReActAgent extends StructuredOutputCapableAgent {
         }
 
         /**
-         * Configures SkillBox integration.
+         * 配置 SkillBox 集成。
          *
-         * <p>This method automatically:
+         * <p>此方法自动：
          * <ul>
-         *   <li>Registers skill load tool to the toolkit
-         *   <li>Adds the skill hook to inject skill prompts on {@link io.agentscope.core.hook.PreCallEvent}
-         *       (priority {@link io.agentscope.core.skill.SkillHook#SKILL_HOOK_PRIORITY}) and manage skill
-         *       activation
-         *   <li>Uploads skill files to the upload directory if auto upload is enabled
+         *   <li>将技能加载工具注册到工具包</li>
+         *   <li>添加技能钩子，在 {@link io.agentscope.core.hook.PreCallEvent} 时注入技能提示
+         *       （优先级为 {@link io.agentscope.core.skill.SkillHook#SKILL_HOOK_PRIORITY}）并管理技能激活</li>
+         *   <li>如果启用自动上传，则将技能文件上传到上传目录</li>
          * </ul>
          */
         private void configureSkillBox(Toolkit agentToolkit) {
             skillBox.bindToolkit(agentToolkit);
-            // Register skill loader tools to toolkit
+            // 将技能加载工具注册到工具包
             skillBox.registerSkillLoadTool();
 
-            // If auto upload is enabled, upload skill files
+            // 如果启用自动上传，则上传技能文件
             if (skillBox.isAutoUploadSkill()) {
                 skillBox.uploadSkillFiles();
             }

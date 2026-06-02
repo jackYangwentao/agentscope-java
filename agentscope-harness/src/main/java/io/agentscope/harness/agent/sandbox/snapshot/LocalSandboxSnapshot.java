@@ -26,6 +26,15 @@ import java.nio.file.StandardOpenOption;
 import java.util.UUID;
 
 /**
+ * 将工作区归档持久化为本地文件系统 tar 文件的快照实现。
+ * <p>
+ * 归档采用原子写入方式：数据首先写入同一目录下的临时文件（前缀为 {@code .}），
+ * 然后通过 {@link StandardCopyOption#ATOMIC_MOVE} 移动到最终路径。
+ * 这确保快照要么完整写入，要么不存在——绝不出现部分写入状态。
+ * <p>
+ * 安全性要求：{@code id} 必须为单个路径段，不能包含 {@code /} 或 {@code ..} 字符，
+ * 以防止路径遍历攻击。
+ * <p>
  * Snapshot that persists workspace archives as tar files on the local filesystem.
  *
  * <p>Archives are written atomically: the data is first written to a temporary file
@@ -42,11 +51,13 @@ public class LocalSandboxSnapshot implements SandboxSnapshot {
     private final String id;
 
     /**
+     * 创建本地快照。
+     * <p>
      * Creates a local snapshot.
      *
-     * @param basePath directory where snapshot tar files are stored
-     * @param id unique identifier for this snapshot (must be a safe single path segment)
-     * @throws IllegalArgumentException if {@code id} contains unsafe characters
+     * @param basePath 快照 tar 文件存储目录
+     * @param id       快照的唯一标识符（必须是安全的单路径段）
+     * @throws IllegalArgumentException 如果 {@code id} 包含不安全的字符
      */
     public LocalSandboxSnapshot(String basePath, String id) {
         validateId(id);
@@ -57,7 +68,9 @@ public class LocalSandboxSnapshot implements SandboxSnapshot {
     /**
      * {@inheritDoc}
      *
-     * <p>Writes the archive atomically to {@code {basePath}/{id}.tar}.
+     * <p>将归档原子写入到 {@code {basePath}/{id}.tar}。
+     * <p>
+     * Writes the archive atomically to {@code {basePath}/{id}.tar}.
      */
     @Override
     public void persist(InputStream workspaceArchive) throws Exception {
@@ -82,6 +95,7 @@ public class LocalSandboxSnapshot implements SandboxSnapshot {
             try {
                 Files.deleteIfExists(tmpPath);
             } catch (Exception ignored) {
+                // 尽力清理临时文件
                 // Best-effort cleanup of the temp file
             }
             throw new SandboxException.SnapshotException(id, "Failed to persist snapshot", e);
@@ -91,7 +105,9 @@ public class LocalSandboxSnapshot implements SandboxSnapshot {
     /**
      * {@inheritDoc}
      *
-     * <p>Opens the snapshot tar file at {@code {basePath}/{id}.tar} for reading.
+     * <p>打开 {@code {basePath}/{id}.tar} 快照 tar 文件进行读取。
+     * <p>
+     * Opens the snapshot tar file at {@code {basePath}/{id}.tar} for reading.
      */
     @Override
     public InputStream restore() throws Exception {
@@ -109,7 +125,9 @@ public class LocalSandboxSnapshot implements SandboxSnapshot {
     /**
      * {@inheritDoc}
      *
-     * @return {@code true} if the snapshot tar file exists
+     * @return 如果快照 tar 文件存在则返回 {@code true}
+     * <p>
+     * {@code true} if the snapshot tar file exists
      */
     @Override
     public boolean isRestorable() {
@@ -127,14 +145,21 @@ public class LocalSandboxSnapshot implements SandboxSnapshot {
     }
 
     /**
+     * 返回快照 tar 文件的存储基目录。
+     * <p>
      * Returns the base directory where snapshot tar files are stored.
      *
-     * @return base path string
+     * @return 基路径字符串
      */
     public String getBasePath() {
         return basePath;
     }
 
+    /**
+     * 验证快照 ID 是否安全（不包含路径分隔符、父目录引用或空字符）。
+     * <p>
+     * Validate that the snapshot ID is safe (no path separators, parent refs, or null chars).
+     */
     private static void validateId(String id) {
         if (id == null || id.isBlank()) {
             throw new IllegalArgumentException("Snapshot id must not be null or blank");

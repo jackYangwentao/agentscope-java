@@ -21,11 +21,10 @@ import java.util.List;
 import reactor.core.publisher.Mono;
 
 /**
- * Interface for knowledge bases.
+ * 知识库接口。
  *
- * <p>This interface provides a unified API for storing and retrieving documents
- * in a knowledge base. Knowledge bases are used in RAG (Retrieval-Augmented Generation)
- * systems to provide context to language models.
+ * <p>该接口提供了在知识库中存储和检索文档的统一 API。知识库用于 RAG（检索增强生成）
+ * 系统中，为语言模型提供上下文信息。
  */
 public interface Knowledge {
 

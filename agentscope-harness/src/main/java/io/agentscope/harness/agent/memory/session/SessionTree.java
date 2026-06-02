@@ -41,29 +41,28 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Manages an append-only JSONL session tree (pi-mono-inspired).
+ * 管理仅追加的 JSONL 会话树（灵感来自 pi-mono）。
  *
- * <p>The session file is a JSONL file where each line is a JSON-serialized {@link SessionEntry}.
- * Entries form a tree via {@code id}/{@code parentId} links. A companion {@code .log.jsonl} file
- * stores the full history for grep-ability (dual-file pattern from pi-mono mom).
+ * <p>会话文件是一个 JSONL 文件，每一行是一个 JSON 序列化的 {@link SessionEntry}。
+ * 条目通过 {@code id}/{@code parentId} 链接形成树形结构。伴随的 {@code .log.jsonl} 文件
+ * 存储完整历史记录以便 grep 搜索（来自 pi-mono mom 的双文件模式）。
  *
- * <h2>File layout</h2>
+ * <h2>文件布局</h2>
  * <pre>
- *   agents/{agentId}/sessions/{sessionId}.jsonl      — LLM context (compacted)
- *   agents/{agentId}/sessions/{sessionId}.log.jsonl   — full history (append-only, never compacted)
+ *   agents/{agentId}/sessions/{sessionId}.jsonl      — LLM 上下文（已压缩）
+ *   agents/{agentId}/sessions/{sessionId}.log.jsonl   — 完整历史（仅追加，永不压缩）
  * </pre>
  *
- * <h2>Persistence model</h2>
- * The local file is the working copy; the remote {@link AbstractFilesystem} (when configured) is
- * the cross-replica mirror. On every {@link #load()}, remote content is fetched and union-merged
- * with the local file so that entries written on another machine are visible to the current one.
- * On every {@link #flush()}, pending entries are appended to the local files synchronously and
- * then mirrored to the remote filesystem asynchronously (fire-and-forget, best-effort).
+ * <h2>持久化模型</h2>
+ * 本地文件是工作副本；远程 {@link AbstractFilesystem}（配置时）是跨副本镜像。
+ * 每次 {@link #load()} 时，获取远程内容并与本地文件联合合并，
+ * 以使另一台机器上写入的条目对当前机器可见。
+ * 每次 {@link #flush()} 时，待处理条目同步追加到本地文件，
+ * 然后异步镜像到远程文件系统（即发即忘，尽力而为）。
  *
- * <h2>Deferred persistence</h2>
- * Entries are buffered in memory and only flushed to disk on the first call to {@link #flush()}
- * (typically after the first assistant message). This avoids partial session files from
- * failed/short interactions.
+ * <h2>延迟持久化</h2>
+ * 条目在内存中缓冲，仅在首次调用 {@link #flush()} 时刷新到磁盘
+ * （通常在第一条助手消息之后）。这避免失败/短交互产生不完整的会话文件。
  */
 public class SessionTree {
 

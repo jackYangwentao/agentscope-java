@@ -22,6 +22,7 @@ import io.agentscope.harness.agent.filesystem.model.ExecuteResponse;
 import io.agentscope.harness.agent.filesystem.sandbox.AbstractSandboxFilesystem;
 
 /**
+ * 基于 {@link AbstractSandboxFilesystem} 的 Shell 命令执行工具。
  * Shell execution tool backed by a {@link AbstractSandboxFilesystem}.
  */
 public class ShellExecuteTool {
@@ -33,8 +34,9 @@ public class ShellExecuteTool {
     }
 
     /**
-     * @param runtimeContext per-call agent runtime injected by the framework (not an LLM argument);
-     *     may be {@code null} when no merged context is available
+     * 执行 Shell 命令。用于 git、npm、构建、测试及其他终端操作。返回合并的输出和退出码。
+     *
+     * @param runtimeContext 每次调用时由框架注入的代理运行时（不是 LLM 参数）；当没有合并的上下文时可能为 {@code null}
      */
     @Tool(
             description =
@@ -51,6 +53,7 @@ public class ShellExecuteTool {
             @ToolParam(name = "timeout", description = "Timeout in seconds (default: 30)")
                     int timeout) {
         String effectiveCommand = command;
+        // 如果指定了工作目录，在命令前添加 cd 切换
         if (workingDirectory != null && !workingDirectory.isBlank()) {
             effectiveCommand = "cd " + workingDirectory + " && " + command;
         }

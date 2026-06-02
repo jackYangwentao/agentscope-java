@@ -47,7 +47,11 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Kubernetes Pod operations using the Fabric8 client. */
+/**
+ * 基于 Fabric8 客户端的 Kubernetes Pod 操作封装。
+ * <p>
+ * Kubernetes Pod operations using the Fabric8 client.
+ */
 public class Fabric8KubernetesPodRuntime {
 
     private static final Logger log = LoggerFactory.getLogger(Fabric8KubernetesPodRuntime.class);
@@ -65,6 +69,11 @@ public class Fabric8KubernetesPodRuntime {
                 templateOptions != null ? templateOptions : new KubernetesSandboxClientOptions();
     }
 
+    /**
+     * 确保 Pod 已创建并可运行；如果不存在则重新创建 Pod。
+     * <p>
+     * Ensure the Pod is created and ready; recreate if not found.
+     */
     public void ensurePodReady(KubernetesSandboxState state) throws Exception {
         String ns = state.getNamespace();
         String podName = state.getPodName();
@@ -87,6 +96,11 @@ public class Fabric8KubernetesPodRuntime {
                 .waitUntilReady(POD_READY_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 
+    /**
+     * 删除受管 Pod（如果所有权标记为 true）。
+     * <p>
+     * Delete the managed Pod if the ownership flag is true.
+     */
     public void deletePodIfOwned(KubernetesSandboxState state) {
         if (!state.isPodOwned()) {
             return;
@@ -103,6 +117,11 @@ public class Fabric8KubernetesPodRuntime {
         }
     }
 
+    /**
+     * 在 Pod 的工作区中执行命令并返回执行结果。
+     * <p>
+     * Execute a command in the Pod's workspace and return the execution result.
+     */
     public ExecResult exec(KubernetesSandboxState state, String command, int timeoutSeconds)
             throws Exception {
         String script =
@@ -127,6 +146,11 @@ public class Fabric8KubernetesPodRuntime {
         }
     }
 
+    /**
+     * 将工作区打包为 tar 归档并作为输入流返回。
+     * <p>
+     * Package the workspace into a tar archive and return as an input stream.
+     */
     public InputStream tarWorkspaceOut(KubernetesSandboxState state) throws Exception {
         String root = state.getWorkspaceRoot();
         StringBuilder script = new StringBuilder("tar ");
@@ -150,10 +174,20 @@ public class Fabric8KubernetesPodRuntime {
         }
     }
 
+    /**
+     * 将 tar 归档解压到工作区中。
+     * <p>
+     * Extract a tar archive into the workspace.
+     */
     public void tarWorkspaceIn(KubernetesSandboxState state, InputStream archive) throws Exception {
         hydrateWithArchive(state, archive);
     }
 
+    /**
+     * 通过 tar 归档流恢复工作区。
+     * <p>
+     * Hydrate the workspace from a tar archive stream.
+     */
     private void hydrateWithArchive(KubernetesSandboxState state, InputStream archive)
             throws Exception {
         String root = state.getWorkspaceRoot();
@@ -176,10 +210,20 @@ public class Fabric8KubernetesPodRuntime {
         }
     }
 
+    /**
+     * 在工作区中创建目录。
+     * <p>
+     * Create a directory in the workspace.
+     */
     public void mkdir(KubernetesSandboxState state, String path) throws Exception {
         exec(state, "mkdir -p " + shellSingleQuote(path), 30);
     }
 
+    /**
+     * 递归删除工作区中的路径（尽力而为）。
+     * <p>
+     * Recursively remove a path in the workspace (best-effort).
+     */
     public void rmRf(KubernetesSandboxState state, String path) throws Exception {
         try {
             exec(state, "rm -rf " + shellSingleQuote(path), 30);
@@ -188,6 +232,11 @@ public class Fabric8KubernetesPodRuntime {
         }
     }
 
+    /**
+     * 获取 Pod 的容器资源引用。
+     * <p>
+     * Get the ContainerResource reference for the Pod.
+     */
     private ContainerResource pod(KubernetesSandboxState state) {
         return client.pods()
                 .inNamespace(state.getNamespace())
@@ -195,6 +244,11 @@ public class Fabric8KubernetesPodRuntime {
                 .inContainer(state.getContainerName());
     }
 
+    /**
+     * 创建 Kubernetes Pod，配置容器、绑定挂载和资源限制。
+     * <p>
+     * Create a Kubernetes Pod, configuring containers, bind mounts, and resource limits.
+     */
     private void createPod(KubernetesSandboxState state) {
         String ns = state.getNamespace();
         String podName = state.getPodName();
@@ -284,6 +338,11 @@ public class Fabric8KubernetesPodRuntime {
         client.pods().inNamespace(ns).resource(pod).create();
     }
 
+    /**
+     * 根据会话 ID 构建标准化的 Pod 名称。
+     * <p>
+     * Build a standardized Pod name from the session ID.
+     */
     static String buildPodName(String sessionId) {
         String compact = sessionId.replace("-", "");
         String suffix = compact.length() > 20 ? compact.substring(0, 20) : compact;
@@ -294,10 +353,20 @@ public class Fabric8KubernetesPodRuntime {
         return name.toLowerCase();
     }
 
+    /**
+     * 使用 shell 单引号转义字符串。
+     * <p>
+     * Escape a string with shell single quotes.
+     */
     private static String shellSingleQuote(String s) {
         return "'" + s.replace("'", "'\"'\"'") + "'";
     }
 
+    /**
+     * 截断字节数组到输出限制大小并以 UTF-8 字符串形式返回。
+     * <p>
+     * Truncate a byte array to the output limit and return it as a UTF-8 string.
+     */
     private static String truncate(byte[] buf) {
         int n = Math.min(buf.length, OUTPUT_TRUNCATE_BYTES);
         return new String(buf, 0, n, StandardCharsets.UTF_8);

@@ -20,6 +20,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 /**
+ * E2B 原生快照引用的跨语言标记，与 openai-agents-python 的
+ * {@code E2B_SANDBOX_SNAPSHOT_V1} 保持一致。
  * Cross-language marker for E2B native snapshot references, aligned with openai-agents-python
  * {@code E2B_SANDBOX_SNAPSHOT_V1}.
  */
@@ -30,6 +32,10 @@ public final class E2bSnapshotRefs {
 
     private E2bSnapshotRefs() {}
 
+    /**
+     * 将快照 ID 编码为带魔数前缀的字节数组。
+     * Encodes a snapshot ID into a byte array with magic prefix.
+     */
     public static byte[] encodeSnapshotId(String snapshotId) throws Exception {
         ObjectMapper om = new ObjectMapper();
         byte[] body =
@@ -40,6 +46,10 @@ public final class E2bSnapshotRefs {
         return out;
     }
 
+    /**
+     * 如果原始字节包含有效的快照引用标记，则解码并返回快照 ID。
+     * Decodes and returns the snapshot ID if the raw bytes contain a valid snapshot reference marker.
+     */
     public static String decodeSnapshotIdIfPresent(byte[] raw) {
         if (raw == null || raw.length <= MAGIC_PREFIX.length) {
             return null;

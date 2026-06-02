@@ -20,11 +20,10 @@ import io.agentscope.core.state.StateModule;
 import java.util.List;
 
 /**
- * Interface for memory components that store and manage conversation history.
+ * 存储和管理对话历史的内存组件接口。
  *
- * <p>Memory extends StateModule to provide state persistence capabilities, allowing conversation
- * history to be saved and restored through sessions. Different memory implementations can provide
- * various storage strategies such as in-memory, database-backed, or window-based storage.
+ * <p>Memory 扩展了 StateModule，提供状态持久化能力，使得对话历史可以通过会话进行保存和恢复。
+ * 不同的内存实现可以提供多种存储策略，例如内存存储、数据库存储或基于窗口的存储。
  */
 public interface Memory extends StateModule {
 

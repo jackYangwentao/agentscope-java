@@ -31,8 +31,8 @@ import java.util.concurrent.CompletableFuture;
 import reactor.core.publisher.Mono;
 
 /**
- * Invokes tool methods with type conversion and error handling.
- * This class handles reflection-based method invocation and parameter conversion.
+ * 调用工具方法，提供类型转换和错误处理。
+ * 该类处理基于反射的方法调用和参数类型转换。
  */
 class ToolMethodInvoker {
 

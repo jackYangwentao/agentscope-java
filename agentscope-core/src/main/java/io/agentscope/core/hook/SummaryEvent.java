@@ -20,7 +20,23 @@ import io.agentscope.core.model.GenerateOptions;
 import java.util.Objects;
 
 /**
- * Base class for summary-related events.
+ * 与摘要生成相关事件的基类。
+ *
+ * <p>此密封类提供了 ReActAgent 达到最大迭代次数并生成摘要时,
+ * 所有摘要事件的通用上下文:
+ * <ul>
+ *   <li>{@link #getModelName()} — 模型名称(如 "qwen-plus", "gpt-4")</li>
+ *   <li>{@link #getGenerateOptions()} — 生成选项(temperature 等)</li>
+ * </ul>
+ *
+ * <p>子类表示摘要过程的不同阶段:
+ * <ul>
+ *   <li>{@link PreSummaryEvent} — 摘要生成前</li>
+ *   <li>{@link SummaryChunkEvent} — 流式传输期间</li>
+ *   <li>{@link PostSummaryEvent} — 摘要生成完成后</li>
+ * </ul>
+ *
+ * <p>Base class for summary-related events.
  *
  * <p>This sealed class provides common context for all summary events that occur
  * when a ReActAgent reaches its maximum iterations and generates a summary:
@@ -47,7 +63,15 @@ public abstract sealed class SummaryEvent extends HookEvent
     private final GenerateOptions generateOptions;
 
     /**
-     * Constructor for SummaryEvent.
+     * SummaryEvent 的构造方法。
+     *
+     * @param type 事件类型(不能为 null)
+     * @param agent Agent 实例(不能为 null)
+     * @param modelName 模型名称(不能为 null)
+     * @param generateOptions 生成选项(可为 null,使用模型默认值)
+     * @throws NullPointerException 如果 type、agent 或 modelName 为 null
+     *
+     * <p>Constructor for SummaryEvent.
      *
      * @param type The event type (must not be null)
      * @param agent The agent instance (must not be null)
@@ -63,7 +87,11 @@ public abstract sealed class SummaryEvent extends HookEvent
     }
 
     /**
-     * Get the model name.
+     * 获取模型名称。
+     *
+     * @return 模型名称(如 "qwen-plus", "gpt-4")
+     *
+     * <p>Get the model name.
      *
      * @return The model name (e.g., "qwen-plus", "gpt-4")
      */
@@ -72,7 +100,11 @@ public abstract sealed class SummaryEvent extends HookEvent
     }
 
     /**
-     * Get the generation options.
+     * 获取生成选项。
+     *
+     * @return 生成选项(temperature, maxTokens 等),如果使用模型默认值则返回 null
+     *
+     * <p>Get the generation options.
      *
      * @return The generation options (temperature, maxTokens, etc.), or null if using model
      *     defaults

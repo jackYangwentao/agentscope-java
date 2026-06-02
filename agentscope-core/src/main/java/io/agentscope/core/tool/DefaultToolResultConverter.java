@@ -24,16 +24,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Default implementation of ToolResultConverter.
- * Handles JSON serialization with schema information.
+ * ToolResultConverter 的默认实现。
+ * 处理带 Schema 信息的 JSON 序列化。
  *
- * <p>This converter:
+ * <p>该转换器：
  * <ul>
- *   <li>Converts null results to "null" text</li>
- *   <li>Converts void results to "Done" text</li>
- *   <li>Passes through ToolResultBlock instances unchanged</li>
- *   <li>Serializes objects to JSON with schema information</li>
- *   <li>Falls back to toString() if serialization fails</li>
+ *   <li>将 null 结果转换为 "null" 文本</li>
+ *   <li>将 void 结果转换为 "Done" 文本</li>
+ *   <li>原样传递 ToolResultBlock 实例</li>
+ *   <li>将对象序列化为带 Schema 信息的 JSON</li>
+ *   <li>如果序列化失败，回退到 toString()</li>
  * </ul>
  */
 public class DefaultToolResultConverter implements ToolResultConverter {

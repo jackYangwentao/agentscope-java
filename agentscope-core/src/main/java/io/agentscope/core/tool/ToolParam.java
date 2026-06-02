@@ -22,13 +22,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to describe parameters of a tool method.
+ * 用于描述工具方法参数的注解。
  *
- * <p>This annotation is required for all parameters of methods annotated with {@link Tool} (except
- * {@link ToolEmitter} which is auto-injected). It provides metadata for generating JSON schemas
- * that describe the tool's parameters to LLMs.
+ * <p>对于所有被 {@link Tool} 注解的方法的参数（除自动注入的 {@link ToolEmitter} 外），此注解是必需的。
+ * 它提供元数据用于生成描述工具参数的 JSON Schema，供 LLM 使用。
  *
- * <p><b>Usage Example:</b>
+ * <p><b>使用示例：</b>
  *
  * <pre>{@code
  * @Tool(name = "calculate_area", description = "Calculate rectangle area")
@@ -44,13 +43,12 @@ import java.lang.annotation.Target;
  * }
  * }</pre>
  *
- * <p><b>Important Notes:</b>
+ * <p><b>重要说明：</b>
  * <ul>
- *   <li>The {@code name} attribute is <b>required</b> because Java does not preserve parameter
- *       names at runtime by default</li>
- *   <li>Parameter names should follow snake_case convention for LLM compatibility</li>
- *   <li>Descriptions help the LLM understand what values to provide</li>
- *   <li>{@link ToolEmitter} parameters do not need this annotation (they are framework-injected)</li>
+ *   <li>{@code name} 属性<b>必需</b>，因为 Java 默认不会在运行时保留参数名称</li>
+ *   <li>参数名称应遵循 snake_case 命名约定以兼容 LLM</li>
+ *   <li>描述帮助 LLM 理解应提供何种参数值</li>
+ *   <li>{@link ToolEmitter} 参数无需此注解（由框架自动注入）</li>
  * </ul>
  *
  * @see Tool

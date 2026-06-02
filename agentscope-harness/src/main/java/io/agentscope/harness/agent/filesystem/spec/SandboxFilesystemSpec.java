@@ -32,10 +32,10 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Declarative sandbox filesystem configuration.
+ * 声明式沙箱文件系统配置。
  *
- * <p>Unlike {@code AbstractFilesystem}, this type is not a runtime filesystem implementation.
- * It only describes how to create a sandbox-backed filesystem at build time.
+ * <p>与 {@code AbstractFilesystem} 不同，此类型不是运行时文件系统实现。
+ * 它仅描述如何在构建时创建沙箱支持的文件系统。
  */
 public abstract class SandboxFilesystemSpec {
 
@@ -76,13 +76,13 @@ public abstract class SandboxFilesystemSpec {
     }
 
     /**
-     * Overrides the {@link SandboxStateStore} used to persist and resume sandbox metadata across
-     * calls. When {@code null} (default), {@link io.agentscope.harness.agent.HarnessAgent} uses
-     * {@link io.agentscope.harness.agent.sandbox.SessionSandboxStateStore} with the effective
-     * {@link io.agentscope.core.session.Session} and agent id at build time.
+     * 覆盖用于跨调用持久化和恢复沙箱元数据的 {@link SandboxStateStore}。
+     * 当为 {@code null}（默认）时，{@link io.agentscope.harness.agent.HarnessAgent} 在构建时使用
+     * 有效的 {@link io.agentscope.core.session.Session} 和代理 ID 的
+     * {@link io.agentscope.harness.agent.sandbox.SessionSandboxStateStore}。
      *
-     * @param sandboxStateStore custom store, or {@code null} for the default session-backed store
-     * @return this spec
+     * @param sandboxStateStore 自定义存储，或 {@code null} 使用默认的基于会话的存储
+     * @return 此规范
      */
     public SandboxFilesystemSpec sandboxStateStore(SandboxStateStore sandboxStateStore) {
         this.sandboxStateStore = sandboxStateStore;
@@ -94,16 +94,15 @@ public abstract class SandboxFilesystemSpec {
     }
 
     /**
-     * Sets a {@link SandboxExecutionGuard} that serialises concurrent executions on the same
-     * isolation slot.
+     * 设置 {@link SandboxExecutionGuard}，用于在同一隔离槽上序列化并发执行。
      *
-     * <p>Only relevant for {@link io.agentscope.harness.agent.IsolationScope#AGENT} and
-     * {@link io.agentscope.harness.agent.IsolationScope#GLOBAL} scopes, where multiple callers
-     * could otherwise race on the same persistent state. When {@code null} (default), no guard is
-     * applied and the existing no-lock behaviour is preserved.
+     * <p>仅与 {@link io.agentscope.harness.agent.IsolationScope#AGENT} 和
+     * {@link io.agentscope.harness.agent.IsolationScope#GLOBAL} 范围相关，
+     * 在这些范围中多个调用方可能会竞争同一持久状态。当为 {@code null}（默认）时，
+     * 不应用守卫并保留现有的无锁行为。
      *
-     * @param executionGuard the guard to apply, or {@code null} for no guard
-     * @return this spec
+     * @param executionGuard 应用的守卫，或 {@code null} 表示无守卫
+     * @return 此规范
      */
     public SandboxFilesystemSpec executionGuard(SandboxExecutionGuard executionGuard) {
         this.executionGuard = executionGuard;

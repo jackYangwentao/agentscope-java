@@ -27,7 +27,45 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Base class for all hook events.
+ * 所有 Hook 事件的基类。
+ *
+ * <p>这是一个密封类(sealed class) — 只允许预定义的事件类型。这使得 switch 表达式
+ * 中可以进行穷举模式匹配。
+ *
+ * <p>所有事件都提供通用上下文访问:
+ * <ul>
+ *   <li>{@link #getAgent()} — Agent 实例</li>
+ *   <li>{@link #getMemory()} — 便捷访问 Agent 的 memory(可能为 null)</li>
+ *   <li>{@link #getType()} — 事件类型</li>
+ *   <li>{@link #getTimestamp()} — 事件发生时间</li>
+ * </ul>
+ *
+ * <p><b>系统消息生命周期:</b> 每个事件携带统一的 {@code systemMsg} 字段,
+ * 保存 LLM 可见的单一 {@link MsgRole#SYSTEM} 消息。{@code ReActAgent}
+ * 在事件生命周期中管理该字段:
+ * <ol>
+ *   <li>每次 {@code call()} 开始时从 {@code sysPrompt} 播种,在 {@link PreCallEvent}
+ *       Hook 运行之前。</li>
+ *   <li>{@link PreCallEvent} Hook 完成后,结果系统消息被<em>冻结</em>为整个调用的基础。</li>
+ *   <li>在每次 {@link PreReasoningEvent}(和 {@link PreSummaryEvent})之前,冻结的基础
+ *       被重新注入到事件中 — 在这些事件上运行的 Hook 始终从相同的干净基线开始,
+ *       并可按迭代追加内容。</li>
+ *   <li>在调用 {@code model.stream(...)} 之前:事件的最终系统消息被前置到
+ *       {@link PreReasoningEvent#getInputMessages()} 作为第一个元素。</li>
+ * </ol>
+ *
+ * <p>由于每个 {@link PreReasoningEvent} 从冻结基础的新副本开始,按迭代触发的 Hook
+ * (如子 Agent 指导)可以安全地使用 {@link #appendSystemContent(String)} —
+ * 内容被追加到该迭代的副本中,不会跨迭代累积。
+ *
+ * <p>Hook 应通过 {@link #setSystemMessage(Msg)}、{@link #appendSystemContent(String)}
+ * 或 {@link #appendSystemContent(ContentBlock)} 专门修改系统消息。
+ * 直接将 {@link MsgRole#SYSTEM} 消息注入 {@code inputMessages} 是被禁止的,
+ * 会在运行时抛出 {@link IllegalStateException}。
+ *
+ * <p><b>可修改性:</b> 事件是否允许修改取决于具体事件类中是否存在 setter 方法。
+ *
+ * <p>Base class for all hook events.
  *
  * <p>This is a sealed class - only the predefined event types are permitted.
  * This enables exhaustive pattern matching in switch expressions.
@@ -79,14 +117,23 @@ public abstract sealed class HookEvent
     private final long timestamp;
 
     /**
-     * The unified system message for this event. Hooks read and write this field via the
+     * 此事件的统一系统消息。Hook 通过下面的辅助方法读写此字段;
+     * {@code ReActAgent} 在事件之间传递它,并在每次推理调用前将其前置到 LLM 输入中。
+     *
+     * <p>The unified system message for this event. Hooks read and write this field via the
      * helper methods below; {@code ReActAgent} propagates it between events and prepends it
      * to the LLM input before every reasoning call.
      */
     private Msg systemMsg;
 
     /**
-     * Constructor for HookEvent.
+     * HookEvent 的构造方法。
+     *
+     * @param type 事件类型(不能为 null)
+     * @param agent Agent 实例(不能为 null)
+     * @throws NullPointerException 如果 type 或 agent 为 null
+     *
+     * <p>Constructor for HookEvent.
      *
      * @param type The event type (must not be null)
      * @param agent The agent instance (must not be null)
@@ -99,7 +146,11 @@ public abstract sealed class HookEvent
     }
 
     /**
-     * Get the event type.
+     * 获取事件类型。
+     *
+     * @return 事件类型
+     *
+     * <p>Get the event type.
      *
      * @return The event type
      */
@@ -108,7 +159,11 @@ public abstract sealed class HookEvent
     }
 
     /**
-     * Get the agent instance.
+     * 获取 Agent 实例。
+     *
+     * @return Agent 实例(永不 null)
+     *
+     * <p>Get the agent instance.
      *
      * @return The agent instance (never null)
      */
@@ -117,7 +172,11 @@ public abstract sealed class HookEvent
     }
 
     /**
-     * Get the timestamp when event was created.
+     * 获取事件创建时的时间戳。
+     *
+     * @return 时间戳(自 epoch 起的毫秒数)
+     *
+     * <p>Get the timestamp when event was created.
      *
      * @return The timestamp (milliseconds since epoch)
      */
@@ -126,7 +185,11 @@ public abstract sealed class HookEvent
     }
 
     /**
-     * Convenient access to agent's memory.
+     * 便捷访问 Agent 的 memory。
+     *
+     * @return memory 实例,如果 Agent 没有 memory 则返回 null
+     *
+     * <p>Convenient access to agent's memory.
      *
      * @return The memory, or null if agent doesn't have memory
      */
@@ -140,7 +203,14 @@ public abstract sealed class HookEvent
     // ==================== System message API ====================
 
     /**
-     * Returns the current unified system message, or {@code null} if none has been set.
+     * 返回当前的统一系统消息,如果未设置则返回 {@code null}。
+     *
+     * <p>在 {@link PreCallEvent} 和 {@link PreReasoningEvent} 上,
+     * 链中较早 Hook 所做的修改已在此反映。
+     *
+     * @return 系统消息,可能为 null
+     *
+     * <p>Returns the current unified system message, or {@code null} if none has been set.
      *
      * <p>On {@link PreCallEvent} and {@link PreReasoningEvent}, modifications made by earlier
      * hooks in the chain are already reflected here.
@@ -152,7 +222,14 @@ public abstract sealed class HookEvent
     }
 
     /**
-     * Replaces the entire system message with the given one.
+     * 用给定的消息替换整个系统消息。
+     *
+     * <p>当只需要添加一部分系统消息时,优先使用 {@link #appendSystemContent};
+     * 只有在需要设置完全自定义的系统消息时才使用此方法。
+     *
+     * @param systemMsg 新的系统消息(可为 null 以清除)
+     *
+     * <p>Replaces the entire system message with the given one.
      *
      * <p>Prefer {@link #appendSystemContent} when you only need to add a portion of the system
      * message; use this method only when you need to set a completely custom system message.
@@ -164,7 +241,14 @@ public abstract sealed class HookEvent
     }
 
     /**
-     * Appends the given text as a new {@link TextBlock} at the end of the system message.
+     * 将给定文本作为新的 {@link TextBlock} 追加到系统消息末尾。
+     *
+     * <p>如果系统消息尚不存在,则会自动以 {@link MsgRole#SYSTEM} 角色和名称
+     * {@code "system"} 创建一条。
+     *
+     * @param text 要追加的文本(不能为 null)
+     *
+     * <p>Appends the given text as a new {@link TextBlock} at the end of the system message.
      *
      * <p>If no system message exists yet, one is created automatically with
      * {@link MsgRole#SYSTEM} and name {@code "system"}.
@@ -177,7 +261,14 @@ public abstract sealed class HookEvent
     }
 
     /**
-     * Appends a {@link ContentBlock} at the end of the system message.
+     * 将 {@link ContentBlock} 追加到系统消息末尾。
+     *
+     * <p>如果系统消息尚不存在,则会自动以 {@link MsgRole#SYSTEM} 角色和名称
+     * {@code "system"} 创建一条。
+     *
+     * @param block 要追加的内容块(不能为 null)
+     *
+     * <p>Appends a {@link ContentBlock} at the end of the system message.
      *
      * <p>If no system message exists yet, one is created automatically with
      * {@link MsgRole#SYSTEM} and name {@code "system"}.

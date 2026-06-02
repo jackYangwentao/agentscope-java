@@ -16,8 +16,8 @@
 package io.agentscope.core.model;
 
 /**
- * Exception thrown when model operations fail.
- * This exception provides a unified way to handle errors from different model providers.
+ * 模型操作失败时抛出的异常。
+ * 该异常提供了统一的方式来处理来自不同模型提供者的错误。
  */
 public class ModelException extends RuntimeException {
 

@@ -16,27 +16,23 @@
 package io.agentscope.core.memory;
 
 /**
- * Defines how long-term memory is integrated with agent behavior.
+ * 定义长期记忆如何与智能体行为集成。
  *
- * <p>This enum controls whether memory management is handled automatically by the framework,
- * actively by the agent through tool calls, or both. The mode affects:
+ * <p>该枚举控制记忆管理是由框架自动处理、由智能体通过工具调用主动处理，还是两者兼有。该模式影响：
  * <ul>
- *   <li>When memory recording and retrieval occur
- *   <li>Whether memory management tools are registered in the agent's toolkit
- *   <li>How much control the agent has over its own memory
+ *   <li>记忆记录和检索何时发生
+ *   <li>记忆管理工具是否注册到智能体的工具包中
+ *   <li>智能体对其自身记忆的控制程度
  * </ul>
  *
- * <p><b>Choosing the Right Mode:</b>
+ * <p><b>选择合适的模式：</b>
  * <ul>
- *   <li><b>AGENT_CONTROL:</b> Use when you want the agent to have full autonomy over memory
- *       decisions. Good for advanced agents that understand when information is important.</li>
- *   <li><b>STATIC_CONTROL:</b> Use when you want automatic, framework-managed memory without
- *       agent involvement. Good for simpler agents or when memory should be comprehensive.</li>
- *   <li><b>BOTH:</b> Recommended default. Combines automatic background memory with agent
- *       control, providing the best of both approaches.</li>
+ *   <li><b>AGENT_CONTROL：</b>当您希望智能体对记忆决策拥有完全自主权时使用。适用于能够理解信息重要性的高级智能体。</li>
+ *   <li><b>STATIC_CONTROL：</b>当您希望框架自动管理记忆而不需要智能体参与时使用。适用于较简单的智能体或需要全面记忆的场景。</li>
+ *   <li><b>BOTH：</b>推荐默认选项。结合了自动后台记忆和智能体控制，提供两全其美的方法。</li>
  * </ul>
  *
- * <p><b>Usage Example:</b>
+ * <p><b>使用示例：</b>
  * <pre>{@code
  * ReActAgent agent = ReActAgent.builder()
  *     .name("Assistant")

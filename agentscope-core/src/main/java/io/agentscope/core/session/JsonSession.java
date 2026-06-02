@@ -40,12 +40,11 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 /**
- * JSON file-based session implementation.
+ * 基于 JSON 文件的会话实现。
  *
- * <p>This implementation stores session state as JSON files on the filesystem. Each session is
- * stored in a directory named by the session ID.
+ * <p>该实现将会话状态作为 JSON 文件存储在文件系统上。每个会话存储在以会话 ID 命名的目录中。
  *
- * <p>Features:
+ * <p>特性：
  *
  * <ul>
  *   <li>Multi-module session support

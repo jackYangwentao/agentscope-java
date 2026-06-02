@@ -24,12 +24,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Helpers for {@link io.agentscope.harness.agent.sandbox.layout.BindMountEntry} handling. */
+/**
+ * {@link io.agentscope.harness.agent.sandbox.layout.BindMountEntry} 处理的辅助工具。
+ * Helpers for {@link io.agentscope.harness.agent.sandbox.layout.BindMountEntry} handling.
+ */
 public final class WorkspaceMountSupport {
 
     private WorkspaceMountSupport() {}
 
     /**
+     * 返回规范树中每个绑定挂载的相对工作空间路径（POSIX 风格，无前导斜杠），按稳定迭代顺序排列。
      * Returns relative workspace paths (POSIX-style, no leading slash) for every bind mount in
      * the spec tree, in stable iteration order.
      */
@@ -47,6 +51,7 @@ public final class WorkspaceMountSupport {
     }
 
     /**
+     * 沙箱内顶级条目键的绝对挂载路径（斜杠已规范化）。
      * Absolute mount path inside the sandbox for a top-level entry key (slashes normalized).
      */
     public static String containerMountPath(String workspaceRoot, String entryKey) {
@@ -60,6 +65,8 @@ public final class WorkspaceMountSupport {
     }
 
     /**
+     * 每个绑定挂载路径的 {@code tar} CLI {@code --exclude} 参数（{@code ./relative}），
+     * 防止快照 tar 遍历挂载内容。
      * {@code tar} CLI {@code --exclude} arguments ({@code ./relative}) for each bind mount path,
      * excluding snapshot tar from traversing mount content.
      */
@@ -93,6 +100,8 @@ public final class WorkspaceMountSupport {
     }
 
     /**
+     * 按条目键索引的顶级 {@link BindMountEntry} 实例，
+     * 用于仅应用扁平清单条目的后端（Docker {@code -v}、Kubernetes HostPath）。
      * Top-level {@link BindMountEntry} instances keyed by entry key, for backends that only apply
      * flat manifest entries (Docker {@code -v}, Kubernetes HostPath).
      */
@@ -109,7 +118,7 @@ public final class WorkspaceMountSupport {
         return m;
     }
 
-    /** Normalized absolute host path for Docker / Kubernetes HostPath. */
+    /** Docker/Kubernetes HostPath 的规范化绝对主机路径。 */
     public static String normalizedHostPath(String hostPath) {
         if (hostPath == null || hostPath.isBlank()) {
             return "";

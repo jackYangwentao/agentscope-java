@@ -16,10 +16,9 @@
 package io.agentscope.core.message;
 
 /**
- * Constants for well-known message metadata keys.
+ * 消息元数据键的常量定义。
  *
- * <p>This class defines standard metadata keys used across the framework
- * to ensure consistency and avoid magic strings.
+ * <p>此类定义跨框架使用的标准元数据键，以确保一致性并避免魔法字符串。
  */
 public final class MessageMetadataKeys {
 

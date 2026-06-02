@@ -19,15 +19,15 @@ import io.agentscope.core.model.ExecutionConfig;
 import java.util.concurrent.ExecutorService;
 
 /**
- * Configuration for Toolkit execution behavior.
+ * 工具集执行行为的配置。
  *
- * <p>This class defines how tools are executed:
- * - Parallel vs Sequential execution
- * - Custom ExecutorService (optional)
- * - Execution configuration for timeout and retry
+ * <p>该类定义工具的执行方式：
+ * - 并行 vs 串行执行
+ * - 自定义 ExecutorService（可选）
+ * - 超时和重试的执行配置
  *
- * <p>By default, all tool execution is asynchronous using Reactor's Schedulers.
- * The default execution config provides 5-minute timeout with no retry (1 attempt).
+ * <p>默认情况下，所有工具执行使用 Reactor 的 Schedulers 异步运行。
+ * 默认执行配置提供 5 分钟超时、无重试（1 次尝试）。
  */
 public class ToolkitConfig {
 

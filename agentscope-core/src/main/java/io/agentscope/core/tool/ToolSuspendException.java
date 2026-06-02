@@ -16,17 +16,16 @@
 package io.agentscope.core.tool;
 
 /**
- * Exception thrown to signal that a tool execution should be suspended and handled externally.
+ * 表示工具执行应被挂起并由外部处理的异常。
  *
- * <p>This exception is used by tools that require external execution (e.g., tools registered
- * via schema-only registration). When thrown, the framework will:
+ * <p>此异常由需要外部执行的工具使用（例如，通过仅注册 Schema 注册的工具）。抛出时，框架将：
  * <ol>
- *   <li>Convert the exception to a pending {@code ToolResultBlock}</li>
- *   <li>Return a suspended message to the user with {@code GenerateReason.TOOL_SUSPENDED}</li>
- *   <li>Wait for the user to provide the tool execution result</li>
+ *   <li>将异常转换为待处理的 {@code ToolResultBlock}</li>
+ *   <li>使用 {@code GenerateReason.TOOL_SUSPENDED} 向用户返回挂起消息</li>
+ *   <li>等待用户提供工具执行结果</li>
  * </ol>
  *
- * <p>Example usage in a custom tool:
+ * <p>在自定义工具中的使用示例：
  * <pre>{@code
  * @Tool(name = "external_api", description = "Call external API")
  * public ToolResultBlock callExternalApi(@ToolParam(name = "url") String url) {

@@ -23,16 +23,17 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
 /**
+ * 安全地将 tar 归档解压到目标目录。
  * Securely extracts tar archives into a target directory.
  *
- * <p>Applies strict path traversal guards before extracting each archive entry:
+ * <p>在解压每个归档条目之前应用严格的路径遍历防护：
  * <ol>
- *   <li>Rejects entries with absolute paths (starting with {@code /} or {@code \})</li>
- *   <li>Rejects entries containing {@code ..} path segments</li>
- *   <li>Verifies the resolved destination path starts with the canonical root</li>
+ *   <li>拒绝绝对路径的条目（以 {@code /} 或 {@code \} 开头）</li>
+ *   <li>拒绝包含 {@code ..} 路径段的条目</li>
+ *   <li>验证解析后的目标路径以规范根路径开头</li>
  * </ol>
  *
- * <p>These guards defend against the "Zip Slip" class of path traversal attacks.
+ * <p>这些防护措施防御"Zip Slip"类别的路径遍历攻击。
  */
 public class WorkspaceArchiveExtractor {
 
@@ -41,13 +42,13 @@ public class WorkspaceArchiveExtractor {
     }
 
     /**
+     * 将 tar 归档流解压到指定的目标目录。
      * Extracts a tar archive stream into the given destination directory.
      *
-     * <p>The destination directory must already exist. Existing files at the same paths
-     * will be replaced.
+     * <p>目标目录必须已存在。相同路径的现有文件将被替换。
      *
-     * @param destRoot the directory to extract into; must already exist
-     * @param tarStream the tar archive input stream; caller is responsible for closing
+     * @param destRoot 要解压到的目录；必须已存在
+     * @param tarStream tar 归档输入流；调用者负责关闭
      * @throws SandboxException.SandboxRuntimeException if a path traversal attempt is detected
      * @throws Exception if extraction fails for any other reason
      */

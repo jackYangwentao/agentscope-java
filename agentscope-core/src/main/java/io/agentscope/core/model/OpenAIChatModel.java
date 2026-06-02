@@ -37,25 +37,24 @@ import reactor.core.publisher.Flux;
 import reactor.core.scheduler.Schedulers;
 
 /**
- * OpenAI Chat Model using native HTTP API.
+ * 使用原生 HTTP API 的 OpenAI Chat Model。
  *
- * <p>This implementation uses direct HTTP calls to OpenAI-compatible APIs.
+ * <p>该实现使用直接的 HTTP 调用与 OpenAI 兼容 API 通信。
  *
- * <p>Features:
+ * <p>特性：
  * <ul>
- *   <li>Streaming and non-streaming modes</li>
- *   <li>Tool calling support</li>
- *   <li>Automatic message format conversion</li>
- *   <li>Timeout and retry configuration</li>
- *   <li>Multi-provider support via different Formatters</li>
+ *   <li>流式和非流式模式</li>
+ *   <li>工具调用支持</li>
+ *   <li>自动消息格式转换</li>
+ *   <li>超时和重试配置</li>
+ *   <li>通过不同的 Formatter 提供多提供商支持</li>
  * </ul>
  *
- * <p>Provider-specific behavior is handled by the Formatter. Use the appropriate formatter
- * for your provider:
+ * <p>提供商特定的行为由 Formatter 处理。根据您的提供商使用适当的 formatter：
  * <ul>
- *   <li>{@link OpenAIChatFormatter} - Standard OpenAI GPT models</li>
- *   <li>{@link io.agentscope.core.formatter.openai.DeepSeekFormatter} - DeepSeek Chat models</li>
- *   <li>{@link io.agentscope.core.formatter.openai.GLMFormatter} - Zhipu GLM models</li>
+ *   <li>{@link OpenAIChatFormatter} - 标准 OpenAI GPT 模型</li>
+ *   <li>{@link io.agentscope.core.formatter.openai.DeepSeekFormatter} - DeepSeek Chat 模型</li>
+ *   <li>{@link io.agentscope.core.formatter.openai.GLMFormatter} - 智谱 GLM 模型</li>
  * </ul>
  */
 public class OpenAIChatModel extends ChatModelBase {

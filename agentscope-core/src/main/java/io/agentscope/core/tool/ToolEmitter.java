@@ -18,22 +18,21 @@ package io.agentscope.core.tool;
 import io.agentscope.core.message.ToolResultBlock;
 
 /**
- * Interface for emitting streaming responses during tool execution.
+ * 在工具执行期间发送流式响应的接口。
  *
- * <p>Tool methods can declare a ToolEmitter parameter to send intermediate progress updates and
- * messages during execution. These streaming chunks are delivered to registered hooks via
- * {@code onActingChunk()} events but are NOT sent to the LLM. Only the final return value of the
- * tool method is sent to the LLM as the tool result.
+ * <p>工具方法可以声明 ToolEmitter 参数，在执行期间发送中间进度更新和消息。
+ * 这些流式数据块通过 {@code onActingChunk()} 事件传递给已注册的钩子，但<b>不会</b>发送给 LLM。
+ * 只有工具方法的最终返回值会作为工具结果发送给 LLM。
  *
- * <p><b>Key Characteristics:</b>
+ * <p><b>关键特性：</b>
  * <ul>
- *   <li>ToolEmitter is auto-injected by the framework - no {@link ToolParam} annotation needed</li>
- *   <li>Emitted chunks go to hooks (for monitoring/logging), not to the LLM</li>
- *   <li>Useful for long-running tools to provide progress feedback</li>
- *   <li>Does not affect the tool schema visible to the LLM</li>
+ *   <li>ToolEmitter 由框架自动注入——无需 {@link ToolParam} 注解</li>
+ *   <li>发送的数据块传递到钩子（用于监控/日志），而非 LLM</li>
+ *   <li>适用于长时间运行的工具以提供进度反馈</li>
+ *   <li>不影响 LLM 可见的工具 Schema</li>
  * </ul>
  *
- * <p><b>Usage Example:</b>
+ * <p><b>使用示例：</b>
  *
  * <pre>{@code
  * @Tool(name = "long_task", description = "Execute a long running task")

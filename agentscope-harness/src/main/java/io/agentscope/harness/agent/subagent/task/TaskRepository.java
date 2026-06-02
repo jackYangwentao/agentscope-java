@@ -19,15 +19,13 @@ import io.agentscope.core.agent.RuntimeContext;
 import java.util.Collection;
 
 /**
- * Repository for managing background subagent tasks, scoped by session.
+ * 管理后台子代理任务的存储库，按会话范围划分。
  *
- * <p>All operations are scoped to a {@code sessionId} so that tasks from different parent sessions
- * are isolated from one another. Implementations may ignore {@code sessionId} (in-memory stores)
- * or use it to partition durable storage (workspace-backed stores).
+ * <p>所有操作都限定在 {@code sessionId} 范围内，以便来自不同父会话的任务相互隔离。
+ * 实现可以忽略 {@code sessionId}（内存存储）或使用它来分区持久化存储（工作区支持的存储）。
  *
- * <p>Every method accepts a {@link RuntimeContext}: implementations that persist task state through
- * a per-user namespaced filesystem must propagate {@code rc} so that writes from concurrent users
- * land in their respective namespaces.
+ * <p>每个方法都接受 {@link RuntimeContext}：通过按用户命名空间化文件系统持久化任务状态的实现
+ * 必须传播 {@code rc}，以便来自并发用户的写入落在各自命名空间中。
  */
 public interface TaskRepository {
 

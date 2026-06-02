@@ -24,16 +24,16 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Base class for all session tree entries (pi-mono-inspired JSONL session model).
+ * 所有会话树条目的基类（灵感来自 pi-mono 的 JSONL 会话模型）。
  *
- * <p>Each entry has a unique {@code id} and a {@code parentId} forming a tree structure.
- * Entries are appended to the session JSONL file in order; they are never deleted.
+ * <p>每个条目具有唯一的 {@code id} 和 {@code parentId}，形成树形结构。
+ * 条目按顺序追加到会话 JSONL 文件中；它们永不删除。
  *
- * <p>Entry types:
+ * <p>条目类型：
  * <ul>
- *   <li>{@link MessageEntry} — wraps a single LLM message (user/assistant/tool/system)</li>
- *   <li>{@link CompactionEntry} — marks a compaction event (non-destructive)</li>
- *   <li>{@link SummaryEntry} — holds a compaction summary</li>
+ *   <li>{@link MessageEntry} — 包装单条 LLM 消息（user/assistant/tool/system）</li>
+ *   <li>{@link CompactionEntry} — 标记压缩事件（非破坏性）</li>
+ *   <li>{@link SummaryEntry} — 保存压缩摘要</li>
  * </ul>
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")

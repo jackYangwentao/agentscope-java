@@ -21,15 +21,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Wraps a {@link CompletableFuture} to track background subagent task execution with status,
- * result, error, and lifecycle metadata. Thread-safe by delegation to the underlying future.
+ * 包装 {@link CompletableFuture} 来跟踪后台子代理任务的执行状态、结果、错误和生命周期元数据。
+ * 通过委托给底层 future 实现线程安全。
  *
- * <p>Lifecycle metadata:
+ * <p>生命周期元数据：
  *
  * <ul>
- *   <li>{@code agentId} — which subagent type is executing
- *   <li>{@code createdAt} — when the task was created
- *   <li>{@code lastCheckedAt} — when the task status was last polled
+ *   <li>{@code agentId} — 正在执行的子代理类型</li>
+ *   <li>{@code createdAt} — 任务创建时间</li>
+ *   <li>{@code lastCheckedAt} — 上次轮询任务状态的时间</li>
  * </ul>
  */
 public class BackgroundTask {

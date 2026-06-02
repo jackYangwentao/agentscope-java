@@ -18,26 +18,25 @@ package io.agentscope.harness.agent.memory.compaction;
 import java.util.Set;
 
 /**
- * Configuration for per-tool-result eviction of oversized outputs.
+ * 按工具结果驱逐超大输出的配置。
  *
- * <p>When a tool produces a result whose text content exceeds {@link #getMaxResultChars()}, the
- * full output is written to the workspace filesystem abstraction at a deterministic path under
- * {@link #getEvictionPath()}, and the in-context {@link io.agentscope.core.message.ToolResultBlock}
- * is replaced with a compact placeholder that includes a head+tail preview and an instruction to
- * use {@code readFile} for the full content.
+ * <p>当工具产生的结果文本内容超过 {@link #getMaxResultChars()} 时，
+ * 完整输出将被写入工作区文件系统抽象中 {@link #getEvictionPath()} 下确定性的路径，
+ * 上下文中的 {@link io.agentscope.core.message.ToolResultBlock} 将被替换为紧凑的占位符，
+ * 包含首尾预览和使用 {@code readFile} 获取完整内容的指令。
  *
- * <p>This mechanism is <b>orthogonal</b> to conversation summarization ({@link CompactionConfig}):
+ * <p>此机制与对话摘要（{@link CompactionConfig}）<b>正交</b>：
  * <ul>
- *   <li><b>Eviction</b> addresses context <em>width</em> — individual messages that are too large.</li>
- *   <li><b>Compaction</b> addresses context <em>depth</em> — too many accumulated messages.</li>
+ *   <li><b>驱逐</b> 解决上下文<em>宽度</em>——单个消息过大。</li>
+ *   <li><b>压缩</b> 解决上下文<em>深度</c>——累积消息过多。</li>
  * </ul>
- * Both operate independently on different trigger conditions and different lifecycle events.
+ * 两者在不同的触发条件和不同的生命周期事件上独立运行。
  *
  * <ul>
- *   <li>Trigger at 80,000 characters (~20 K tokens at 4 chars/token)</li>
- *   <li>Preview: first + last 2,000 characters of the original output</li>
- *   <li>Eviction path prefix: {@code /large_tool_results}</li>
- *   <li>Excluded tools: filesystem read/write/edit/list + memory tools (small or self-paginating)</li>
+ *   <li>80,000 个字符时触发（约 4 字符/令牌下的 20K 令牌）</li>
+ *   <li>预览：原始输出的前 + 后各 2,000 个字符</li>
+ *   <li>驱逐路径前缀：{@code /large_tool_results}</li>
+ *   <li>排除的工具：文件系统读/写/编辑/列出 + 内存工具（小或自分页）</li>
  * </ul>
  */
 public class ToolResultEvictionConfig {

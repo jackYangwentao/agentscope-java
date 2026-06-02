@@ -22,7 +22,11 @@ import io.fabric8.kubernetes.client.KubernetesClient;
 import java.util.HashMap;
 import java.util.Map;
 
-/** Options for {@link KubernetesSandboxClient}. */
+/**
+ * {@link KubernetesSandboxClient} 的选项配置。
+ * <p>
+ * Options for {@link KubernetesSandboxClient}.
+ */
 public class KubernetesSandboxClientOptions extends SandboxClientOptions {
 
     private KubernetesClient kubernetesClient;
@@ -48,6 +52,9 @@ public class KubernetesSandboxClientOptions extends SandboxClientOptions {
     }
 
     /**
+     * 返回显式的 Kubernetes 客户端。当为 {@code null} 时，将根据 {@link #getKubernetesConfig()}
+     * 或通过集群内/默认 kubeconfig 链构建客户端。
+     * <p>
      * Returns an explicit Kubernetes client. When {@code null}, a client is built from {@link
      * #getKubernetesConfig()} or the in-cluster / default kubeconfig chain.
      */

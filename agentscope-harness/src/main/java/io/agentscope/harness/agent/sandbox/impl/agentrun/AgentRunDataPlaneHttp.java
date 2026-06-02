@@ -31,15 +31,30 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-/** Minimal data-plane HTTP client for the AgentRun sandbox API. */
+/**
+ * AgentRun 沙箱 API 的最简数据面 HTTP 客户端。
+ * Minimal data-plane HTTP client for the AgentRun sandbox API.
+ */
 final class AgentRunDataPlaneHttp {
 
+    /** JSON 媒体类型常量。JSON media type constant. */
     private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
+    /** OkHttp HTTP 客户端。OkHttp HTTP client. */
     private final OkHttpClient http;
+
+    /** Jackson JSON 对象映射器。Jackson JSON object mapper. */
     private final ObjectMapper json = new ObjectMapper();
+
+    /** AgentRun 沙箱客户端选项。AgentRun sandbox client options. */
     private final AgentRunSandboxClientOptions opt;
 
+    /**
+     * 使用给定选项构造 AgentRunDataPlaneHttp 实例。
+     * Constructs an AgentRunDataPlaneHttp instance with the given options.
+     *
+     * @param opt AgentRun 沙箱客户端选项 / AgentRun sandbox client options
+     */
     AgentRunDataPlaneHttp(AgentRunSandboxClientOptions opt) {
         this.opt = Objects.requireNonNull(opt, "opt");
         OkHttpClient base = opt.getHttpClient();
@@ -54,7 +69,10 @@ final class AgentRunDataPlaneHttp {
         }
     }
 
-    /** Creates a sandbox with a deterministic id and returns the sandbox object as JSON. */
+    /**
+     * 使用确定性 ID 创建沙箱，并以 JSON 形式返回沙箱对象。
+     * Creates a sandbox with a deterministic id and returns the sandbox object as JSON.
+     */
     JsonNode createSandbox(String sandboxId) throws IOException {
         ObjectNode body = json.createObjectNode();
         body.put("sandboxId", sandboxId);
@@ -97,14 +115,18 @@ final class AgentRunDataPlaneHttp {
         return AgentRunRetry.withRetries(opt.getMaxRetries(), () -> postJson(url, body));
     }
 
+    /**
+     * 获取沙箱信息。
+     * Gets sandbox information.
+     */
     JsonNode getSandbox(String sandboxId) throws IOException {
         String url = opt.getResolvedDataPlaneBaseUrl() + "/2025-09-10/sandboxes/" + sandboxId;
         return AgentRunRetry.withRetries(opt.getMaxRetries(), () -> getJson(url));
     }
 
     /**
-     * Deletes the sandbox. Returns silently on HTTP 404 (already gone). All other non-2xx
-     * responses raise.
+     * 删除沙箱。HTTP 404（已不存在）时静默返回。所有其他非 2xx 响应都会抛出异常。
+     * Deletes the sandbox. Returns silently on HTTP 404 (already gone). All other non-2xx responses raise.
      */
     void deleteSandbox(String sandboxId) throws IOException {
         String url = opt.getResolvedDataPlaneBaseUrl() + "/2025-09-10/sandboxes/" + sandboxId;
@@ -119,8 +141,8 @@ final class AgentRunDataPlaneHttp {
     }
 
     /**
-     * Polls {@link #getSandbox(String)} until the sandbox reaches the {@code READY} state or
-     * fails.
+     * 轮询 {@link #getSandbox(String)} 直到沙箱达到 {@code READY} 状态或失败。
+     * Polls {@link #getSandbox(String)} until the sandbox reaches the {@code READY} state or fails.
      */
     void waitUntilReady(String sandboxId, int maxWaitSeconds) throws Exception {
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(maxWaitSeconds);
@@ -150,6 +172,10 @@ final class AgentRunDataPlaneHttp {
                         + sandboxId);
     }
 
+    /**
+     * 从 JSON 节点中提取沙箱状态文本。
+     * Extracts the sandbox status text from a JSON node.
+     */
     private static String textStatus(JsonNode s) {
         if (s == null) {
             return null;
@@ -165,6 +191,10 @@ final class AgentRunDataPlaneHttp {
         return null;
     }
 
+    /**
+     * 构建包含通用请求头的 OkHttp 请求构建器。
+     * Builds an OkHttp request builder with common headers.
+     */
     private Request.Builder baseRequest() {
         Request.Builder b = new Request.Builder().addHeader("X-API-Key", requireApiKey());
         if (opt.getAccountId() != null && !opt.getAccountId().isBlank()) {
@@ -173,6 +203,10 @@ final class AgentRunDataPlaneHttp {
         return b;
     }
 
+    /**
+     * 获取 API 密钥，如果未设置则抛出异常。
+     * Gets the API key or throws if not set.
+     */
     private String requireApiKey() {
         String key = opt.getApiKey();
         if (key == null || key.isBlank()) {
@@ -182,6 +216,10 @@ final class AgentRunDataPlaneHttp {
         return key;
     }
 
+    /**
+     * 发送 POST JSON 请求到指定 URL。
+     * Sends a POST JSON request to the specified URL.
+     */
     private JsonNode postJson(String url, ObjectNode body) throws IOException {
         Request req =
                 baseRequest().url(url).post(RequestBody.create(body.toString(), JSON)).build();
@@ -199,6 +237,10 @@ final class AgentRunDataPlaneHttp {
         }
     }
 
+    /**
+     * 发送 GET JSON 请求到指定 URL。
+     * Sends a GET JSON request to the specified URL.
+     */
     private JsonNode getJson(String url) throws IOException {
         Request req = baseRequest().url(url).get().build();
         try (Response res = http.newCall(req).execute()) {

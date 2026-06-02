@@ -33,26 +33,21 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 /**
- * LLM-based consolidation of daily memory ledgers into the curated {@code MEMORY.md}.
+ * 基于 LLM 的每日内存账本合并到策划的 {@code MEMORY.md}。
  *
- * <p>This component owns the second layer of the two-layer memory model:
+ * <p>该组件拥有两层内存模型中的第二层：
  * <ul>
- *   <li><b>Layer 1 — daily ledger</b>: {@code memory/YYYY-MM-DD.md} files written by
- *       {@link MemoryFlushManager}, append-only, one section per compaction flush.</li>
- *   <li><b>Layer 2 — curated MEMORY.md</b>: Owned by this class. Periodically reads the
- *       daily ledgers (those modified since the last consolidation watermark) plus the
- *       current MEMORY.md, asks the LLM to merge / dedupe / trim, and overwrites
- *       MEMORY.md with the result.</li>
+ *   <li><b>第 1 层 — 每日账本</b>：由 {@link MemoryFlushManager} 写入的 {@code memory/YYYY-MM-DD.md} 文件，
+ *       仅追加，每次压缩刷新写入一个带时间戳的章节。</li>
+ *   <li><b>第 2 层 — 策划的 MEMORY.md</b>：由此类拥有。定期读取自上次合并水印以来修改的每日账本
+ *       加上当前 MEMORY.md，请求 LLM 进行合并/去重/裁剪，并用结果覆盖 MEMORY.md。</li>
  * </ul>
  *
- * <p>A small state file ({@code memory/.consolidation_state}) records the timestamp of
- * the last successful consolidation. Daily files whose {@code modifiedAt} is at or before
- * that timestamp are skipped — reducing token usage and protecting MEMORY.md from being
- * re-rewritten with stale content.
+ * <p>一个小的状态文件（{@code memory/.consolidation_state}）记录上次成功合并的时间戳。
+ * 在时间戳之前或等于时间戳的每日文件会被跳过——减少令牌使用并防止 MEMORY.md 被陈旧内容重写。
  *
- * <p>All file I/O is performed via the {@link AbstractFilesystem} obtained from the
- * {@link WorkspaceManager}, so this class is backend-agnostic (works with Local,
- * Sandbox, and Remote filesystems without any direct {@code java.nio.file.Files} usage).
+ * <p>所有文件 I/O 通过从 {@link WorkspaceManager} 获取的 {@link AbstractFilesystem} 执行，
+ * 因此此类与后端无关（适用于本地、沙箱和远程文件系统，无需直接使用 {@code java.nio.file.Files}）。
  */
 public class MemoryConsolidator {
 

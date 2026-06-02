@@ -36,18 +36,15 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * Represents a message in the AgentScope framework.
+ * 表示 AgentScope 框架中的一条消息。
  *
- * <p>Messages are the primary communication unit between agents, users, and tools.
- * Each message has a role (user, assistant, system, or tool), content blocks,
- * and optional metadata.
+ * <p>消息是智能体、用户和工具之间的主要通信单元。每条消息都有一个角色（用户、助手、系统或工具）、
+ * 内容块和可选的元数据。
  *
- * <p>Content blocks can include text, images, audio, video, thinking content,
- * tool use blocks, and tool result blocks. The content is stored as an immutable
- * list for thread safety.
+ * <p>内容块可以包含文本、图片、音频、视频、推理内容、工具调用块和工具结果块。
+ * 内容以不可变列表的形式存储，以确保线程安全。
  *
- * <p>Messages are serialized to JSON using Jackson and include a unique ID
- * for tracking purposes.
+ * <p>消息使用 Jackson 序列化为 JSON，并包含用于追踪的唯一 ID。
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Msg implements State {

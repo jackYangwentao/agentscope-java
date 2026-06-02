@@ -19,6 +19,11 @@ import io.agentscope.core.message.Msg;
 import java.util.List;
 import reactor.core.publisher.Flux;
 
+/**
+ * 模型接口，定义与语言模型交互的通用协议。
+ *
+ * <p>所有与 LLM 的通信均通过此接口进行，支持流式和非流式两种模式。
+ */
 public interface Model {
 
     /**

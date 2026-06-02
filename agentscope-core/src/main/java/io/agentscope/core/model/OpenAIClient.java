@@ -38,27 +38,25 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 
 /**
- * Stateless HTTP client for OpenAI-compatible APIs.
+ * 用于 OpenAI 兼容 API 的无状态 HTTP 客户端。
  *
- * <p>This client handles communication with OpenAI's Chat Completion API using direct HTTP calls.
- * All configuration (API key, base URL) is passed per-request, making this client stateless and
- * safe to share across multiple model instances.
+ * <p>该客户端使用直接的 HTTP 调用与 OpenAI 的 Chat Completion API 通信。
+ * 所有配置（API 密钥、基础 URL）均在每次请求时传递，使得该客户端无状态且可在多个模型实例间安全共享。
  *
- * <p>Features:
+ * <p>特性：
  * <ul>
- *   <li>Synchronous and streaming request support</li>
- *   <li>SSE stream parsing</li>
- *   <li>JSON serialization/deserialization</li>
- *   <li>Support for OpenAI-compatible APIs (custom base URL)</li>
- *   <li>Generic API call support for other OpenAI endpoints (images, audio, etc.)</li>
+ *   <li>同步和流式请求支持</li>
+ *   <li>SSE 流解析</li>
+ *   <li>JSON 序列化/反序列化</li>
+ *   <li>支持 OpenAI 兼容 API（自定义基础 URL）</li>
+ *   <li>支持其他 OpenAI 端点的通用 API 调用（图片、音频等）</li>
  * </ul>
  *
- * <p>API endpoints:
+ * <p>API 端点：
  * <ul>
- *   <li>Chat completions: /v1/chat/completions</li>
- *   <li>Images: /v1/images/generations, /v1/images/edits, /v1/images/variations</li>
- *   <li>Audio: /v1/audio/speech, /v1/audio/transcriptions, /v1/audio/translations</li>
- * </ul>
+ *   <li>聊天补全：/v1/chat/completions</li>
+ *   <li>图片：/v1/images/generations, /v1/images/edits, /v1/images/variations</li>
+ *   <li>音频：/v1/audio/speech, /v1/audio/transcriptions, /v1/audio/translations</li>
  */
 public class OpenAIClient {
 

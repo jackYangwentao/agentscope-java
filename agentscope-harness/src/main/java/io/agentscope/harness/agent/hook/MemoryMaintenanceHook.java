@@ -54,12 +54,19 @@ import reactor.core.publisher.Mono;
  * <p>All file I/O goes through {@link AbstractFilesystem} (obtained from
  * {@link WorkspaceManager}), making this backend-agnostic across Local, Sandbox, and
  * Remote filesystems.
+ *
+ * <p>内存维护钩子，在每次 agent 调用后执行定期内存维护。
+ * 将后台 {@code MemoryMaintenanceScheduler} 替换为基于钩子的、事件循环友好的方式。
+ * 在 {@link PostCallEvent}（优先级 6，在优先级 5 的 {@link MemoryFlushHook} 之后）上触发，
+ * 并通过可配置的最小间隔进行限流，因此不会在每次调用时都运行。
+ * 所有文件 I/O 通过 {@link AbstractFilesystem} 进行，使其在本地、沙箱和远程文件系统之间保持后端无关。
  */
 public class MemoryMaintenanceHook implements Hook, RuntimeContextAware {
 
     private static final Logger log = LoggerFactory.getLogger(MemoryMaintenanceHook.class);
 
     /** Default minimum gap between two maintenance runs. */
+    /** 两次维护运行之间的默认最小间隔。 */
     public static final Duration DEFAULT_MIN_GAP = Duration.ofMinutes(30);
 
     private final WorkspaceManager workspaceManager;
@@ -131,6 +138,11 @@ public class MemoryMaintenanceHook implements Hook, RuntimeContextAware {
         log.debug("Memory maintenance completed");
     }
 
+    /**
+     * Moves daily memory files older than the retention period to the archive directory.
+     *
+     * <p>将早于保留期限的每日内存文件移动到归档目录。
+     */
     private void expireDailyFiles(RuntimeContext rc) {
         AbstractFilesystem fs = workspaceManager.getFilesystem();
         if (fs == null) {
@@ -164,10 +176,16 @@ public class MemoryMaintenanceHook implements Hook, RuntimeContextAware {
                 }
             } catch (Exception e) {
                 // not a date-named file, skip
+                // 非日期命名的文件，跳过
             }
         }
     }
 
+    /**
+     * Runs LLM-based memory consolidation if a consolidator is configured.
+     *
+     * <p>如果配置了合并器，则运行基于 LLM 的内存合并。
+     */
     private void consolidateMemory(RuntimeContext rc) {
         if (consolidator == null) {
             return;
@@ -179,6 +197,11 @@ public class MemoryMaintenanceHook implements Hook, RuntimeContextAware {
         }
     }
 
+    /**
+     * Deletes session log files older than the session retention period.
+     *
+     * <p>删除早于会话保留期限的会话日志文件。
+     */
     private void pruneOldSessions(RuntimeContext rc) {
         AbstractFilesystem fs = workspaceManager.getFilesystem();
         if (fs == null) {
@@ -210,6 +233,11 @@ public class MemoryMaintenanceHook implements Hook, RuntimeContextAware {
         }
     }
 
+    /**
+     * Extracts the file name from a path string, returning empty string for null input.
+     *
+     * <p>从路径字符串中提取文件名，对 null 输入返回空字符串。
+     */
     private static String fileName(String path) {
         if (path == null) {
             return "";

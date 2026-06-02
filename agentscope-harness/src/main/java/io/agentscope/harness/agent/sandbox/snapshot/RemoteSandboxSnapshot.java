@@ -19,6 +19,14 @@ import io.agentscope.harness.agent.sandbox.SandboxException;
 import java.io.InputStream;
 
 /**
+ * 由 {@link RemoteSnapshotClient}（例如 S3、OSS、GCS）支持的快照。
+ * <p>
+ * 此类将所有操作委托给提供的客户端。客户端负责认证、重试逻辑和网络错误处理。
+ * <p>
+ * 注意：{@code RemoteSandboxSnapshot} 不能直接序列化为 JSON，因为
+ * {@link RemoteSnapshotClient} 无法被序列化。持久化会话状态时，
+ * 只需要 {@code id} —— 客户端在恢复时从构建器重新注入。
+ * <p>
  * Snapshot backed by a {@link RemoteSnapshotClient} (e.g. S3, OSS, GCS).
  *
  * <p>This class delegates all operations to the provided client. The client is responsible
@@ -34,10 +42,12 @@ public class RemoteSandboxSnapshot implements SandboxSnapshot {
     private final String id;
 
     /**
+     * 创建远程快照。
+     * <p>
      * Creates a remote snapshot.
      *
-     * @param client the remote storage client to delegate operations to
-     * @param id unique identifier for this snapshot
+     * @param client 要委托操作的远程存储客户端
+     * @param id     此快照的唯一标识符
      */
     public RemoteSandboxSnapshot(RemoteSnapshotClient client, String id) {
         this.client = client;
@@ -47,7 +57,9 @@ public class RemoteSandboxSnapshot implements SandboxSnapshot {
     /**
      * {@inheritDoc}
      *
-     * <p>Uploads the archive via {@link RemoteSnapshotClient#upload}.
+     * <p>通过 {@link RemoteSnapshotClient#upload} 上传归档。
+     * <p>
+     * Uploads the archive via {@link RemoteSnapshotClient#upload}.
      */
     @Override
     public void persist(InputStream workspaceArchive) throws Exception {
@@ -61,7 +73,9 @@ public class RemoteSandboxSnapshot implements SandboxSnapshot {
     /**
      * {@inheritDoc}
      *
-     * <p>Downloads the archive via {@link RemoteSnapshotClient#download}.
+     * <p>通过 {@link RemoteSnapshotClient#download} 下载归档。
+     * <p>
+     * Downloads the archive via {@link RemoteSnapshotClient#download}.
      */
     @Override
     public InputStream restore() throws Exception {
@@ -75,7 +89,9 @@ public class RemoteSandboxSnapshot implements SandboxSnapshot {
     /**
      * {@inheritDoc}
      *
-     * <p>Checks existence via {@link RemoteSnapshotClient#exists}.
+     * <p>通过 {@link RemoteSnapshotClient#exists} 检查存在性。
+     * <p>
+     * Checks existence via {@link RemoteSnapshotClient#exists}.
      */
     @Override
     public boolean isRestorable() throws Exception {

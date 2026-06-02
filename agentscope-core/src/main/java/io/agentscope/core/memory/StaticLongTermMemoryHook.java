@@ -33,24 +33,23 @@ import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
 /**
- * Static Long-Term Memory Hook for automatic memory management.
+ * 用于自动记忆管理的静态长期记忆钩子。
  *
- * <p>This hook implements the STATIC_CONTROL mode for long-term memory, where memory
- * retrieval and recording are handled automatically by the framework without agent
- * involvement. The hook:
+ * <p>该钩子实现了长期记忆的 STATIC_CONTROL 模式，其中记忆的检索和记录由框架自动处理，
+ * 无需智能体参与。该钩子：
  * <ol>
- *   <li>Retrieves relevant memories before reasoning (PreReasoningEvent)</li>
- *   <li>Injects retrieved memories as system messages for context</li>
- *   <li>Records conversations to long-term memory after agent replies (PostCallEvent)</li>
+ *   <li>在推理前检索相关记忆（PreReasoningEvent）</li>
+ *   <li>将检索到的记忆作为系统消息注入以提供上下文</li>
+ *   <li>在智能体回复后将对话记录到长期记忆（PostCallEvent）</li>
  * </ol>
  *
- * <p><b>When to Use:</b>
+ * <p><b>使用时机：</b>
  * <ul>
- *   <li>STATIC_CONTROL mode: Framework manages memory automatically</li>
- *   <li>BOTH mode: Combined with agent control tools</li>
+ *   <li>STATIC_CONTROL 模式：框架自动管理记忆</li>
+ *   <li>BOTH 模式：与智能体控制工具结合使用</li>
  * </ul>
  *
- * <p><b>Usage Example:</b>
+ * <p><b>使用示例：</b>
  * <pre>{@code
  * LongTermMemory memory = Mem0LongTermMemory.builder()
  *     .agentName("Assistant")

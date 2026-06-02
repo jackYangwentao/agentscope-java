@@ -16,6 +16,11 @@
 package io.agentscope.harness.agent.sandbox.layout;
 
 /**
+ * 将 Git 仓库克隆到沙箱工作区的布局条目。
+ * <p>
+ * 仓库将从给定的 {@code url} 和 {@code ref}（分支、标签或提交 SHA）克隆。
+ * 此类用作 JSON 序列化的类型骨架。
+ * <p>
  * Layout entry that clones a Git repository into the sandbox workspace.
  *
  * <p>The repository is cloned from {@code url} at the given {@code ref}
@@ -27,14 +32,16 @@ public class GitRepoEntry extends WorkspaceEntry {
     private String url;
     private String ref = "HEAD";
 
-    /** Creates an empty git repo entry. */
+    /** 创建空的 git 仓库条目。Creates an empty git repo entry. */
     public GitRepoEntry() {}
 
     /**
+     * 创建带 URL 和 ref 的 git 仓库条目。
+     * <p>
      * Creates a git repo entry with the given URL and ref.
      *
-     * @param url the repository clone URL
-     * @param ref the branch, tag, or commit SHA to check out
+     * @param url 仓库克隆 URL
+     * @param ref 要检出的分支、标签或提交 SHA
      */
     public GitRepoEntry(String url, String ref) {
         this.url = url;
@@ -42,24 +49,30 @@ public class GitRepoEntry extends WorkspaceEntry {
     }
 
     /**
+     * 返回仓库克隆 URL。
+     * <p>
      * Returns the repository clone URL.
      *
-     * @return clone URL
+     * @return 克隆 URL
      */
     public String getUrl() {
         return url;
     }
 
     /**
+     * 设置仓库克隆 URL。
+     * <p>
      * Sets the repository clone URL.
      *
-     * @param url clone URL
+     * @param url 克隆 URL
      */
     public void setUrl(String url) {
         this.url = url;
     }
 
     /**
+     * 返回要检出的 Git ref（分支、标签或提交 SHA）。
+     * <p>
      * Returns the Git ref (branch, tag, or commit SHA) to check out.
      *
      * @return git ref
@@ -69,9 +82,11 @@ public class GitRepoEntry extends WorkspaceEntry {
     }
 
     /**
+     * 设置 Git ref。
+     * <p>
      * Sets the Git ref.
      *
-     * @param ref branch, tag, or commit SHA
+     * @param ref 分支、标签或提交 SHA
      */
     public void setRef(String ref) {
         this.ref = ref;

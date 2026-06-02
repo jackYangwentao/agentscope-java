@@ -37,6 +37,9 @@ import reactor.core.publisher.Mono;
 /**
  * Internal hook implementation for streaming events.
  *
+ * <p>用于流式事件传输的内部 Hook 实现。拦截 Hook 回调并将 {@link Event} 实例
+ * 发送到 FluxSink,处理事件过滤和分片模式处理。
+ *
  * <p>Intercepts hook callbacks and emits {@link Event} instances to a FluxSink. Handles event
  * filtering and chunk mode processing.
  */
@@ -45,14 +48,14 @@ class StreamingHook implements Hook {
     private final FluxSink<Event> sink;
     private final StreamOptions options;
 
-    // Track previous content for incremental mode
+    // 用于增量模式,跟踪每条消息的上一次内容(预留用于将来计算 diff)
     private final Map<String, List<ContentBlock>> previousContent = new HashMap<>();
 
     /**
-     * Creates a new streaming hook.
+     * 创建一个新的流式 Hook。
      *
-     * @param sink The FluxSink to emit events to
-     * @param options Configuration options for streaming
+     * @param sink 用于发送事件的 FluxSink
+     * @param options 流式传输的配置选项
      */
     StreamingHook(FluxSink<Event> sink, StreamOptions options) {
         this.sink = sink;
@@ -63,8 +66,7 @@ class StreamingHook implements Hook {
     public <T extends HookEvent> Mono<T> onEvent(T event) {
         if (event instanceof PostReasoningEvent) {
             PostReasoningEvent e = (PostReasoningEvent) event;
-            // postReasoning is called after streaming completes
-            // This is the last/complete message
+            // postReasoning 在流式完成后调用,此时消息已是最后/完整状态
             if (options.shouldStream(EventType.REASONING)
                     && options.shouldIncludeReasoningEmission(false)) {
                 emitEvent(EventType.REASONING, e.getReasoningMessage(), true);
@@ -72,10 +74,10 @@ class StreamingHook implements Hook {
             return Mono.just(event);
         } else if (event instanceof ReasoningChunkEvent) {
             ReasoningChunkEvent e = (ReasoningChunkEvent) event;
-            // This is an intermediate chunk
+            // 这是中间分片
             if (options.shouldStream(EventType.REASONING)
                     && options.shouldIncludeReasoningEmission(true)) {
-                // Use incremental or accumulated based on StreamOptions
+                // 根据 StreamOptions 选择发送增量还是累积内容
                 Msg msgToEmit =
                         options.isIncremental() ? e.getIncrementalChunk() : e.getAccumulated();
                 emitEvent(EventType.REASONING, msgToEmit, false);
@@ -83,7 +85,7 @@ class StreamingHook implements Hook {
             return Mono.just(event);
         } else if (event instanceof PostActingEvent) {
             PostActingEvent e = (PostActingEvent) event;
-            // Tool execution completed
+            // 工具执行完成
             if (options.shouldStream(EventType.TOOL_RESULT)) {
                 Msg toolMsg = createToolMessage(e.getToolResult());
                 emitEvent(EventType.TOOL_RESULT, toolMsg, true);
@@ -91,7 +93,7 @@ class StreamingHook implements Hook {
             return Mono.just(event);
         } else if (event instanceof ActingChunkEvent) {
             ActingChunkEvent e = (ActingChunkEvent) event;
-            // Intermediate tool chunk
+            // 中间工具分片
             if (options.shouldStream(EventType.TOOL_RESULT) && options.isIncludeActingChunk()) {
                 Msg toolMsg = createToolMessage(e.getChunk());
                 emitEvent(EventType.TOOL_RESULT, toolMsg, false);
@@ -99,7 +101,7 @@ class StreamingHook implements Hook {
             return Mono.just(event);
         } else if (event instanceof PostSummaryEvent) {
             PostSummaryEvent e = (PostSummaryEvent) event;
-            // Summary generation completed
+            // 摘要生成完成
             if (options.shouldStream(EventType.SUMMARY)
                     && options.shouldIncludeSummaryEmission(false)) {
                 emitEvent(EventType.SUMMARY, e.getSummaryMessage(), true);
@@ -107,10 +109,10 @@ class StreamingHook implements Hook {
             return Mono.just(event);
         } else if (event instanceof SummaryChunkEvent) {
             SummaryChunkEvent e = (SummaryChunkEvent) event;
-            // Intermediate summary chunk
+            // 中间摘要分片
             if (options.shouldStream(EventType.SUMMARY)
                     && options.shouldIncludeSummaryEmission(true)) {
-                // Use incremental or accumulated based on StreamOptions
+                // 根据 StreamOptions 选择发送增量还是累积内容
                 Msg msgToEmit =
                         options.isIncremental() ? e.getIncrementalChunk() : e.getAccumulated();
                 emitEvent(EventType.SUMMARY, msgToEmit, false);
@@ -120,13 +122,13 @@ class StreamingHook implements Hook {
         return Mono.just(event);
     }
 
-    // ========== Helper Methods ==========
+    // ========== 辅助方法 ==========
 
     /**
-     * Creates a tool message from a tool result block.
+     * 从工具结果块创建一条 TOOL 角色的消息。
      *
-     * @param toolResultBlock The tool result or chunk
-     * @return A message with TOOL role containing the result
+     * @param toolResultBlock 工具结果或分片
+     * @return 包含该结果的 TOOL 角色消息
      */
     private Msg createToolMessage(ToolResultBlock toolResultBlock) {
         return Msg.builder()
@@ -137,23 +139,23 @@ class StreamingHook implements Hook {
     }
 
     /**
-     * Emit an event to the sink.
+     * 将事件发送到 sink。
      *
-     * @param type The event type
-     * @param msg The message
-     * @param isLast Whether this is the last/complete message in the stream
+     * @param type 事件类型
+     * @param msg 消息
+     * @param isLast 是否为流中最后/完整的消息
      */
     private void emitEvent(EventType type, Msg msg, boolean isLast) {
         Msg processedMsg = msg;
 
-        // For incremental mode, calculate the diff (if needed in the future)
-        // Currently we directly use the incremental chunk from ReasoningChunkEvent
+        // 对于增量模式,目前直接使用 ReasoningChunkEvent 给出的增量分片
+        // (留作将来计算 diff 之用)
 
-        // Create and emit the event
+        // 构造并发送事件
         Event event = new Event(type, processedMsg, isLast);
         sink.next(event);
 
-        // Update tracking
+        // 更新跟踪:非最终消息保存其内容,最终消息清理跟踪记录
         if (!isLast) {
             previousContent.put(msg.getId(), new ArrayList<>(msg.getContent()));
         } else {

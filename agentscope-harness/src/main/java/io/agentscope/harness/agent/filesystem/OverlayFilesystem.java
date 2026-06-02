@@ -32,23 +32,20 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A layered filesystem that overlays a user-specific "upper" layer on top of a shared "lower"
- * layer, providing copy-on-write semantics.
+ * 分层文件系统，将用户特定的"上层"覆盖在共享的"下层"之上，提供写时复制语义。
  *
- * <p>Read operations check the upper layer first and fall back to the lower layer. Write operations
- * always target the upper layer. This enables per-user customization of shared content (e.g.
- * skills, subagents) without modifying the shared originals.
+ * <p>读操作优先检查上层，然后回退到下层。写操作始终针对上层。
+ * 这实现了共享内容（如技能、子Agent）的按用户定制，而无需修改共享原件。
  *
- * <p>Merge semantics:
+ * <p>合并语义：
  *
  * <ul>
- *   <li>{@code ls} — union of both layers; upper entries take precedence on path collision
- *   <li>{@code read} — upper first, then lower
- *   <li>{@code write}/{@code edit} — always to upper (copy-on-write)
- *   <li>{@code delete} — removes from upper only; shared-layer files cannot be deleted
- *   <li>{@code grep}/{@code glob} — searches both layers; upper results override lower on path
- *       collision
- *   <li>{@code exists} — true if present in either layer
+ *   <li>{@code ls} — 两个层的并集；路径冲突时上层条目优先
+ *   <li>{@code read} — 先上层，后下层
+ *   <li>{@code write}/{@code edit} — 始终写入上层（写时复制）
+ *   <li>{@code delete} — 仅从上层删除；共享层文件不可删除
+ *   <li>{@code grep}/{@code glob} — 搜索两个层；路径冲突时上层结果覆盖下层
+ *   <li>{@code exists} — 任一层存在则返回 true
  * </ul>
  */
 public class OverlayFilesystem implements AbstractFilesystem {
@@ -57,10 +54,10 @@ public class OverlayFilesystem implements AbstractFilesystem {
     private final AbstractFilesystem lower;
 
     /**
-     * Creates an overlay filesystem.
+     * 创建分层文件系统。
      *
-     * @param upper the user-specific layer (read/write); takes precedence on conflicts
-     * @param lower the shared layer (read-only from the overlay's perspective)
+     * @param upper 用户特定层（可读写）；冲突时优先
+     * @param lower 共享层（从分层角度视为只读）
      */
     public OverlayFilesystem(AbstractFilesystem upper, AbstractFilesystem lower) {
         if (upper == null) {

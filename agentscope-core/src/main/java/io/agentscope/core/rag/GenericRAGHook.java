@@ -31,21 +31,20 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 /**
- * Generic RAG Hook for automatic knowledge retrieval before reasoning.
+ * 用于推理前自动知识检索的通用 RAG 钩子。
  *
- * <p>This hook implements the Generic RAG mode, where knowledge is automatically retrieved
- * and injected into the prompt before each reasoning step. Unlike Agentic mode (where agents
- * decide when to retrieve), Generic mode always retrieves relevant knowledge for user queries.
+ * <p>该钩子实现了通用 RAG 模式，其中知识在每个推理步骤前自动检索并注入到提示中。
+ * 与智能体式模式（智能体自行决定何时检索）不同，通用模式始终为用户查询检索相关知识。
  *
- * <p>This hook intercepts {@link PreReasoningEvent} and:
+ * <p>该钩子拦截 {@link PreReasoningEvent} 并执行以下操作：
  * <ol>
- *   <li>Extracts the query from user messages</li>
- *   <li>Retrieves relevant documents from the knowledge base</li>
- *   <li>Injects the retrieved knowledge as a user message</li>
- *   <li>Modifies the input messages to include the knowledge context</li>
+ *   <li>从用户消息中提取查询</li>
+ *   <li>从知识库中检索相关文档</li>
+ *   <li>将检索到的知识作为用户消息注入</li>
+ *   <li>修改输入消息以包含知识上下文</li>
  * </ol>
  *
- * <p>Example usage:
+ * <p>使用示例：
  * <pre>{@code
  * KnowledgeBase knowledgeBase = new SimpleKnowledge(embeddingModel, vectorStore);
  * GenericRAGHook ragHook = new GenericRAGHook(knowledgeBase);
@@ -57,9 +56,9 @@ import reactor.core.publisher.Mono;
  *     .build();
  * }</pre>
  *
- * <p>Configuration options:
+ * <p>配置选项：
  * <ul>
- *   <li>{@code defaultConfig} - Retrieval configuration (limit, score threshold)</li>
+ *   <li>{@code defaultConfig} - 检索配置（限制数、分数阈值）</li>
  * </ul>
  */
 public class GenericRAGHook implements Hook {

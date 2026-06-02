@@ -21,15 +21,14 @@ import io.agentscope.core.hook.PreCallEvent;
 import reactor.core.publisher.Mono;
 
 /**
- * Injects the skill catalog prompt into the unified system message on {@link PreCallEvent} via
- * {@link PreCallEvent#appendSystemContent(String)}.
+ * 在 {@link PreCallEvent} 上通过 {@link PreCallEvent#appendSystemContent(String)}
+ * 将技能目录提示注入到统一的系统消息中。
  *
- * <p>Uses priority {@link #SKILL_HOOK_PRIORITY} so that, in typical {@code HarnessAgent} wiring,
- * this hook runs after {@code SubagentsHook} (80) and before {@code WorkspaceContextHook} (900),
- * yielding append order: base prompt → subagents → skills → workspace context.
+ * <p>使用 {@link #SKILL_HOOK_PRIORITY} 优先级，在典型的 {@code HarnessAgent} 编排中，
+ * 此钩子在 {@code SubagentsHook} (80) 之后、{@code WorkspaceContextHook} (900) 之前运行，
+ * 追加顺序为：基础提示 → 子智能体 → 技能 → 工作空间上下文。
  *
- * <p>The skill prompt is appended to the transient system message and is never stored in
- * the agent's persistent {@code Memory}.
+ * <p>技能提示被追加到临时系统消息中，永远不会存储在智能体的持久化 {@code Memory} 中。
  */
 public class SkillHook implements Hook {
 

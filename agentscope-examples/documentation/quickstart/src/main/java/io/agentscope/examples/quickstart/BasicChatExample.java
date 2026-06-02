@@ -20,6 +20,7 @@ import io.agentscope.core.formatter.dashscope.DashScopeChatFormatter;
 import io.agentscope.core.memory.InMemoryMemory;
 import io.agentscope.core.model.DashScopeChatModel;
 import io.agentscope.core.model.GenerateOptions;
+import io.agentscope.core.model.OllamaChatModel;
 import io.agentscope.core.tool.Toolkit;
 
 /**
@@ -35,7 +36,7 @@ public class BasicChatExample {
                         + "You'll chat with an AI assistant powered by DashScope.");
 
         // Get API key (from environment or interactive input)
-        String apiKey = ExampleUtils.getDashScopeApiKey();
+        // String apiKey = ExampleUtils.getDashScopeApiKey();
 
         // Create Agent with minimal configuration
         ReActAgent agent =
@@ -43,16 +44,9 @@ public class BasicChatExample {
                         .name("Assistant")
                         .sysPrompt("You are a helpful AI assistant. Be friendly and concise.")
                         .model(
-                                DashScopeChatModel.builder()
-                                        .apiKey(apiKey)
-                                        .modelName("qwen-plus")
-                                        .stream(true)
-                                        .enableThinking(true)
-                                        .formatter(new DashScopeChatFormatter())
-                                        .defaultOptions(
-                                                GenerateOptions.builder()
-                                                        .thinkingBudget(1024)
-                                                        .build())
+                                OllamaChatModel.builder()
+                                        .modelName("llama3.2")
+                                        .baseUrl("http://localhost:11434")
                                         .build())
                         .memory(new InMemoryMemory())
                         .toolkit(new Toolkit())

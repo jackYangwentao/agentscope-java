@@ -21,18 +21,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Represents reasoning or thinking content in a message.
+ * 表示消息中的推理或思考内容。
  *
- * <p>This content block is used to capture the internal reasoning process of an agent before
- * taking action. It provides transparency into how the agent arrived at its decisions or tool
- * choices.
+ * <p>该内容块用于捕获智能体在采取行动前的内部推理过程。它提供了智能体如何得出决策或工具选择的
+ * 透明性。
  *
- * <p>Thinking blocks are particularly useful in ReAct agents and other reasoning-intensive systems
- * where understanding the agent's thought process is valuable for debugging and analysis.
+ * <p>思考块在 ReAct 智能体和其他推理密集型系统中特别有用，理解智能体的思维过程对于调试和分析
+ * 非常有价值。
  *
- * <p>The optional metadata field can store additional reasoning information such as OpenRouter's
- * reasoning_details (reasoning.text, reasoning.encrypted, reasoning.summary) that need to be
- * preserved and restored when formatting messages back to the API.
+ * <p>可选的 metadata 字段可以存储额外的推理信息，例如 OpenRouter 的 reasoning_details
+ * （reasoning.text、reasoning.encrypted、reasoning.summary），这些信息在将消息格式化回 API
+ * 时需要保留和恢复。
  */
 public final class ThinkingBlock extends ContentBlock {
 

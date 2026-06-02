@@ -29,22 +29,21 @@ import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
 /**
- * Fanout pipeline implementation for parallel agent execution.
+ * 扇出管道实现，用于并行智能体执行。
  *
- * This pipeline distributes the same input to multiple agents and executes
- * them either concurrently or sequentially, collecting all results.
+ * 该管道将相同的输入分发给多个智能体，并同时或顺序执行它们，收集所有结果。
  *
- * Execution flow:
- * Input -> [Agent1, Agent2, ..., AgentN] -> [Output1, Output2, ..., OutputN]
+ * 执行流程：
+ * 输入 -> [智能体1, 智能体2, ..., 智能体N] -> [输出1, 输出2, ..., 输出N]
  *
- * Features:
- * - Fan-out pattern execution (one input, multiple outputs)
- * - Configurable concurrent vs sequential execution
- * - Input isolation (each agent gets a copy of the input)
- * - Result aggregation into a list
- * - Enhanced error handling with detailed agent failure information
- * - Composite exception collection for multiple agent failures
- * - Individual agent error isolation without affecting others
+ * 特性：
+ * - 扇出模式执行（一个输入，多个输出）
+ * - 可配置的并发或串行执行
+ * - 输入隔离（每个智能体获取输入的副本）
+ * - 结果聚合成列表
+ * - 增强的错误处理，包含详细的智能体失败信息
+ * - 多个智能体失败的复合异常收集
+ * - 单个智能体的错误隔离，不影响其他智能体
  */
 public class FanoutPipeline implements Pipeline<List<Msg>> {
 

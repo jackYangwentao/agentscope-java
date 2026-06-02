@@ -42,21 +42,21 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * Plan notebook for managing complex tasks through structured planning.
+ * 通过结构化计划管理复杂任务的计划笔记本。
  *
- * <p>Provides tool functions for agents to create, manage, and track plans. Automatically injects
- * contextual hints to guide agent execution through a hook-based mechanism.
+ * <p>为智能体提供创建、管理和跟踪计划的工具函数。通过基于钩子的机制自动注入上下文提示，
+ * 引导智能体执行。
  *
- * <p><b>Core Features:</b>
+ * <p><b>核心特性：</b>
  *
  * <ul>
- *   <li><b>Plan Management:</b> Create, revise, and finish plans with multiple subtasks
- *   <li><b>Automatic Hint Injection:</b> Injects contextual hints before each reasoning step
- *   <li><b>State Tracking:</b> Tracks subtask states (todo/in_progress/done/abandoned)
- *   <li><b>Historical Plans:</b> Stores and recovers historical plans
+ *   <li><b>计划管理：</b>创建、修订和完成包含多个子任务的计划</li>
+ *   <li><b>自动提示注入：</b>在每个推理步骤前注入上下文提示</li>
+ *   <li><b>状态跟踪：</b>跟踪子任务状态（todo/in_progress/done/abandoned）</li>
+ *   <li><b>历史计划：</b>存储和恢复历史计划</li>
  * </ul>
  *
- * <p><b>Usage Example:</b>
+ * <p><b>使用示例：</b>
  *
  * <pre>{@code
  * // Create PlanNotebook with custom configuration

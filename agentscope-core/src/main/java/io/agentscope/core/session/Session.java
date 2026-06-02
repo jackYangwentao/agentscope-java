@@ -22,20 +22,19 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Session storage interface for AgentScope.
+ * AgentScope 的会话存储接口。
  *
- * <p>Sessions provide persistent storage for state objects, allowing agents, memories, toolkits,
- * and other stateful components to be saved and restored across application runs or user
- * interactions.
+ * <p>会话为状态对象提供持久化存储，允许智能体、记忆、工具集和其他有状态组件
+ * 在应用运行或用户交互之间进行保存和恢复。
  *
  * <ul>
- *   <li>{@link #save(SessionKey, String, State)} - Save a single state object
- *   <li>{@link #save(SessionKey, String, List)} - Save a list (incremental append)
- *   <li>{@link #get(SessionKey, String, Class)} - Get a single state object
- *   <li>{@link #getList(SessionKey, String, Class)} - Get a list of state objects
+ *   <li>{@link #save(SessionKey, String, State)} - 保存单个状态对象</li>
+ *   <li>{@link #save(SessionKey, String, List)} - 保存列表（增量追加）</li>
+ *   <li>{@link #get(SessionKey, String, Class)} - 获取单个状态对象</li>
+ *   <li>{@link #getList(SessionKey, String, Class)} - 获取状态对象列表</li>
  * </ul>
  *
- * <p>Example usage:
+ * <p>使用示例：
  *
  * <pre>{@code
  * Session session = new JsonSession(Path.of("sessions"));

@@ -20,21 +20,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 /**
- * Represents Base64-encoded media content with media type and data.
+ * 表示带有媒体类型和数据的 Base64 编码媒体内容。
  *
- * <p>This source is used for embedding media files directly in messages
- * by encoding the binary data as Base64 strings. The format follows
- * the standard MIME type convention with Base64 encoding.
+ * <p>此来源用于通过将二进制数据编码为 Base64 字符串，将媒体文件直接嵌入消息中。
+ * 格式遵循标准的 MIME 类型约定与 Base64 编码。
  *
- * <p>Common media types include:
+ * <p>常见媒体类型包括：
  * <ul>
- *   <li>image/jpeg, image/png, image/gif - for images</li>
- *   <li>audio/mpeg, audio/wav, audio/ogg - for audio</li>
- *   <li>video/mp4, video/avi, video/mov - for video</li>
+ *   <li>image/jpeg、image/png、image/gif - 用于图片</li>
+ *   <li>audio/mpeg、audio/wav、audio/ogg - 用于音频</li>
+ *   <li>video/mp4、video/avi、video/mov - 用于视频</li>
  * </ul>
  *
- * <p>This approach is useful when media files need to be included
- * directly in messages rather than referenced by URL.
+ * <p>当媒体文件需要直接包含在消息中而非通过 URL 引用时，此方式非常有用。
  */
 public class Base64Source extends Source {
 

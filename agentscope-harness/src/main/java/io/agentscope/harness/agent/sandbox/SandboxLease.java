@@ -16,25 +16,28 @@
 package io.agentscope.harness.agent.sandbox;
 
 /**
+ * 表示在沙箱隔离槽上持有的执行权的句柄。
  * A handle that represents a held execution right on a sandbox isolation slot.
  *
- * <p>Returned by {@link SandboxExecutionGuard#tryEnter}. The harness closes the lease
- * automatically after {@link SandboxManager#release} completes (whether the call succeeded or
- * failed), so implementations do not need to worry about cleanup ordering.
+ * <p>由 {@link SandboxExecutionGuard#tryEnter} 返回。框架在 {@link SandboxManager#release}
+ * 完成后自动关闭租约（无论调用成功或失败），因此实现无需担心清理顺序。
  *
- * <p>Implementations must be idempotent: calling {@link #close()} more than once must be safe.
+ * <p>实现必须是幂等的：多次调用 {@link #close()} 必须是安全的。
  */
 public interface SandboxLease extends AutoCloseable {
 
     /**
+     * 释放此租约持有的执行权。
      * Releases the execution right held by this lease.
      *
-     * <p>Must not throw. Any release-side error should be logged internally by the implementation.
+     * <p>不得抛出异常。任何释放侧的错误应由实现在内部记录日志。
      */
     @Override
     void close();
 
     /**
+     * 返回一个空操作租约，其 {@link #close()} 不执行任何操作。
+     * 由默认的 {@link SandboxExecutionGuard#noop()} 实现使用。
      * Returns a no-op lease whose {@link #close()} is a no-op. Used by the default
      * {@link SandboxExecutionGuard#noop()} implementation.
      */

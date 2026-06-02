@@ -37,21 +37,17 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 /**
- * <h2>Algorithm</h2>
+ * <h2>算法</h2>
  * <ol>
- *   <li><b>Check trigger</b> — token count or message count exceeds threshold</li>
- *   <li><b>Determine cutoff</b> — find the earliest index that keeps the tail within the
- *       "keep" budget; never split an ASSISTANT tool-call from its TOOL result(s)</li>
- *   <li><b>Memory flush</b> (optional) — extract long-term memories from the prefix via
- *       {@link MemoryFlushManager#flushMemories}</li>
- *   <li><b>Message offload</b> (optional) — persist the full conversation to the session
- *       JSONL via {@link MemoryFlushManager#offloadMessages}</li>
- *   <li><b>Summarize</b> — one LLM call to distill the prefix into a structured summary</li>
- *   <li><b>Rebuild</b> — return {@code [summaryUserMsg] + preservedTail}</li>
+ *   <li><b>检查触发</b> — 令牌数或消息数超过阈值</li>
+ *   <li><b>确定分割点</b> — 找到保留尾部在"保留"预算内的最早索引；永不拆分 ASSISTANT 工具调用和其 TOOL 结果</li>
+ *   <li><b>内存刷新</b>（可选）— 通过 {@link MemoryFlushManager#flushMemories} 从前缀中提取长期记忆</li>
+ *   <li><b>消息卸载</b>（可选）— 将会话的全部对话持久化到会话 JSONL，通过 {@link MemoryFlushManager#offloadMessages}</li>
+ *   <li><b>摘要</b> — 一次 LLM 调用将前缀提炼为结构化摘要</li>
+ *   <li><b>重建</b> — 返回 {@code [summaryUserMsg] + preservedTail}</li>
  * </ol>
  *
- * <p>The caller is responsible for updating both the agent's working memory and the LLM-facing
- * message list (see {@link CompactionHook}).
+ * <p>调用者负责同时更新代理的工作内存和面向 LLM 的消息列表（见 {@link CompactionHook}）。
  */
 public class ConversationCompactor {
 

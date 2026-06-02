@@ -16,8 +16,10 @@
 package io.agentscope.harness.agent.sandbox.impl.e2b.mounts;
 
 /**
+ * E2B 云存储桶挂载配置的占位符。
  * Placeholder for E2B cloud bucket mount configuration.
  */
 public interface E2bCloudBucketMountStrategy {
+    // 故意为空——在从 Harness 工作空间规范连接 E2B 卷挂载时扩展
     // intentionally empty — extend when wiring E2B volume mounts from Harness workspace specs
 }

@@ -40,23 +40,22 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 
 /**
- * HTTP client for DashScope API.
+ * DashScope API 的 HTTP 客户端。
  *
- * <p>This client handles communication with DashScope's text-generation and
- * multimodal-generation APIs using the native DashScope protocol.
+ * <p>该客户端使用原生 DashScope 协议处理与 DashScope 的文本生成和多模态生成 API 的通信。
  *
- * <p>Features:
+ * <p>特性：
  * <ul>
- *   <li>Automatic API endpoint routing based on model name</li>
- *   <li>Synchronous and streaming request support</li>
- *   <li>SSE stream parsing</li>
- *   <li>JSON serialization/deserialization</li>
+ *   <li>基于模型名称的自动 API 端点路由</li>
+ *   <li>同步和流式请求支持</li>
+ *   <li>SSE 流解析</li>
+ *   <li>JSON 序列化/反序列化</li>
  * </ul>
  *
- * <p>API endpoints:
+ * <p>API 端点：
  * <ul>
- *   <li>Text generation: /api/v1/services/aigc/text-generation/generation</li>
- *   <li>Multimodal generation: /api/v1/services/aigc/multimodal-generation/generation</li>
+ *   <li>文本生成：/api/v1/services/aigc/text-generation/generation</li>
+ *   <li>多模态生成：/api/v1/services/aigc/multimodal-generation/generation</li>
  * </ul>
  */
 public class DashScopeHttpClient {

@@ -23,11 +23,11 @@ import com.github.victools.jsonschema.generator.SchemaGeneratorConfigPart;
 import java.util.stream.Stream;
 
 /**
- * A victools JSON Schema {@link Module} that reads {@link ToolParam} annotations
- * to populate {@code "description"} and {@code "required"} in the generated schema.
+ * 一个 victools JSON Schema {@link Module}，用于读取 {@link ToolParam} 注解
+ * 并在生成的 Schema 中填充 {@code "description"} 和 {@code "required"}。
  *
- * <p>By default, un-annotated fields are treated as required. Pass
- * {@link Option#PROPERTY_REQUIRED_FALSE_BY_DEFAULT} to invert this.
+ * <p>默认情况下，未注解的字段被视为必填。传递
+ * {@link Option#PROPERTY_REQUIRED_FALSE_BY_DEFAULT} 可反转此行为。
  *
  * @see ToolParam
  */

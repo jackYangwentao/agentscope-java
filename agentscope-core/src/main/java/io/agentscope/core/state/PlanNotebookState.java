@@ -18,12 +18,11 @@ package io.agentscope.core.state;
 import io.agentscope.core.plan.model.Plan;
 
 /**
- * State record for PlanNotebook.
+ * PlanNotebook 的状态记录。
  *
- * <p>This record captures the current plan state for persistence. It wraps the existing {@link
- * Plan} object which contains the full plan structure including subtasks.
+ * <p>该记录捕获当前计划状态以进行持久化。它包装了包含完整计划结构（包括子任务）的现有 {@link Plan} 对象。
  *
- * <p>Example usage:
+ * <p>使用示例：
  *
  * <pre>{@code
  * Plan currentPlan = planNotebook.getCurrentPlan();
@@ -36,7 +35,7 @@ import io.agentscope.core.plan.model.Plan;
  * Optional<PlanNotebookState> loaded = session.get(sessionKey, "planNotebook_state", PlanNotebookState.class);
  * }</pre>
  *
- * @param currentPlan the current active plan, may be null if no plan is active
+ * @param currentPlan 当前激活的计划，如果没有激活的计划则为 null
  * @see State
  * @see io.agentscope.core.plan.PlanNotebook
  * @see Plan

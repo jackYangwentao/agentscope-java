@@ -19,11 +19,10 @@ import io.agentscope.core.message.Msg;
 import java.util.List;
 
 /**
- * Configuration for document retrieval operations.
+ * 文档检索操作的配置。
  *
- * <p>This class uses the builder pattern to configure retrieval parameters such as
- * the maximum number of results, the minimum similarity score threshold, and optional
- * conversation history for context-aware retrieval.
+ * <p>该类使用构建器模式配置检索参数，例如最大结果数、最低相似度分数阈值，
+ * 以及用于上下文感知检索的可选对话历史。
  */
 public class RetrieveConfig {
 

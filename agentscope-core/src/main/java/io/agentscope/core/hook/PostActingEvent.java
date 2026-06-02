@@ -22,30 +22,23 @@ import io.agentscope.core.message.ToolUseBlock;
 import io.agentscope.core.tool.Toolkit;
 
 /**
- * Event fired after tool execution completes.
+ * 工具执行完成后触发的事件。
  *
- * <p><b>Modifiable:</b> Yes - {@link #setToolResult(ToolResultBlock)}
+ * <p>此事件允许 Hook 在结果返回给 Agent 之前检查或修改工具执行结果。
+ * 适用于结果转换、错误处理或结果记录。
  *
- * <p><b>Context:</b>
- * <ul>
- *   <li>{@link #getAgent()} - The agent instance</li>
- *   <li>{@link #getMemory()} - Agent's memory</li>
- *   <li>{@link #getToolkit()} - The toolkit instance</li>
- *   <li>{@link #getToolUse()} - The original tool call</li>
- *   <li>{@link #getToolResult()} - The tool execution result (modifiable)</li>
- * </ul>
+ * <p><b>可修改:</b> 是(工具结果)
  *
- * <p><b>Note:</b> This is called once per tool execution.
+ * <p>Event fired after tool execution completes.
  *
- * <p><b>Use Cases:</b>
- * <ul>
- *   <li>Post-process individual tool results</li>
- *   <li>Filter or sanitize tool output</li>
- *   <li>Add metadata to results</li>
- *   <li>Handle tool execution errors</li>
- *   <li>Transform result format</li>
- *   <li>Request to stop the agent for human review via {@link #stopAgent()}</li>
- * </ul>
+ * <p>This event allows hooks to inspect or modify the tool execution result
+ * before it is returned to the agent. Useful for result transformation,
+ * error handling, or result logging.
+ *
+ * <p><b>Modifiable:</b> Yes (tool result)
+ *
+ * @see PreActingEvent
+ * @see ActingChunkEvent
  */
 public final class PostActingEvent extends ActingEvent {
 
@@ -54,7 +47,14 @@ public final class PostActingEvent extends ActingEvent {
     private boolean stopRequested = false;
 
     /**
-     * Constructor for PostActingEvent.
+     * PostActingEvent 的构造方法。
+     *
+     * @param agent Agent 实例(不能为 null)
+     * @param toolkit Toolkit 实例(不能为 null)
+     * @param toolUse 原始工具调用(对于空事件可为 null)
+     * @param toolResult 工具执行结果(对于空事件可为 null)
+     *
+     * <p>Constructor for PostActingEvent.
      *
      * @param agent The agent instance (must not be null)
      * @param toolkit The toolkit instance (must not be null)
@@ -68,7 +68,11 @@ public final class PostActingEvent extends ActingEvent {
     }
 
     /**
-     * Get the tool execution result.
+     * 获取工具执行结果。
+     *
+     * @return 工具结果块
+     *
+     * <p>Get the tool execution result.
      *
      * @return The tool result block
      */
@@ -77,7 +81,11 @@ public final class PostActingEvent extends ActingEvent {
     }
 
     /**
-     * Modify the tool execution result.
+     * 修改工具执行结果。
+     *
+     * @param toolResult 新的工具结果
+     *
+     * <p>Modify the tool execution result.
      *
      * @param toolResult The new tool result
      */
@@ -86,7 +94,15 @@ public final class PostActingEvent extends ActingEvent {
     }
 
     /**
-     * Request to stop the agent after this acting phase.
+     * 请求在此执行阶段后停止 Agent。
+     *
+     * <p>调用时,Agent 将返回包含 ToolResultBlock 的当前消息,
+     * 而不是继续执行下一个推理迭代。用户可以审查工具执行结果,
+     * 然后通过调用无参的 {@code agent.call()} 恢复执行。
+     *
+     * <p>这实现了需要用户审查的人机协同场景。
+     *
+     * <p>Request to stop the agent after this acting phase.
      *
      * <p>When called, the agent will return the current message containing the ToolResultBlock
      * instead of continuing to the next reasoning iteration. The user can then review the
@@ -100,7 +116,11 @@ public final class PostActingEvent extends ActingEvent {
     }
 
     /**
-     * Check if a stop has been requested.
+     * 检查是否已请求停止。
+     *
+     * @return 如果已调用 {@link #stopAgent()} 则返回 true,否则返回 false
+     *
+     * <p>Check if a stop has been requested.
      *
      * @return true if {@link #stopAgent()} has been called, false otherwise
      */
@@ -109,7 +129,11 @@ public final class PostActingEvent extends ActingEvent {
     }
 
     /**
-     * Get the tool result message.
+     * 获取工具结果消息。
+     *
+     * @return 工具结果消息
+     *
+     * <p>Get the tool result message.
      *
      * @return The tool result message
      */
@@ -118,7 +142,11 @@ public final class PostActingEvent extends ActingEvent {
     }
 
     /**
-     * Set the tool result message.
+     * 设置工具结果消息。
+     *
+     * @param toolResultMsg 工具结果消息
+     *
+     * <p>Set the tool result message.
      *
      * @param toolResultMsg The tool result message
      */

@@ -22,19 +22,18 @@ import java.util.List;
 import reactor.core.publisher.Mono;
 
 /**
- * Sequential pipeline implementation for agent orchestration.
+ * 串行管道实现，用于智能体编排。
  *
- * This pipeline executes agents in sequence, where each agent's output becomes
- * the input for the next agent.
+ * 该管道按顺序执行智能体，每个智能体的输出成为下一个智能体的输入。
  *
- * Execution flow:
- * Input -> Agent1 -> Agent2 -> ... -> AgentN -> Output
+ * 执行流程：
+ * 输入 -> 智能体1 -> 智能体2 -> ... -> 智能体N -> 输出
  *
- * Features:
- * - Chain pattern execution
- * - State propagation through the pipeline
- * - Error handling and recovery
- * - Support for empty agent lists
+ * 特性：
+ * - 链式模式执行
+ * - 通过管道进行状态传播
+ * - 错误处理和恢复
+ * - 支持空智能体列表
  */
 public class SequentialPipeline implements Pipeline<Msg> {
 

@@ -28,6 +28,11 @@ import java.util.concurrent.ConcurrentMap;
  * Per-call metadata for an agent run: session-scoped fields plus a thread-safe attribute bag and
  * an optional {@link ToolExecutionContext} (tool-POJO / DI layer).
  *
+ * <p>单次 Agent 调用的元数据:会话作用域字段,加上一个线程安全的属性包,
+ * 以及一个可选的 {@link ToolExecutionContext}(工具 POJO / DI 层)。
+ *
+ * <p>属性不会被持久化。在单次 {@code call} 调用期间,Hook 和工具可读写同一个实例。
+ *
  * <p>Attributes are not persisted. Hooks and tools may read and update the same instance for the
  * duration of a single {@code call}.
  */
@@ -40,12 +45,11 @@ public class RuntimeContext {
     private final Session session;
     private final SessionKey sessionKey;
 
-    /** String-keyed extras (legacy and generic extension). */
+    /** 以 String 为键的扩展属性(遗留及通用扩展用途)。 */
     private final ConcurrentMap<String, Object> stringAttributes;
 
     /**
-     * Typed layer: class -&gt; (key -&gt; value). For singleton-typed access, use {@link
-     * #TYPED_DEFAULT_KEY}.
+     * 类型化层:class -&gt; (key -&gt; value)。单例类型访问请使用 {@link #TYPED_DEFAULT_KEY}。
      */
     private final ConcurrentMap<Class<?>, ConcurrentMap<String, Object>> typedAttributes;
 
@@ -73,37 +77,46 @@ public class RuntimeContext {
     }
 
     /**
-     * Shallow, mutable empty context (null session fields, empty attribute maps, no tool context).
+     * 构造一个浅层、可变的空 Context(session 字段为 null,属性 map 为空,无工具 Context)。
      */
     public static RuntimeContext empty() {
         return new Builder().build();
     }
 
+    /** @return 会话 ID */
     public String getSessionId() {
         return sessionId;
     }
 
+    /** @return 用户 ID */
     public String getUserId() {
         return userId;
     }
 
+    /** @return 关联的 {@link Session} */
     public Session getSession() {
         return session;
     }
 
+    /** @return 关联的 {@link SessionKey} */
     public SessionKey getSessionKey() {
         return sessionKey;
     }
 
     /**
-     * Returns the tool execution context provided at build time, if any.
+     * 返回构建时提供的工具执行 Context(若有)。
      *
-     * <p>Does not include runtime attribute projections; use {@link #asToolExecutionContext()}.
+     * <p>不包含运行时属性映射,请使用 {@link #asToolExecutionContext()}。
      */
     public ToolExecutionContext getToolExecutionContext() {
         return toolExecutionContext;
     }
 
+    /**
+     * 按 String 键获取属性。
+     *
+     * @param key 键名,null 时返回 null
+     */
     @SuppressWarnings("unchecked")
     public <T> T get(String key) {
         if (key == null) {
@@ -112,6 +125,9 @@ public class RuntimeContext {
         return (T) stringAttributes.get(key);
     }
 
+    /**
+     * 按 String 键写入属性。value 为 null 时等价于移除该键。
+     */
     public void put(String key, Object value) {
         if (key == null) {
             return;
@@ -123,6 +139,9 @@ public class RuntimeContext {
         }
     }
 
+    /**
+     * 按类型(单例)获取属性。
+     */
     @SuppressWarnings("unchecked")
     public <T> T get(Class<T> type) {
         if (type == null) {
@@ -139,6 +158,9 @@ public class RuntimeContext {
         return null;
     }
 
+    /**
+     * 按类型(单例)写入属性。value 为 null 时移除该类型。
+     */
     public <T> void put(Class<T> type, T value) {
         if (type == null) {
             return;
@@ -150,6 +172,9 @@ public class RuntimeContext {
         }
     }
 
+    /**
+     * 按 String 键 + 类型获取属性。
+     */
     @SuppressWarnings("unchecked")
     public <T> T get(String key, Class<T> type) {
         if (key == null || type == null) {
@@ -165,6 +190,9 @@ public class RuntimeContext {
         return null;
     }
 
+    /**
+     * 按 String 键 + 类型写入属性。value 为 null 时移除。
+     */
     public <T> void put(String key, Class<T> type, T value) {
         if (key == null || type == null) {
             return;
@@ -177,9 +205,9 @@ public class RuntimeContext {
     }
 
     /**
-     * View of string-keyed attributes; mutating the returned map affects this context.
+     * 获取 String 键扩展属性的视图(可变),修改返回值会影响本 Context。
      *
-     * <p>Typed {@link #get(Class)} values are not included; use type-based accessors.
+     * <p>不包含类型化 {@link #get(Class)} 值,类型化访问请使用类型化 API。
      */
     public Map<String, Object> getExtra() {
         return stringAttributes;
@@ -213,11 +241,11 @@ public class RuntimeContext {
     }
 
     /**
-     * Merges this context's data into a {@link ToolExecutionContext} for tool invocations.
+     * 将本 Context 的数据合并到 {@link ToolExecutionContext} 以供工具调用使用。
      *
-     * <p>Order: this instance is registered and exposed first (highest priority in {@link
-     * ToolExecutionContext#merge}, then a {@link ContextStore} for typed and string attributes,
-     * then stores from the nested {@link #getToolExecutionContext()} (if any).
+     * <p>顺序:本实例优先注册并暴露(在 {@link ToolExecutionContext#merge} 中优先级最高),
+     * 然后是承载类型化和 String 属性的 {@link ContextStore},
+     * 最后是嵌套的 {@link #getToolExecutionContext()}(若有)中的 store。
      */
     public ToolExecutionContext asToolExecutionContext() {
         ToolExecutionContext.Builder b = ToolExecutionContext.builder();
@@ -245,26 +273,33 @@ public class RuntimeContext {
         private final Map<Class<?>, Object> typedSingletons = new HashMap<>();
         private ToolExecutionContext toolExecutionContext;
 
+        /** @param sessionId 会话 ID */
         public Builder sessionId(String sessionId) {
             this.sessionId = sessionId;
             return this;
         }
 
+        /** @param userId 用户 ID */
         public Builder userId(String userId) {
             this.userId = userId;
             return this;
         }
 
+        /** @param session 关联的 {@link Session} */
         public Builder session(Session session) {
             this.session = session;
             return this;
         }
 
+        /** @param sessionKey 关联的 {@link SessionKey} */
         public Builder sessionKey(SessionKey sessionKey) {
             this.sessionKey = sessionKey;
             return this;
         }
 
+        /**
+         * 在 Builder 阶段预置一个 String 键扩展属性(用于 {@link #getExtra()})。
+         */
         public Builder put(String key, Object value) {
             if (this.stringExtras == null) {
                 this.stringExtras = new ConcurrentHashMap<>();
@@ -273,6 +308,9 @@ public class RuntimeContext {
             return this;
         }
 
+        /**
+         * 批量预置 String 键扩展属性。
+         */
         public Builder putAll(Map<String, Object> extras) {
             if (extras == null || extras.isEmpty()) {
                 return this;
@@ -284,6 +322,9 @@ public class RuntimeContext {
             return this;
         }
 
+        /**
+         * 在 Builder 阶段预置一个类型化单例属性。
+         */
         public <T> Builder put(Class<T> type, T value) {
             if (type != null) {
                 this.typedSingletons.put(type, value);
@@ -292,8 +333,8 @@ public class RuntimeContext {
         }
 
         /**
-         * Nests a {@link ToolExecutionContext} (e.g. agent builder-level tool DI) that will be
-         * visible at lower priority than runtime attributes in {@link #asToolExecutionContext()}.
+         * 嵌套一个 {@link ToolExecutionContext}(例如 Agent Builder 级别的工具 DI),
+         * 在 {@link #asToolExecutionContext()} 中其优先级低于运行时属性。
          */
         public Builder toolExecutionContext(ToolExecutionContext toolExecutionContext) {
             this.toolExecutionContext = toolExecutionContext;
@@ -306,8 +347,8 @@ public class RuntimeContext {
     }
 
     /**
-     * Merged view of this {@link RuntimeContext} for the tool stack: first checks typed, then
-     * string map for legacy {@link #get(String)} keys, then defers to delegate stores.
+     * 工具栈使用的本 {@link RuntimeContext} 合并视图:先查类型化,再查 String 键(遗留的
+     * {@link #get(String)} 键),最后委托给被委派的 store。
      */
     private static final class DefaultMutableContextStore implements ContextStore {
 

@@ -22,12 +22,12 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 /**
- * Evaluates whether a session is still "fresh" or should be reset.
+ * 评估会话是否仍然"新鲜"或应重置。
  *
- * <p>Inspired by agentscope-claw's SessionFreshnessEvaluator. Supports two reset policies:
+ * <p>灵感来自 agentscope-claw 的 SessionFreshnessEvaluator。支持两种重置策略：
  * <ul>
- *   <li><b>Daily reset:</b> Session resets after a configured hour each day</li>
- *   <li><b>Idle timeout:</b> Session resets after inactivity exceeding a threshold</li>
+ *   <li><b>每日重置：</b>会话在每天配置的小时后重置</li>
+ *   <li><b>空闲超时：</b>会话在超过阈值的不活动时间后重置</li>
  * </ul>
  */
 public class SessionFreshnessEvaluator {

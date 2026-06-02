@@ -29,13 +29,20 @@ import java.util.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** {@link io.agentscope.harness.agent.sandbox.Sandbox} backed by Daytona cloud sandboxes. */
+/**
+ * 基于 Daytona 云沙箱的 {@link io.agentscope.harness.agent.sandbox.Sandbox} 实现。
+ * <p>
+ * {@link io.agentscope.harness.agent.sandbox.Sandbox} backed by Daytona cloud sandboxes.
+ */
 public class DaytonaSandbox extends AbstractBaseSandbox {
 
     private static final Logger log = LoggerFactory.getLogger(DaytonaSandbox.class);
 
+    /** 输出截断阈值：512 KB */
     private static final int OUTPUT_TRUNCATE_BYTES = 512 * 1024;
+    /** tar 操作的超时时间：300 秒 */
     private static final int TAR_TIMEOUT_SECONDS = 300;
+    /** Base64 编码的分块大小：4000 字符 */
     private static final int B64_CHUNK = 4000;
 
     private final DaytonaSandboxState daytonaState;
@@ -47,6 +54,11 @@ public class DaytonaSandbox extends AbstractBaseSandbox {
         this.http = http;
     }
 
+    /**
+     * 启动沙箱，检查绑定挂载并确保沙箱实例就绪。
+     * <p>
+     * Start the sandbox, checking bind mounts and ensuring the sandbox instance is ready.
+     */
     @Override
     public void start() throws Exception {
         if (WorkspaceMountSupport.hasBindMounts(daytonaState.getWorkspaceSpec())) {
@@ -58,6 +70,11 @@ public class DaytonaSandbox extends AbstractBaseSandbox {
         super.start();
     }
 
+    /**
+     * 关闭沙箱，释放受管的沙箱资源。
+     * <p>
+     * Shutdown the sandbox, releasing owned sandbox resources.
+     */
     @Override
     public void shutdown() throws Exception {
         if (!daytonaState.isSandboxOwned()) {
@@ -69,6 +86,11 @@ public class DaytonaSandbox extends AbstractBaseSandbox {
         }
     }
 
+    /**
+     * 在沙箱中执行命令并返回执行结果。
+     * <p>
+     * Execute a command in the sandbox and return the execution result.
+     */
     @Override
     protected ExecResult doExec(RuntimeContext runtimeContext, String command, int timeoutSeconds)
             throws Exception {
@@ -91,6 +113,11 @@ public class DaytonaSandbox extends AbstractBaseSandbox {
         return r;
     }
 
+    /**
+     * 将工作区打包为 tar 归档流（通过 base64 编码通道）。
+     * <p>
+     * Package the workspace into a tar archive stream (via base64 encoding channel).
+     */
     @Override
     protected InputStream doPersistWorkspace() throws Exception {
         String root = daytonaState.getWorkspaceRoot();
@@ -109,6 +136,11 @@ public class DaytonaSandbox extends AbstractBaseSandbox {
         return new ByteArrayInputStream(raw);
     }
 
+    /**
+     * 将 tar 归档流恢复到工作区（通过 base64 分块写入 + Python 辅助）。
+     * <p>
+     * Restore a tar archive stream to the workspace (via base64 chunked write + Python helpers).
+     */
     @Override
     protected void doHydrateWorkspace(InputStream archive) throws Exception {
         String root = daytonaState.getWorkspaceRoot();
@@ -154,11 +186,21 @@ public class DaytonaSandbox extends AbstractBaseSandbox {
         }
     }
 
+    /**
+     * 创建工作区根目录。
+     * <p>
+     * Create the workspace root directory.
+     */
     @Override
     protected void doSetupWorkspace() throws Exception {
         exec(null, "mkdir -p " + shellSingleQuote(daytonaState.getWorkspaceRoot()), 30);
     }
 
+    /**
+     * 销毁工作区，清理文件（尽力而为）。
+     * <p>
+     * Destroy the workspace, cleaning up files (best-effort).
+     */
     @Override
     protected void doDestroyWorkspace() throws Exception {
         try {
@@ -168,11 +210,22 @@ public class DaytonaSandbox extends AbstractBaseSandbox {
         }
     }
 
+    /**
+     * 获取工作区根路径。
+     * <p>
+     * Get the workspace root path.
+     */
     @Override
     protected String getWorkspaceRoot() {
         return daytonaState.getWorkspaceRoot();
     }
 
+    /**
+     * 确保沙箱实例已创建并处于运行状态；如果现有实例不可用则重建。
+     * <p>
+     * Ensure the sandbox instance is created and running; rebuild if the existing instance is
+     * unavailable.
+     */
     private void ensureSandbox() throws Exception {
         if (daytonaState.getSandboxId() == null || daytonaState.getSandboxId().isBlank()) {
             String id = http.createSandbox();
@@ -195,6 +248,11 @@ public class DaytonaSandbox extends AbstractBaseSandbox {
         http.waitUntilStarted(daytonaState.getSandboxId(), 120);
     }
 
+    /**
+     * 将绝对路径转为相对路径（去除开头的 "/"）。
+     * <p>
+     * Convert an absolute path to a relative path (strip leading "/").
+     */
     private static String relativeCwd(String abs) {
         if (abs == null || abs.isBlank()) {
             return "";
@@ -202,6 +260,11 @@ public class DaytonaSandbox extends AbstractBaseSandbox {
         return abs.startsWith("/") ? abs.substring(1) : abs;
     }
 
+    /**
+     * 使用 shell 单引号转义字符串。
+     * <p>
+     * Escape a string with shell single quotes.
+     */
     private static String shellSingleQuote(String s) {
         return "'" + s.replace("'", "'\"'\"'") + "'";
     }

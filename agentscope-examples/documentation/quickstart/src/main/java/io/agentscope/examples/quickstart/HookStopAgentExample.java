@@ -27,6 +27,7 @@ import io.agentscope.core.message.TextBlock;
 import io.agentscope.core.message.ToolResultBlock;
 import io.agentscope.core.message.ToolUseBlock;
 import io.agentscope.core.model.DashScopeChatModel;
+import io.agentscope.core.model.OllamaChatModel;
 import io.agentscope.core.tool.Tool;
 import io.agentscope.core.tool.ToolParam;
 import io.agentscope.core.tool.Toolkit;
@@ -59,7 +60,7 @@ public class HookStopAgentExample {
                         + "allowing you to review and confirm the tool calls.");
 
         // Get API key
-        String apiKey = ExampleUtils.getDashScopeApiKey();
+        // String apiKey = ExampleUtils.getDashScopeApiKey();
 
         // Create toolkit with sensitive tools
         Toolkit toolkit = new Toolkit();
@@ -82,11 +83,9 @@ public class HookStopAgentExample {
                                     + " Always use the appropriate tool when asked to delete files"
                                     + " or send emails.")
                         .model(
-                                DashScopeChatModel.builder()
-                                        .apiKey(apiKey)
-                                        .modelName("qwen-plus")
-                                        .stream(true)
-                                        .formatter(new DashScopeChatFormatter())
+                                OllamaChatModel.builder()
+                                        .modelName("llama3.2")
+                                        .baseUrl("http://localhost:11434")
                                         .build())
                         .toolkit(toolkit)
                         .memory(new InMemoryMemory())

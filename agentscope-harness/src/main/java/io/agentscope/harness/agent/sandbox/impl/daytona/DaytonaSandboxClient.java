@@ -27,7 +27,11 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** {@link SandboxClient} for Daytona. */
+/**
+ * Daytona 的 {@link SandboxClient} 实现。
+ * <p>
+ * {@link SandboxClient} for Daytona.
+ */
 public class DaytonaSandboxClient implements SandboxClient<DaytonaSandboxClientOptions> {
 
     private static final Logger log = LoggerFactory.getLogger(DaytonaSandboxClient.class);
@@ -39,6 +43,11 @@ public class DaytonaSandboxClient implements SandboxClient<DaytonaSandboxClientO
         this(new DaytonaSandboxClientOptions(), null);
     }
 
+    /**
+     * 使用自定义默认选项和 ObjectMapper 构造客户端。
+     * <p>
+     * Construct the client with custom default options and ObjectMapper.
+     */
     public DaytonaSandboxClient(
             DaytonaSandboxClientOptions defaultOptions, ObjectMapper objectMapper) {
         this.defaultOptions =
@@ -52,6 +61,11 @@ public class DaytonaSandboxClient implements SandboxClient<DaytonaSandboxClientO
                                 .registerModule(new DaytonaHarnessSandboxJacksonModule());
     }
 
+    /**
+     * 创建新的 Daytona 沙箱实例。
+     * <p>
+     * Create a new Daytona sandbox instance.
+     */
     @Override
     public Sandbox create(
             WorkspaceSpec workspaceSpec,
@@ -77,6 +91,11 @@ public class DaytonaSandboxClient implements SandboxClient<DaytonaSandboxClientO
         return new DaytonaSandbox(state, new DaytonaHttp(merged));
     }
 
+    /**
+     * 从之前的状态恢复沙箱会话。
+     * <p>
+     * Resume a sandbox session from a prior state.
+     */
     @Override
     public Sandbox resume(SandboxState state) {
         if (!(state instanceof DaytonaSandboxState d)) {
@@ -89,6 +108,11 @@ public class DaytonaSandboxClient implements SandboxClient<DaytonaSandboxClientO
     @Override
     public void delete(Sandbox sandbox) {}
 
+    /**
+     * 将沙箱状态序列化为 JSON 字符串。
+     * <p>
+     * Serialize the sandbox state to a JSON string.
+     */
     @Override
     public String serializeState(SandboxState state) {
         try {
@@ -99,6 +123,11 @@ public class DaytonaSandboxClient implements SandboxClient<DaytonaSandboxClientO
         }
     }
 
+    /**
+     * 从 JSON 字符串反序列化沙箱状态。
+     * <p>
+     * Deserialize the sandbox state from a JSON string.
+     */
     @Override
     public SandboxState deserializeState(String json) {
         try {
@@ -109,6 +138,11 @@ public class DaytonaSandboxClient implements SandboxClient<DaytonaSandboxClientO
         }
     }
 
+    /**
+     * 将默认选项与调用时指定的选项合并（调用方选项优先）。
+     * <p>
+     * Merge default options with call-site options (call-site takes precedence).
+     */
     private DaytonaSandboxClientOptions merge(DaytonaSandboxClientOptions call) {
         DaytonaSandboxClientOptions o = copy(defaultOptions);
         if (call == null) {
@@ -150,6 +184,11 @@ public class DaytonaSandboxClient implements SandboxClient<DaytonaSandboxClientO
         return o;
     }
 
+    /**
+     * 深拷贝一个 DaytonaSandboxClientOptions 实例。
+     * <p>
+     * Deep copy a DaytonaSandboxClientOptions instance.
+     */
     private static DaytonaSandboxClientOptions copy(DaytonaSandboxClientOptions src) {
         DaytonaSandboxClientOptions o = new DaytonaSandboxClientOptions();
         o.setApiKey(src.getApiKey());

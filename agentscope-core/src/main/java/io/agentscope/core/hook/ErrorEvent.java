@@ -19,31 +19,33 @@ import io.agentscope.core.agent.Agent;
 import java.util.Objects;
 
 /**
- * Event fired when an error occurs during agent execution.
+ * Agent 执行过程中发生错误时触发的事件。
  *
- * <p><b>Modifiable:</b> No (notification-only)
+ * <p>此事件为通知型(只读) — 允许 Hook 记录错误或将错误上报到监控系统。
+ * Hook 无法通过此事件修改或吞没错误。
  *
- * <p><b>Context:</b>
- * <ul>
- *   <li>{@link #getAgent()} - The agent instance</li>
- *   <li>{@link #getMemory()} - Agent's memory</li>
- *   <li>{@link #getError()} - The error that occurred</li>
- * </ul>
+ * <p><b>不可修改:</b> 通知型事件
  *
- * <p><b>Use Cases:</b>
- * <ul>
- *   <li>Log errors with context</li>
- *   <li>Send error notifications</li>
- *   <li>Collect error metrics</li>
- *   <li>Implement custom error handling</li>
- * </ul>
+ * <p>Event fired when an error occurs during agent execution.
+ *
+ * <p>This is a notification-only (read-only) event — hooks can log the error
+ * or report it to monitoring systems. Hooks cannot modify or swallow the error
+ * through this event.
+ *
+ * <p><b>Not Modifiable:</b> Notification event
  */
 public final class ErrorEvent extends HookEvent {
 
     private final Throwable error;
 
     /**
-     * Constructor for ErrorEvent.
+     * ErrorEvent 的构造方法。
+     *
+     * @param agent Agent 实例(不能为 null)
+     * @param error 发生的错误(不能为 null)
+     * @throws NullPointerException 如果 agent 或 error 为 null
+     *
+     * <p>Constructor for ErrorEvent.
      *
      * @param agent The agent instance (must not be null)
      * @param error The error that occurred (must not be null)
@@ -55,7 +57,11 @@ public final class ErrorEvent extends HookEvent {
     }
 
     /**
-     * Get the error that occurred.
+     * 获取发生的错误。
+     *
+     * @return 抛出的异常
+     *
+     * <p>Get the error that occurred.
      *
      * @return The error
      */

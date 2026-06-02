@@ -28,7 +28,18 @@ import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Schedulers;
 
 /**
- * Hook for real-time Text-to-Speech synthesis during agent execution.
+ * Agent 执行期间实时文本转语音合成的 Hook。
+ *
+ * <p>此 Hook 通过监听流式推理事件并实时合成语音,
+ * 实现了"边生成边朗读"功能。
+ *
+ * <p><b>两种使用模式:</b>
+ * <ul>
+ *   <li><b>本地播放(CLI/桌面):</b> 使用 audioPlayer 直接播放</li>
+ *   <li><b>服务端模式(Web/SSE):</b> 使用 audioCallback 将音频返回给前端</li>
+ * </ul>
+ *
+ * <p>Hook for real-time Text-to-Speech synthesis during agent execution.
  *
  * <p>This hook implements "speak as you generate" by listening to streaming
  * reasoning events and synthesizing speech in real-time.
@@ -38,38 +49,6 @@ import reactor.core.scheduler.Schedulers;
  *   <li><b>Local Playback (CLI/Desktop):</b> Use audioPlayer for direct playback</li>
  *   <li><b>Server Mode (Web/SSE):</b> Use audioCallback to return audio to frontend</li>
  * </ul>
- *
- * <p><b>Example 1: Local Playback (CLI/Testing)</b>
- * <pre>{@code
- * AudioPlayer player = AudioPlayer.builder().sampleRate(24000).build();
- *
- * TTSHook ttsHook = TTSHook.builder()
- *     .ttsModel(ttsModel)
- *     .audioPlayer(player)  // Local playback
- *     .build();
- * }</pre>
- *
- * <p><b>Example 2: Server Mode (Return to Frontend via SSE)</b>
- * <pre>{@code
- * TTSHook ttsHook = TTSHook.builder()
- *     .ttsModel(ttsModel)
- *     .audioCallback(audio -> {
- *         // Send via SSE/WebSocket to frontend
- *         sseEmitter.send(audio);
- *     })
- *     .build();
- * }</pre>
- *
- * <p><b>Example 3: Get Audio Stream (Reactive)</b>
- * <pre>{@code
- * TTSHook ttsHook = TTSHook.builder()
- *     .ttsModel(ttsModel)
- *     .build();
- *
- * // Subscribe to audio stream
- * ttsHook.getAudioStream()
- *     .subscribe(audio -> sendToClient(audio));
- * }</pre>
  */
 public class TTSHook implements Hook {
 
@@ -81,6 +60,8 @@ public class TTSHook implements Hook {
     private final boolean realtimeMode;
     private final Consumer<AudioBlock> audioCallback;
 
+    // 用于外部消费者的响应式音频流(如 SSE/WebSocket 到前端)
+    // 当新的推理开始时,此 sink 不会被中断 — 前端控制播放
     // Reactive audio stream for external consumers (e.g., SSE/WebSocket to frontend)
     // This sink is NOT interrupted when new reasoning starts - frontend controls playback
     private final Sinks.Many<AudioBlock> audioSink =
@@ -98,17 +79,16 @@ public class TTSHook implements Hook {
     }
 
     /**
-     * Gets the reactive audio stream.
+     * 获取响应式音频流。
+     *
+     * <p>使用此流订阅音频块的生成。适用于 SSE/WebSocket 向前端推送。
+     *
+     * @return 音频生成时发出的 AudioBlock Flux
+     *
+     * <p>Gets the reactive audio stream.
      *
      * <p>Use this to subscribe to audio blocks as they are generated.
      * This is useful for SSE/WebSocket streaming to frontend.
-     *
-     * <p>Example:
-     * <pre>{@code
-     * ttsHook.getAudioStream()
-     *     .map(audio -> ((Base64Source) audio.getSource()).getData())
-     *     .subscribe(base64 -> sseEmitter.send(base64));
-     * }</pre>
      *
      * @return Flux of AudioBlock that emits audio as it's synthesized
      */
@@ -126,7 +106,9 @@ public class TTSHook implements Hook {
     }
 
     /**
-     * Handle real-time mode: synthesize on each chunk.
+     * 处理实时模式:在每个块上合成语音。
+     *
+     * <p>Handle real-time mode: synthesize on each chunk.
      */
     private <T extends HookEvent> Mono<T> handleRealtimeMode(T event) {
         if (event instanceof PreReasoningEvent) {
@@ -171,7 +153,9 @@ public class TTSHook implements Hook {
     }
 
     /**
-     * Handle batch mode: wait for complete response then synthesize.
+     * 处理批量模式:等待完整响应后再合成。
+     *
+     * <p>Handle batch mode: wait for complete response then synthesize.
      */
     private <T extends HookEvent> Mono<T> handleBatchMode(T event) {
         if (event instanceof PreReasoningEvent) {
@@ -197,7 +181,9 @@ public class TTSHook implements Hook {
     }
 
     /**
-     * Emit audio to all consumers (player, callback, stream).
+     * 向所有消费者(播放器、回调、流)发送音频。
+     *
+     * <p>Emit audio to all consumers (player, callback, stream).
      */
     private void emitAudio(AudioBlock audio) {
         // 1. Emit to reactive stream (for SSE/WebSocket consumers)
@@ -226,7 +212,9 @@ public class TTSHook implements Hook {
     }
 
     /**
-     * Ensure audio player is started.
+     * 确保音频播放器已启动。
+     *
+     * <p>Ensure audio player is started.
      */
     private void ensurePlayerStarted() {
         if (audioPlayer != null && autoStartPlayer && !playerStarted) {
@@ -236,20 +224,27 @@ public class TTSHook implements Hook {
     }
 
     /**
-     * Interrupts current playback when a new reasoning starts.
+     * 当新的推理开始时中断当前播放。
+     *
+     * <p>此方法:
+     * <ul>
+     *   <li>中断本地 AudioPlayer — 清空队列并停止当前播放
+     *       (即使 TTS 会话已结束,AudioPlayer 可能仍在播放)</li>
+     *   <li>如果 TTS 会话活跃则关闭 — 停止从 WebSocket 接收新音频</li>
+     *   <li>不中断 audioSink — 前端流继续,允许前端独立控制播放</li>
+     * </ul>
+     *
+     * <p>注意:audioSink(用于前端/SSE 消费者)不会被中断,
+     * 因为前端应用可以自行控制音频播放。只有本地播放被中断。
+     *
+     * <p>Interrupts current playback when a new reasoning starts.
      *
      * <p>This method:
      * <ul>
-     *   <li>Interrupts local AudioPlayer - clears queue and stops current playback
-     *       (even if TTS session has already ended, AudioPlayer may still be playing)</li>
-     *   <li>Closes current TTS session if active - stops receiving new audio from WebSocket</li>
-     *   <li>Does NOT interrupt audioSink - frontend stream continues, allowing frontend to
-     *       control playback independently</li>
+     *   <li>Interrupts local AudioPlayer - clears queue and stops current playback</li>
+     *   <li>Closes current TTS session if active</li>
+     *   <li>Does NOT interrupt audioSink - frontend stream continues</li>
      * </ul>
-     *
-     * <p>Note: The audioSink (for frontend/SSE consumers) is not interrupted because
-     * frontend applications can control audio playback themselves. Only local playback
-     * is interrupted.
      */
     private void interruptCurrentPlayback() {
         // Always interrupt AudioPlayer if it's started, even if TTS session has ended
@@ -274,11 +269,14 @@ public class TTSHook implements Hook {
     }
 
     /**
-     * Drain the audio player asynchronously.
+     * 异步排空音频播放器。
+     *
+     * <p>确保音频完整播放而不阻塞调用方。排空操作在单独的线程中运行,
+     * 使 Agent 在合成完成后能立即返回。
+     *
+     * <p>Drain the audio player asynchronously.
      *
      * <p>This ensures audio plays completely without blocking the caller.
-     * The drain operation runs in a separate thread, allowing the agent
-     * to return immediately after synthesis completes.
      */
     private void drainPlayerAsync() {
         if (audioPlayer != null) {
@@ -289,7 +287,9 @@ public class TTSHook implements Hook {
     }
 
     /**
-     * Synthesize complete text and emit (for batch mode).
+     * 合成完整文本并发送(批量模式)。
+     *
+     * <p>Synthesize complete text and emit (for batch mode).
      */
     private void synthesizeAndEmit(String text) {
         if (text == null || text.isEmpty()) {
@@ -307,7 +307,9 @@ public class TTSHook implements Hook {
     }
 
     /**
-     * Stop the audio player and clean up resources.
+     * 停止音频播放器并清理资源。
+     *
+     * <p>Stop the audio player and clean up resources.
      */
     public void stop() {
         // Close TTS WebSocket connection
@@ -327,7 +329,11 @@ public class TTSHook implements Hook {
     }
 
     /**
-     * Creates a new builder for TTSHook.
+     * 创建 TTSHook 的新 Builder。
+     *
+     * @return 新的 Builder 实例
+     *
+     * <p>Creates a new builder for TTSHook.
      *
      * @return a new Builder instance
      */
@@ -336,7 +342,9 @@ public class TTSHook implements Hook {
     }
 
     /**
-     * Builder for constructing TTSHook instances.
+     * 用于构建 TTSHook 实例的 Builder。
+     *
+     * <p>Builder for constructing TTSHook instances.
      */
     public static class Builder {
         private DashScopeRealtimeTTSModel ttsModel;
@@ -346,7 +354,12 @@ public class TTSHook implements Hook {
         private Consumer<AudioBlock> audioCallback;
 
         /**
-         * Sets the TTS model for speech synthesis. (Required)
+         * 设置用于语音合成的 TTS 模型。(必需)
+         *
+         * @param ttsModel 实时 TTS 模型
+         * @return 此 Builder
+         *
+         * <p>Sets the TTS model for speech synthesis. (Required)
          *
          * @param ttsModel the realtime TTS model
          * @return this builder
@@ -357,7 +370,20 @@ public class TTSHook implements Hook {
         }
 
         /**
-         * Sets the audio player for local playback. (Optional)
+         * 设置用于本地播放的音频播放器。(可选)
+         *
+         * <p>如果未设置:
+         * <ul>
+         *   <li>如果 audioCallback 也未设置:将自动创建默认的 AudioPlayer
+         *       (24000 Hz 采样率,单声道,16 位 PCM)用于本地播放。</li>
+         *   <li>如果设置了 audioCallback:音频将只能通过 audioCallback
+         *       或 getAudioStream() 获取,适合服务端使用。</li>
+         * </ul>
+         *
+         * @param audioPlayer 音频播放器,或 null 以使用默认或服务端模式
+         * @return 此 Builder
+         *
+         * <p>Sets the audio player for local playback. (Optional)
          *
          * <p>If not set:
          * <ul>
@@ -376,7 +402,12 @@ public class TTSHook implements Hook {
         }
 
         /**
-         * Sets whether to auto-start the audio player.
+         * 设置是否自动启动音频播放器。
+         *
+         * @param autoStartPlayer true 为自动启动(默认: true)
+         * @return 此 Builder
+         *
+         * <p>Sets whether to auto-start the audio player.
          *
          * @param autoStartPlayer true to auto-start (default: true)
          * @return this builder
@@ -387,7 +418,15 @@ public class TTSHook implements Hook {
         }
 
         /**
-         * Sets whether to use real-time mode.
+         * 设置是否使用实时模式。
+         *
+         * <p>为 true(默认)时,TTS 在 LLM 生成每个文本块时触发。
+         * 为 false 时,TTS 等待完整响应后再合成。
+         *
+         * @param realtimeMode true 为实时"边生成边朗读"(默认)
+         * @return 此 Builder
+         *
+         * <p>Sets whether to use real-time mode.
          *
          * <p>When true (default), TTS is triggered on each text chunk as LLM generates.
          * When false, TTS waits for complete response before synthesis.
@@ -401,20 +440,18 @@ public class TTSHook implements Hook {
         }
 
         /**
-         * Sets a callback for receiving audio blocks. (Optional)
+         * 设置用于接收音频块的回调。(可选)
+         *
+         * <p>这是服务端处理音频的推荐方式。
+         * 回调在合成出每个音频块时被调用。
+         *
+         * @param audioCallback 接收音频块的回调
+         * @return 此 Builder
+         *
+         * <p>Sets a callback for receiving audio blocks. (Optional)
          *
          * <p>This is the recommended way for server-side usage to handle audio.
          * The callback is invoked for each audio block as it's synthesized.
-         *
-         * <p>Example for SSE:
-         * <pre>{@code
-         * .audioCallback(audio -> {
-         *     Base64Source src = (Base64Source) audio.getSource();
-         *     sseEmitter.send(SseEmitter.event()
-         *         .name("audio")
-         *         .data(src.getData()));
-         * })
-         * }</pre>
          *
          * @param audioCallback callback to receive audio blocks
          * @return this builder
@@ -425,7 +462,15 @@ public class TTSHook implements Hook {
         }
 
         /**
-         * Builds the TTSHook instance.
+         * 构建 TTSHook 实例。
+         *
+         * <p>如果既未提供 audioPlayer 也未提供 audioCallback,
+         * 将自动创建默认的 AudioPlayer 用于本地播放(24000 Hz 采样率)。
+         *
+         * @return 配置完成的 TTSHook
+         * @throws IllegalArgumentException 如果未设置 ttsModel
+         *
+         * <p>Builds the TTSHook instance.
          *
          * <p>If neither audioPlayer nor audioCallback is provided, a default AudioPlayer
          * will be created automatically for local playback (24000 Hz sample rate).

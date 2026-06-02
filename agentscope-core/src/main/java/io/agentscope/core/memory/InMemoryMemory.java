@@ -25,10 +25,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 /**
- * In-memory implementation of Memory with state persistence support.
+ * Memory 的内存中实现，支持状态持久化。
  *
- * This implementation stores messages in memory using thread-safe collections
- * and provides state serialization/deserialization for session management.
+ * 该实现使用线程安全的集合在内存中存储消息，并提供用于会话管理的状态序列化/反序列化功能。
  */
 public class InMemoryMemory implements Memory {
 

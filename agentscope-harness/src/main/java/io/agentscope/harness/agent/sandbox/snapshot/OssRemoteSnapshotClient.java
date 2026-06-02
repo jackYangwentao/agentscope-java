@@ -22,6 +22,8 @@ import java.io.InputStream;
 import java.util.Objects;
 
 /**
+ * 基于阿里云 OSS 的 {@link RemoteSnapshotClient} 实现。
+ * <p>
  * {@link RemoteSnapshotClient} backed by Alibaba Cloud OSS.
  */
 public class OssRemoteSnapshotClient implements RemoteSnapshotClient {
@@ -31,11 +33,13 @@ public class OssRemoteSnapshotClient implements RemoteSnapshotClient {
     private final String keyPrefix;
 
     /**
+     * 创建 OSS 后端的快照客户端。
+     * <p>
      * Creates an OSS-backed snapshot client.
      *
-     * @param ossClient initialized OSS client
-     * @param bucketName bucket for snapshot objects
-     * @param keyPrefix object key prefix (optional, may be null/blank)
+     * @param ossClient  初始化后的 OSS 客户端
+     * @param bucketName 快照对象所在的存储桶
+     * @param keyPrefix  对象键前缀（可选，可为 null/空）
      */
     public OssRemoteSnapshotClient(OSS ossClient, String bucketName, String keyPrefix) {
         this.ossClient = Objects.requireNonNull(ossClient, "ossClient must not be null");
@@ -46,11 +50,21 @@ public class OssRemoteSnapshotClient implements RemoteSnapshotClient {
         this.keyPrefix = normalizePrefix(keyPrefix);
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * 将快照数据上传到 OSS。
+     */
     @Override
     public void upload(String snapshotId, InputStream data) throws Exception {
         ossClient.putObject(bucketName, objectKey(snapshotId), data);
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * 从 OSS 下载快照数据。
+     */
     @Override
     public InputStream download(String snapshotId) throws Exception {
         String key = objectKey(snapshotId);
@@ -61,11 +75,21 @@ public class OssRemoteSnapshotClient implements RemoteSnapshotClient {
         return object.getObjectContent();
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * 检查快照在 OSS 中是否存在。
+     */
     @Override
     public boolean exists(String snapshotId) throws Exception {
         return ossClient.doesObjectExist(bucketName, objectKey(snapshotId));
     }
 
+    /**
+     * 构造 OSS 对象键。
+     * <p>
+     * Build the OSS object key.
+     */
     private String objectKey(String snapshotId) {
         if (snapshotId == null || snapshotId.isBlank()) {
             throw new IllegalArgumentException("snapshotId must not be blank");
@@ -73,6 +97,11 @@ public class OssRemoteSnapshotClient implements RemoteSnapshotClient {
         return keyPrefix + snapshotId + ".tar";
     }
 
+    /**
+     * 标准化 key 前缀格式（去除首尾斜杠、确保以斜杠结尾）。
+     * <p>
+     * Normalize the key prefix format.
+     */
     private static String normalizePrefix(String prefix) {
         if (prefix == null || prefix.isBlank()) {
             return "";

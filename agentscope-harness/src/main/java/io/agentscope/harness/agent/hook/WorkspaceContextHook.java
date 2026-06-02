@@ -39,6 +39,13 @@ import reactor.core.publisher.Mono;
  *
  * <p>Runs at priority 900 — after all other pre-call hooks so that workspace context is
  * appended after skill and subagent guidance.
+ *
+ * <p>工作区上下文钩子，在 {@link PreCallEvent} 上将工作区上下文（会话信息、AGENTS.md、
+ * MEMORY.md、知识库）注入统一的系统消息。
+ * 工作区内容通过 {@link PreCallEvent#appendSystemContent} 添加。
+ * 由于此钩子仅在 {@link PreCallEvent} 上触发（每次 {@code call()} 一次），
+ * 因此不存在跨推理迭代累积的风险。
+ * 优先级为 900 — 在所有其他调用前钩子之后运行，以便工作区上下文在技能和子 agent 指南之后追加。
  */
 public class WorkspaceContextHook implements Hook, RuntimeContextAware {
 
@@ -114,6 +121,11 @@ public class WorkspaceContextHook implements Hook, RuntimeContextAware {
         this.maxContextTokens = maxContextTokens;
     }
 
+    /**
+     * Sets additional context files to be loaded from the workspace.
+     *
+     * <p>设置要从工作区加载的额外上下文文件。
+     */
     public void setAdditionalContextFiles(List<String> files) {
         this.additionalContextFiles = files != null ? files : List.of();
     }
@@ -207,6 +219,8 @@ public class WorkspaceContextHook implements Hook, RuntimeContextAware {
 
     /**
      * Builds XML-style loaded context blocks for AGENTS/MEMORY/KNOWLEDGE and extra files.
+     *
+     * <p>为 AGENTS/MEMORY/KNOWLEDGE 和额外文件构建 XML 风格的已加载上下文块。
      */
     private String buildLoadedContextSection(
             String agentsContent,
@@ -225,6 +239,11 @@ public class WorkspaceContextHook implements Hook, RuntimeContextAware {
         return sb.toString();
     }
 
+    /**
+     * Wraps content in an XML-style tag, or emits an empty tag if content is blank.
+     *
+     * <p>将内容包装在 XML 风格的标签中，如果内容为空则发出空标签。
+     */
     private static String buildXmlContext(String tagName, String content) {
         if (content == null || content.isBlank()) {
             return "  <" + tagName + "></" + tagName + ">\n";
@@ -232,12 +251,19 @@ public class WorkspaceContextHook implements Hook, RuntimeContextAware {
         return "  <" + tagName + ">\n" + indentByTwo(content.strip()) + "\n  </" + tagName + ">\n";
     }
 
+    /**
+     * Indents each line of text by two spaces.
+     *
+     * <p>将文本的每一行缩进两个空格。
+     */
     private static String indentByTwo(String text) {
         return text.lines().map(line -> "  " + line).collect(Collectors.joining("\n"));
     }
 
     /**
      * Renders additional user-configured files as XML blocks under {@code <loaded_context>}.
+     *
+     * <p>将额外的用户配置文件渲染为 {@code <loaded_context>} 下的 XML 块。
      */
     private String buildAdditionalContextBlock(RuntimeContext rc) {
         if (additionalContextFiles.isEmpty()) {
@@ -258,11 +284,18 @@ public class WorkspaceContextHook implements Hook, RuntimeContextAware {
 
     /**
      * Estimates token count using the chars/4 heuristic (consistent with pi-mono).
+     *
+     * <p>使用 chars/4 启发式方法估算 token 数量（与 pi-mono 一致）。
      */
     private static int estimateTokens(String text) {
         return text == null || text.isEmpty() ? 0 : text.length() / 4;
     }
 
+    /**
+     * Truncates text to fit within a token budget, appending a truncation notice if truncated.
+     *
+     * <p>将文本截断以适应 token 预算，如果被截断则附加截断提示。
+     */
     private static String truncateToTokenBudget(String text, int maxTokens) {
         int maxChars = maxTokens * 4;
         if (text.length() <= maxChars) {
@@ -271,6 +304,12 @@ public class WorkspaceContextHook implements Hook, RuntimeContextAware {
         return text.substring(0, maxChars) + TRUNCATION_NOTICE;
     }
 
+    /**
+     * Builds the knowledge block containing KNOWLEDGE.md content and a listing of all knowledge
+     * files found in the workspace.
+     *
+     * <p>构建知识块，包含 KNOWLEDGE.md 内容和工作区中找到的所有知识文件列表。
+     */
     private String buildKnowledgeBlock(RuntimeContext rc, String knowledgeContent, Path workspace) {
         List<Path> knowledgeFiles = workspaceManager.listKnowledgeFiles(rc);
         StringBuilder sb = new StringBuilder();

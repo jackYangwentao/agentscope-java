@@ -19,10 +19,10 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 /**
- * Discriminated union describing how a background subagent task should execute.
+ * 描述后台子代理任务应如何执行的判别联合。
  *
- * <p>{@link LocalTaskRunSpec} runs the supplier on a local executor. {@link RemoteTaskRunSpec}
- * delegates to an AgentScope task HTTP API (see {@code agentscope-extensions-agent-protocol}).
+ * <p>{@link LocalTaskRunSpec} 在本地执行器上运行供应商。{@link RemoteTaskRunSpec}
+ * 委托给 AgentScope 任务 HTTP API（参见 {@code agentscope-extensions-agent-protocol}）。
  */
 public sealed interface TaskRunSpec {
 

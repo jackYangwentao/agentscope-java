@@ -19,6 +19,7 @@ import io.agentscope.core.ReActAgent;
 import io.agentscope.core.formatter.dashscope.DashScopeChatFormatter;
 import io.agentscope.core.memory.InMemoryMemory;
 import io.agentscope.core.model.DashScopeChatModel;
+import io.agentscope.core.model.OllamaChatModel;
 import io.agentscope.core.skill.AgentSkill;
 import io.agentscope.core.skill.SkillBox;
 import io.agentscope.core.skill.repository.FileSystemSkillRepository;
@@ -89,12 +90,9 @@ public class AgentSkillExample {
                         .name("SkillCreator")
                         .sysPrompt(buildSystemPrompt(outputDir))
                         .model(
-                                DashScopeChatModel.builder()
-                                        .apiKey(apiKey)
-                                        .modelName("qwen-max")
-                                        .stream(true)
-                                        .enableThinking(true)
-                                        .formatter(new DashScopeChatFormatter())
+                                OllamaChatModel.builder()
+                                        .modelName("llama3.2")
+                                        .baseUrl("http://localhost:11434")
                                         .build())
                         .toolkit(toolkit)
                         .skillBox(skillBox)

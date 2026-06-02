@@ -18,12 +18,12 @@ package io.agentscope.harness.agent.filesystem.model;
 import java.time.Instant;
 
 /**
- * Data structure for storing file contents with metadata.
+ * 存储文件内容及元数据的数据结构。
  *
- * @param content file content as a plain string (utf-8 text or base64-encoded binary)
- * @param encoding content encoding: {@code "utf-8"} for text, {@code "base64"} for binary
- * @param createdAt ISO 8601 timestamp of file creation (nullable)
- * @param modifiedAt ISO 8601 timestamp of last modification (nullable)
+ * @param content 文件内容（UTF-8 文本或 Base64 编码的二进制数据）
+ * @param encoding 内容编码：{@code "utf-8"} 表示文本，{@code "base64"} 表示二进制
+ * @param createdAt ISO 8601 格式的文件创建时间戳（可为空）
+ * @param modifiedAt ISO 8601 格式的最后修改时间戳（可为空）
  */
 public record FileData(String content, String encoding, String createdAt, String modifiedAt) {
 
@@ -31,18 +31,18 @@ public record FileData(String content, String encoding, String createdAt, String
         this(content, encoding, null, null);
     }
 
-    /** Creates a new UTF-8 text FileData with timestamps set to now. */
+    /** 创建新的 UTF-8 文本 FileData，时间戳设置为当前时间。 */
     public static FileData create(String content) {
         return create(content, "utf-8");
     }
 
-    /** Creates a new FileData with specified encoding and timestamps set to now. */
+    /** 创建新的 FileData，指定编码并将时间戳设置为当前时间。 */
     public static FileData create(String content, String encoding) {
         String now = Instant.now().toString();
         return new FileData(content, encoding, now, now);
     }
 
-    /** Returns a copy with updated content and modified timestamp. */
+    /** 返回内容已更新且修改时间已刷新的副本。 */
     public FileData withContent(String newContent) {
         return new FileData(newContent, encoding, createdAt, Instant.now().toString());
     }

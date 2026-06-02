@@ -19,6 +19,14 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /**
+ * {@link io.agentscope.harness.agent.sandbox.WorkspaceSpec} 中条目的基类。
+ * <p>
+ * 每个条目描述了沙箱启动时工作区中应存在的单个文件或目录。
+ * 条目可以从内联内容、本地主机文件或远程源中构建。
+ * <p>
+ * 当 {@code ephemeral} 为 {@code true} 时，即使存在快照，此条目也会在每次沙箱启动时
+ * 重新应用。非临时（non-ephemeral）条目会持久化在快照内部，并在恢复时随工作区一起还原。
+ * <p>
  * Base class for entries in a {@link io.agentscope.harness.agent.sandbox.WorkspaceSpec}.
  *
  * <p>Each entry describes a single file or directory that should be present in the sandbox
@@ -44,21 +52,28 @@ public abstract class WorkspaceEntry {
     private boolean ephemeral = false;
 
     /**
+     * 返回此条目是否为临时性（ephemeral）。
+     * <p>
+     * 临时条目在会话恢复时无论是否存在快照都会重新应用。
+     * 适用于不应被快照的动态配置。
+     * <p>
      * Returns whether this entry is ephemeral.
      *
      * <p>Ephemeral entries are always re-applied on session resume regardless of whether a
      * snapshot exists. They are suitable for dynamic configuration that should not be snapshotted.
      *
-     * @return true if this entry is ephemeral
+     * @return 如果此条目是临时性的则返回 true
      */
     public boolean isEphemeral() {
         return ephemeral;
     }
 
     /**
+     * 设置此条目是否为临时性。
+     * <p>
      * Sets whether this entry is ephemeral.
      *
-     * @param ephemeral true to mark as ephemeral
+     * @param ephemeral 标记为临时性则设为 true
      */
     public void setEphemeral(boolean ephemeral) {
         this.ephemeral = ephemeral;

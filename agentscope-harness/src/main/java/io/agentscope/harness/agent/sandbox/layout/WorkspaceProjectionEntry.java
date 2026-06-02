@@ -19,6 +19,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * 在 {@link io.agentscope.harness.agent.sandbox.Sandbox} 启动时，
+ * 将所选文件/目录从主机工作区投影到沙箱工作区的布局条目。
+ * <p>
+ * 此条目是沙箱特定的，会被 {@link io.agentscope.harness.agent.sandbox.WorkspaceSpecApplier}
+ * 的常规文件构建逻辑忽略。相反，投影通过归档解压在
+ * {@link io.agentscope.harness.agent.sandbox.Sandbox#start()} 内部应用。
+ * <p>
  * Layout entry that projects selected files/directories from host workspace into sandbox
  * workspace when the {@link io.agentscope.harness.agent.sandbox.Sandbox} starts.
  *
@@ -33,6 +40,8 @@ public class WorkspaceProjectionEntry extends WorkspaceEntry {
     private List<String> includeRoots = new ArrayList<>();
 
     /**
+     * 用作投影源的主机端工作区根目录绝对路径。
+     * <p>
      * Absolute host-side workspace root used as source for projection.
      */
     public String getSourceRoot() {
@@ -44,6 +53,8 @@ public class WorkspaceProjectionEntry extends WorkspaceEntry {
     }
 
     /**
+     * {@link #getSourceRoot()} 下的相对包含根目录列表。
+     * <p>
      * Relative include roots under {@link #getSourceRoot()}.
      */
     public List<String> getIncludeRoots() {

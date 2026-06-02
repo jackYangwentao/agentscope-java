@@ -21,6 +21,9 @@ import io.agentscope.core.message.TextBlock;
 /**
  * Text content accumulator for accumulating streaming text chunks.
  *
+ * <p>用于累积流式文本分片的文本内容累积器。该累积器按顺序拼接所有文本分片,
+ * 以构建完整的文本内容。
+ *
  * <p>This accumulator concatenates all text chunks in order to build the complete text content.
  * @hidden
  */
@@ -29,6 +32,8 @@ public class TextAccumulator implements ContentAccumulator<TextBlock> {
     private final StringBuilder accumulated = new StringBuilder();
 
     /**
+     * 添加一个文本分片到累积器。仅当 block 及其文本均非 null 时才追加。
+     *
      * @hidden
      */
     @Override
@@ -39,6 +44,8 @@ public class TextAccumulator implements ContentAccumulator<TextBlock> {
     }
 
     /**
+     * 检查累积器中是否已有内容。
+     *
      * @hidden
      */
     @Override
@@ -47,6 +54,8 @@ public class TextAccumulator implements ContentAccumulator<TextBlock> {
     }
 
     /**
+     * 从已累积的文本分片构建聚合的 TextBlock。如果没有内容则返回 null。
+     *
      * @hidden
      */
     @Override
@@ -58,6 +67,8 @@ public class TextAccumulator implements ContentAccumulator<TextBlock> {
     }
 
     /**
+     * 重置累积器状态,清空所有已累积的文本。
+     *
      * @hidden
      */
     @Override
@@ -66,10 +77,10 @@ public class TextAccumulator implements ContentAccumulator<TextBlock> {
     }
 
     /**
-     * Get the accumulated text content.
+     * 获取已累积的文本内容。
      *
      * @hidden
-     * @return accumulated text as string
+     * @return 已累积的文本字符串
      */
     public String getAccumulated() {
         return accumulated.toString();

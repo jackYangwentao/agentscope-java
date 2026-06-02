@@ -19,6 +19,7 @@ import io.agentscope.core.ReActAgent;
 import io.agentscope.core.agent.user.UserAgent;
 import io.agentscope.core.message.Msg;
 import io.agentscope.core.model.DashScopeChatModel;
+import io.agentscope.core.model.OllamaChatModel;
 import io.agentscope.core.rag.RAGMode;
 import io.agentscope.core.rag.integration.dify.DifyKnowledge;
 import io.agentscope.core.rag.integration.dify.DifyRAGConfig;
@@ -48,9 +49,9 @@ public class DifyRAGExample {
                 ReActAgent.builder()
                         .name("KnowledgeAssistant")
                         .model(
-                                DashScopeChatModel.builder()
-                                        .apiKey(apiKey)
-                                        .modelName("qwen-plus")
+                                OllamaChatModel.builder()
+                                        .modelName("llama3.2")
+                                        .baseUrl("http://localhost:11434")
                                         .build())
                         .knowledge(
                                 DifyKnowledge.builder()

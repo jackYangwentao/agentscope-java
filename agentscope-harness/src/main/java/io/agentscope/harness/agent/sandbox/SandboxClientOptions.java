@@ -20,12 +20,13 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.agentscope.harness.agent.sandbox.impl.docker.DockerSandboxClientOptions;
 
 /**
+ * 沙箱客户端配置选项的基类。
  * Base class for sandbox client configuration options.
  *
- * <p>Each concrete subclass describes a specific sandbox backend (e.g. Docker) and can
- * self-instantiate the corresponding {@link SandboxClient} via {@link #createClient()}.
- * This allows callers to configure only the options object and rely on
- * {@link io.agentscope.harness.agent.HarnessAgent.Builder} to derive the client automatically.
+ * <p>每个具体子类描述一个特定的沙箱后端（例如 Docker），
+ * 并可以通过 {@link #createClient()} 自实例化对应的 {@link SandboxClient}。
+ * 这允许调用者仅配置选项对象，依赖
+ * {@link io.agentscope.harness.agent.HarnessAgent.Builder} 自动推导出客户端。
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes({
@@ -34,19 +35,21 @@ import io.agentscope.harness.agent.sandbox.impl.docker.DockerSandboxClientOption
 public abstract class SandboxClientOptions {
 
     /**
+     * 返回 JSON 序列化中使用的类型鉴别器。
      * Returns the type discriminator used in JSON serialization.
      *
-     * @return type string (e.g. "docker")
+     * @return 类型字符串（例如 "docker"）
      */
     public abstract String getType();
 
     /**
+     * 创建与这些选项对应的 {@link SandboxClient} 实现。
      * Creates the {@link SandboxClient} implementation that corresponds to these options.
      *
-     * <p>Called by {@link io.agentscope.harness.agent.HarnessAgent.Builder} when no explicit
-     * client has been provided, so callers only need to configure the options object.
+     * <p>当未提供显式客户端时，由 {@link io.agentscope.harness.agent.HarnessAgent.Builder} 调用，
+     * 因此调用者只需配置选项对象即可。
      *
-     * @return a new client instance ready for use
+     * @return 一个新的客户端实例，立即可用
      */
     public abstract SandboxClient<? extends SandboxClientOptions> createClient();
 }

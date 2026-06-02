@@ -18,9 +18,16 @@ package io.agentscope.harness.agent.sandbox.impl.daytona;
 import com.fasterxml.jackson.databind.jsontype.NamedType;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 
-/** Jackson module registering {@link DaytonaSandboxState} under the {@code daytona} type id. */
+/**
+ * 在 {@code daytona} 类型 ID 下注册 {@link DaytonaSandboxState} 的 Jackson 模块。
+ * Jackson module registering {@link DaytonaSandboxState} under the {@code daytona} type id.
+ */
 public final class DaytonaHarnessSandboxJacksonModule extends SimpleModule {
 
+    /**
+     * 构造一个注册了 DaytonaSandboxState 类型的 Jackson 模块。
+     * Constructs a Jackson module with DaytonaSandboxState type registration.
+     */
     public DaytonaHarnessSandboxJacksonModule() {
         super("harness-sandbox-daytona");
         registerSubtypes(new NamedType(DaytonaSandboxState.class, "daytona"));
