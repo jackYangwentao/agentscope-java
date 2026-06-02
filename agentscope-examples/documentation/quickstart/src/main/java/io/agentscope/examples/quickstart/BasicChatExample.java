@@ -24,25 +24,28 @@ import io.agentscope.core.model.OllamaChatModel;
 import io.agentscope.core.tool.Toolkit;
 
 /**
- * BasicChatExample - The simplest Agent conversation example.
+ * BasicChatExample —— 最简单的 Agent 对话示例。
+ *
+ * <p>展示如何使用最少的配置创建一个可对话的 AI 助手，
+ * 包括 Agent、Model、Memory 和 Toolkit 的核心组件组合。
  */
 public class BasicChatExample {
 
     public static void main(String[] args) throws Exception {
-        // Print welcome message
+        // 打印欢迎信息
         ExampleUtils.printWelcome(
-                "Basic Chat Example",
-                "This example demonstrates the simplest Agent setup.\n"
-                        + "You'll chat with an AI assistant powered by DashScope.");
+                "基础对话示例",
+                "本示例演示了最简单的 Agent 设置。\n"
+                        + "您将与一个由 Ollama 驱动的 AI 助手进行对话。");
 
-        // Get API key (from environment or interactive input)
+        // 获取 API 密钥（从环境变量或交互输入）
         // String apiKey = ExampleUtils.getDashScopeApiKey();
 
-        // Create Agent with minimal configuration
+        // 使用最小配置创建 Agent
         ReActAgent agent =
                 ReActAgent.builder()
                         .name("Assistant")
-                        .sysPrompt("You are a helpful AI assistant. Be friendly and concise.")
+                        .sysPrompt("你是一个有帮助的 AI 助手，请保持友好和简洁。")
                         .model(
                                 OllamaChatModel.builder()
                                         .modelName("llama3.2")
@@ -52,7 +55,7 @@ public class BasicChatExample {
                         .toolkit(new Toolkit())
                         .build();
 
-        // Start interactive chat
+        // 启动交互式对话
         ExampleUtils.startChat(agent);
     }
 }

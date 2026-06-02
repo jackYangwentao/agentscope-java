@@ -38,26 +38,28 @@ import java.util.List;
 import reactor.core.publisher.Mono;
 
 /**
- * MultiModalToolExample - Demonstrates how to equip an Agent with multimodal tools.
+ * MultiModalToolExample —— 演示如何为 Agent 配备多模态工具。
+ *
+ * <p>Agent 拥有图像、音频和视频处理能力，可分析多种格式的媒体文件。
  */
 public class MultiModalToolExample {
 
     public static void main(String[] args) throws Exception {
-        // Print welcome message
+        // 打印欢迎信息
         ExampleUtils.printWelcome(
-                "MultiModal Tool Calling Example",
-                "This example demonstrates how to equip an Agent with multimodal tools.\n"
-                        + "The agent has image, audio and video multimodal tools.");
+                "多模态工具调用示例",
+                "本示例演示如何为 Agent 配备多模态工具。\n"
+                        + "Agent 拥有图像、音频和视频多模态工具。");
 
-        // Get API key
+        // 获取 API 密钥
         String apiKey = ExampleUtils.getDashScopeApiKey();
 
-        // Create and register tools
+        // 创建并注册工具
         Toolkit toolkit = new Toolkit();
         toolkit.registerTool(new DashScopeMultiModalTool(apiKey));
         printRegisterTools();
 
-        // Create Agent with tools
+        // 创建带有工具的 Agent
         ReActAgent agent =
                 ReActAgent.builder()
                         .name("MultiModalToolAgent")

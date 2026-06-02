@@ -38,7 +38,9 @@ import java.util.Map;
 import reactor.core.publisher.Mono;
 
 /**
- * Simple PlanNotebook example demonstrating plan tracking with visual output.
+ * PlanNotebookExample —— 演示 PlanNotebook 计划管理，支持任务的创建、跟踪和可视化输出。
+ *
+ * <p>Agent 可以创建多步计划，跟踪执行进度，并支持暂停和恢复。
  */
 public class PlanNotebookExample {
 

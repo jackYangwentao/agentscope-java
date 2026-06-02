@@ -35,19 +35,19 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * PgVectorRAGExample - Demonstrates local RAG with PostgreSQL pgvector and DashScope embedding.
+ * PgVectorRAGExample —— 演示使用 PostgreSQL pgvector + DashScope 向量嵌入实现本地 RAG。
  *
- * <p>This example shows how to build a local knowledge base using:
+ * <p>本示例展示如何构建本地知识库，核心组件包括：
  * <ul>
- *   <li>DashScope text-embedding-v3 for generating embeddings</li>
- *   <li>PostgreSQL with pgvector extension for vector storage</li>
- *   <li>SimpleKnowledge for knowledge management</li>
- *   <li>ReActAgent for question answering</li>
+ *   <li>DashScope text-embedding-v3：生成文本向量嵌入</li>
+ *   <li>PostgreSQL + pgvector 扩展：向量存储与相似度检索</li>
+ *   <li>SimpleKnowledge：知识管理</li>
+ *   <li>ReActAgent：基于检索结果进行问答</li>
  * </ul>
  *
- * <p>Prerequisites:
+ * <p>前置条件：
  * <ul>
- *   <li>PostgreSQL 11+ with pgvector extension installed</li>
+ *   <li>PostgreSQL 11+ 并安装 pgvector 扩展</li>
  *   <li>Run: CREATE EXTENSION IF NOT EXISTS vector;</li>
  *   <li>Set environment variables: DASHSCOPE_API_KEY, PG_HOST, PG_PORT, PG_DATABASE, PG_USER, PG_PASSWORD</li>
  * </ul>

@@ -27,21 +27,24 @@ import io.agentscope.core.tool.Toolkit;
 import io.agentscope.examples.quickstart.util.MsgUtils;
 
 /**
- * MsgHubExample - Multi-agent conversation demonstration.
+ * MsgHubExample —— 演示多 Agent 对话场景，使用 MsgHub 自动广播消息。
+ *
+ * <p>三个学生角色（Alice、Bob、Charlie）围绕一个话题展开讨论，
+ * MsgHub 自动将每个学生的消息广播给其他成员。
  */
 public class MsgHubExample {
 
     public static void main(String[] args) throws Exception {
         ExampleUtils.printWelcome(
-                "MsgHub Example - Multi-Agent Conversation",
-                "This example demonstrates how to use MsgHub for multi-agent conversations.\n"
-                    + "Three students (Alice, Bob, and Charlie) will discuss a topic together.\n"
-                    + "MsgHub automatically broadcasts each student's message to the others.");
+                "MsgHub 示例 —— 多 Agent 对话",
+                "本示例演示如何使用 MsgHub 进行多 Agent 对话。\n"
+                    + "三位学生（Alice、Bob、Charlie）将一起讨论话题。\n"
+                    + "MsgHub 自动将每个学生的消息广播给其他人。");
 
-        // Get API key
+        // 获取 API 密钥
         String apiKey = ExampleUtils.getDashScopeApiKey();
 
-        // Create shared model with MultiAgentFormatter
+        // 使用 MultiAgentFormatter 创建共享模型
         DashScopeChatModel model =
                 DashScopeChatModel.builder()
                         .apiKey(apiKey)
@@ -49,9 +52,9 @@ public class MsgHubExample {
                         .formatter(new DashScopeMultiAgentFormatter())
                         .build();
 
-        System.out.println("\n=== Creating Three Student Agents ===\n");
+        System.out.println("\n=== 创建三个学生 Agent ===\n");
 
-        // Create three agents with different roles
+        // 创建三个不同角色的 Agent
         ReActAgent alice =
                 ReActAgent.builder()
                         .name("Alice")

@@ -26,19 +26,19 @@ import io.agentscope.core.message.VideoBlock;
 import java.util.stream.Collectors;
 
 /**
- * Utility methods for working with Msg in examples. These are convenience
- * methods for common
- * operations.
+ * MsgUtils —— 示例中操作 Msg 消息的工具类，提供便捷的常用操作方法。
+ *
+ * <p>封装了从消息中提取文本、检查消息类型以及创建各种类型消息的便利方法。
  */
 public class MsgUtils {
 
     /**
-     * Extract text content from a message. Concatenates text from all
-     * text-containing blocks
-     * (TextBlock and ThinkingBlock).
+     * 从消息中提取文本内容，拼接所有文本块（TextBlock 和 ThinkingBlock）的文本。
      *
-     * @param msg The message to extract text from
-     * @return Concatenated text content or empty string if not available
+     * <p>同时包含推理内容（ThinkingBlock）和回复文本（TextBlock），中间用空行分隔。
+     *
+     * @param msg 要提取文本的消息
+     * @return 拼接后的文本内容，如果没有文本则返回 "[No response]"
      */
     public static String getTextContent(Msg msg) {
         String thinking =
@@ -65,10 +65,10 @@ public class MsgUtils {
     }
 
     /**
-     * Check if a message has text content.
+     * 检查消息是否包含文本内容（TextBlock 或 ThinkingBlock）。
      *
-     * @param msg The message to check
-     * @return true if the message contains text content
+     * @param msg 要检查的消息
+     * @return 如果消息包含文本内容则返回 true
      */
     public static boolean hasTextContent(Msg msg) {
         return msg.getContent().stream()
@@ -76,10 +76,10 @@ public class MsgUtils {
     }
 
     /**
-     * Check if a message has media content.
+     * 检查消息是否包含媒体内容（图像、音频或视频块）。
      *
-     * @param msg The message to check
-     * @return true if the message contains media content
+     * @param msg 要检查的消息
+     * @return 如果消息包含媒体内容则返回 true
      */
     public static boolean hasMediaContent(Msg msg) {
         return msg.getContent().stream()
@@ -91,12 +91,12 @@ public class MsgUtils {
     }
 
     /**
-     * Create a message with text content (convenience method).
+     * 创建包含文本内容的消息（便捷方法）。
      *
-     * @param name Sender name
-     * @param role Message role
-     * @param text Text content
-     * @return Message with text content
+     * @param name 发送者名称
+     * @param role 消息角色
+     * @param text 文本内容
+     * @return 包含文本内容的消息
      */
     public static Msg textMsg(String name, MsgRole role, String text) {
         return Msg.builder()
@@ -107,12 +107,12 @@ public class MsgUtils {
     }
 
     /**
-     * Create a message with image content (convenience method).
+     * 创建包含图像内容的消息（便捷方法）。
      *
-     * @param name   Sender name
-     * @param role   Message role
-     * @param source Image source
-     * @return Message with image content
+     * @param name   发送者名称
+     * @param role   消息角色
+     * @param source 图像来源
+     * @return 包含图像内容的消息
      */
     public static Msg imageMsg(String name, MsgRole role, Source source) {
         return Msg.builder()
@@ -123,12 +123,12 @@ public class MsgUtils {
     }
 
     /**
-     * Create a message with audio content (convenience method).
+     * 创建包含音频内容的消息（便捷方法）。
      *
-     * @param name   Sender name
-     * @param role   Message role
-     * @param source Audio source
-     * @return Message with audio content
+     * @param name   发送者名称
+     * @param role   消息角色
+     * @param source 音频来源
+     * @return 包含音频内容的消息
      */
     public static Msg audioMsg(String name, MsgRole role, Source source) {
         return Msg.builder()
@@ -139,12 +139,12 @@ public class MsgUtils {
     }
 
     /**
-     * Create a message with video content (convenience method).
+     * 创建包含视频内容的消息（便捷方法）。
      *
-     * @param name   Sender name
-     * @param role   Message role
-     * @param source Video source
-     * @return Message with video content
+     * @param name   发送者名称
+     * @param role   消息角色
+     * @param source 视频来源
+     * @return 包含视频内容的消息
      */
     public static Msg videoMsg(String name, MsgRole role, Source source) {
         return Msg.builder()
@@ -155,12 +155,12 @@ public class MsgUtils {
     }
 
     /**
-     * Create a message with thinking content (convenience method).
+     * 创建包含推理内容的消息（便捷方法）。
      *
-     * @param name     Sender name
-     * @param role     Message role
-     * @param thinking Thinking content
-     * @return Message with thinking content
+     * @param name     发送者名称
+     * @param role     消息角色
+     * @param thinking 推理内容
+     * @return 包含推理内容的消息
      */
     public static Msg thinkingMsg(String name, MsgRole role, String thinking) {
         return Msg.builder()

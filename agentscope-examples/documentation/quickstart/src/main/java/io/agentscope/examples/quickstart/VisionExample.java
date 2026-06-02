@@ -30,23 +30,22 @@ import io.agentscope.examples.quickstart.util.MsgUtils;
 import java.util.List;
 
 /**
- * VisionExample - Demonstrates vision capabilities with images.
+ * VisionExample —— 演示 Agent 的视觉能力，支持图片分析与描述。
  */
 public class VisionExample {
 
     public static void main(String[] args) throws Exception {
-        // Print welcome message
+        // 打印欢迎信息
         ExampleUtils.printWelcome(
-                "Vision Example",
-                "This example demonstrates how to use vision capabilities.\n"
-                        + "The agent can analyze images and describe what it sees.\n"
-                        + "\nNote: DashScope vision requires Base64-encoded images for best"
-                        + " compatibility.");
+                "视觉能力示例",
+                "本示例演示如何使用 Agent 的视觉能力。\n"
+                        + "Agent 可以分析图片并描述其看到的内容。\n"
+                        + "\n注意：DashScope 视觉模型推荐使用 Base64 编码的图片以获得最佳兼容性。");
 
-        // Get API key
+        // 获取 API 密钥
         String apiKey = ExampleUtils.getDashScopeApiKey();
 
-        // Create Agent with vision model
+        // 使用视觉模型创建 Agent
         ReActAgent agent =
                 ReActAgent.builder()
                         .name("VisionAssistant")

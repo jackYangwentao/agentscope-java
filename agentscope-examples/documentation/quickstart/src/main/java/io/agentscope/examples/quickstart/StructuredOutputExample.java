@@ -29,21 +29,24 @@ import java.util.List;
 import reactor.core.publisher.Flux;
 
 /**
- * StructuredOutputExample - Demonstrates structured output generation.
+ * StructuredOutputExample —— 演示 Agent 的 JSON 结构化输出生成能力。
+ *
+ * <p>展示如何通过 Java POJO 定义输出 Schema，让 Agent 返回类型安全的结构化数据，
+ * 支持商品信息提取、联系方式提取和情感分析等场景。
  */
 public class StructuredOutputExample {
 
     public static void main(String[] args) throws Exception {
-        // Print welcome message
+        // 打印欢迎信息
         ExampleUtils.printWelcome(
-                "Structured Output Example",
-                "This example demonstrates how to generate structured output from agents.\n"
-                        + "The agent will analyze user queries and return structured data.");
+                "结构化输出示例",
+                "本示例演示如何从 Agent 生成结构化输出。\n"
+                        + "Agent 将分析用户查询并返回结构化的数据。");
 
-        // Get API key
+        // 获取 API 密钥
         String apiKey = ExampleUtils.getDashScopeApiKey();
 
-        // Create Agent
+        // 创建 Agent
         ReActAgent agent =
                 ReActAgent.builder()
                         .name("AnalysisAgent")

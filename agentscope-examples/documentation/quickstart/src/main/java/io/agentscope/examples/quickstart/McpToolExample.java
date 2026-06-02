@@ -26,7 +26,10 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
 /**
- * McpToolExample - Demonstrates MCP (Model Context Protocol) tool integration.
+ * McpToolExample —— 演示 MCP（Model Context Protocol）工具服务集成。
+ *
+ * <p>MCP 协议允许 Agent 连接外部工具服务器，如文件系统、Git、数据库等，
+ * 实现生态化的工具扩展能力。
  */
 public class McpToolExample {
 
@@ -34,26 +37,25 @@ public class McpToolExample {
             new BufferedReader(new InputStreamReader(System.in));
 
     public static void main(String[] args) throws Exception {
-        // Print welcome message
+        // 打印欢迎信息
         ExampleUtils.printWelcome(
-                "MCP Tool Example",
-                "This example demonstrates MCP (Model Context Protocol) integration.\n"
-                        + "MCP allows agents to use external tool servers like filesystem, git,"
-                        + " databases, etc.");
+                "MCP 工具示例",
+                "本示例演示 MCP（Model Context Protocol）集成。\n"
+                        + "MCP 允许 Agent 使用外部工具服务器，如文件系统、Git、数据库等。");
 
-        // Get API key
+        // 获取 API 密钥
         String apiKey = ExampleUtils.getDashScopeApiKey();
 
-        // Interactive MCP configuration
+        // 交互式 MCP 配置
         McpClientWrapper mcpClient = configureMcp();
 
-        // Register MCP tools
+        // 注册 MCP 工具
         Toolkit toolkit = new Toolkit();
-        System.out.print("Registering MCP tools...");
+        System.out.print("正在注册 MCP 工具...");
         toolkit.registerMcpClient(mcpClient).block();
-        System.out.println(" Done\n");
+        System.out.println(" 完成\n");
 
-        // Create Agent
+        // 创建 Agent
         ReActAgent agent =
                 ReActAgent.builder()
                         .name("McpAgent")

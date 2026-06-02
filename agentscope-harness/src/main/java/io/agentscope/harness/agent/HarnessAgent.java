@@ -2503,6 +2503,9 @@ public class HarnessAgent implements Agent, StateModule, AutoCloseable {
          * <p>Returns the hook, which owns its own {@link DefaultAgentManager} and (unless an
          * external one was supplied) its own {@link io.agentscope.harness.agent.tool.AgentSpawnTool}.
          */
+        /**
+         * 构建在配置了工作区文件系统时默认使用的 {@link DynamicSubagentsHook}。
+         */
         private DynamicSubagentsHook buildDynamicSubagentsHook(
                 WorkspaceManager wsManager, Path workspace, SandboxBackedFilesystem sandboxFs) {
             List<SubagentEntry> staticEntries = buildStaticSubagentEntries(workspace, sandboxFs);

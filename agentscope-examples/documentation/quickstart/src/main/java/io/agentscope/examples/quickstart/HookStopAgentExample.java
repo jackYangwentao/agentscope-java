@@ -36,28 +36,28 @@ import java.util.Scanner;
 import reactor.core.publisher.Mono;
 
 /**
- * HookStopAgentExample - Demonstrates human-in-the-loop with Hook stopAgent().
+ * HookStopAgentExample —— 演示使用 Hook 的 stopAgent() 实现人工审核流程。
  *
- * <p>This example shows how to use the stopAgent() feature to implement human-in-the-loop
- * workflows where sensitive tool calls require user confirmation before execution.
+ * <p>本示例展示如何使用 stopAgent() 功能实现人工介入工作流，
+ * 在敏感工具调用执行前需要用户确认。
  *
- * <p><b>Key Features:</b>
+ * <p><b>关键特性：</b>
  * <ul>
- *   <li>Hook calls stopAgent() in PostReasoningEvent to pause before tool execution</li>
- *   <li>Agent returns the pending ToolUse message for user review</li>
- *   <li>User can confirm to resume or provide alternative input</li>
- *   <li>Check Msg content to determine if agent is waiting for confirmation</li>
+ *   <li>Hook 在 PostReasoningEvent 中调用 stopAgent()，在工具执行前暂停</li>
+ *   <li>Agent 返回待处理的 ToolUse 消息供用户审查</li>
+ *   <li>用户可以确认继续执行或提供替代输入</li>
+ *   <li>检查 Msg 内容判断 Agent 是否正在等待确认</li>
  * </ul>
  */
 public class HookStopAgentExample {
 
     public static void main(String[] args) throws Exception {
-        // Print welcome message
+        // 打印欢迎信息
         ExampleUtils.printWelcome(
-                "Hook Stop Agent Example",
-                "This example demonstrates human-in-the-loop tool confirmation.\n"
-                        + "The agent will pause before executing sensitive operations,\n"
-                        + "allowing you to review and confirm the tool calls.");
+                "Hook 停止 Agent 示例",
+                "本示例演示人工审核工具调用的流程。\n"
+                        + "Agent将在执行敏感操作前暂停，\n"
+                        + "允许您审查并确认工具调用。");
 
         // Get API key
         // String apiKey = ExampleUtils.getDashScopeApiKey();

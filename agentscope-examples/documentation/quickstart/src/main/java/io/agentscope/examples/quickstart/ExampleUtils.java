@@ -32,15 +32,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
- * Utility class providing common functionality for examples.
+ * ExampleUtils —— 为 quickstart 示例提供通用功能的工具类。
  *
- * <p>
- * Features:
- *
+ * <p>主要功能包括：
  * <ul>
- * <li>Interactive API key configuration
- * <li>Chat loop implementation
- * <li>Helper methods for user interaction
+ * <li>交互式 API 密钥配置（支持环境变量和手动输入）</li>
+ * <li>Agent 对话循环实现（支持流式输出和普通调用两种模式）</li>
+ * <li>用户交互的辅助方法（欢迎横幅、输入读取等）</li>
  * </ul>
  */
 public class ExampleUtils {
@@ -49,10 +47,10 @@ public class ExampleUtils {
             new BufferedReader(new InputStreamReader(System.in));
 
     /**
-     * Get DashScope API key from environment variable or interactive input.
+     * 从环境变量或交互式输入获取 DashScope API 密钥。
      *
-     * @return API key
-     * @throws IOException if input fails
+     * @return API 密钥字符串
+     * @throws IOException 如果输入读取失败
      */
     public static String getDashScopeApiKey() throws IOException {
         return getApiKey(
@@ -60,23 +58,25 @@ public class ExampleUtils {
     }
 
     /**
-     * Get OpenAI API key from environment variable or interactive input.
+     * 从环境变量或交互式输入获取 OpenAI API 密钥。
      *
-     * @return API key
-     * @throws IOException if input fails
+     * @return API 密钥字符串
+     * @throws IOException 如果输入读取失败
      */
     public static String getOpenAIApiKey() throws IOException {
         return getApiKey("OPENAI_API_KEY", "OpenAI", "https://platform.openai.com/api-keys");
     }
 
     /**
-     * Get API key from environment variable or interactive input.
+     * 从环境变量或交互式输入获取 API 密钥的通用方法。
      *
-     * @param envVarName  environment variable name
-     * @param serviceName service name for display
-     * @param helpUrl     URL to get API key
-     * @return API key
-     * @throws IOException if input fails
+     * <p>优先从环境变量读取，如果未设置则提示用户手动输入。
+     *
+     * @param envVarName  环境变量名称
+     * @param serviceName 服务名称（用于显示）
+     * @param helpUrl     获取 API 密钥的帮助 URL
+     * @return API 密钥字符串
+     * @throws IOException 如果输入读取失败
      */
     public static String getApiKey(String envVarName, String serviceName, String helpUrl)
             throws IOException {
@@ -110,10 +110,10 @@ public class ExampleUtils {
     }
 
     /**
-     * Mask API key for display (show first 4 and last 4 characters).
+     * 对 API 密钥进行脱敏处理（仅显示首 4 位和末 4 位字符）。
      *
-     * @param apiKey API key to mask
-     * @return masked API key
+     * @param apiKey 需要脱敏的 API 密钥
+     * @return 脱敏后的 API 密钥字符串
      */
     public static String maskApiKey(String apiKey) {
         if (apiKey == null || apiKey.length() <= 8) {
@@ -123,10 +123,13 @@ public class ExampleUtils {
     }
 
     /**
-     * Start an interactive chat loop with an agent.
+     * 启动与 Agent 的交互式对话循环。
      *
-     * @param agent the agent to chat with
-     * @throws IOException if input fails
+     * <p>支持流式输出（stream）和普通调用（call）两种模式，
+     * 自动降级处理——流式失败时回退到普通调用。
+     *
+     * @param agent 要对话的 Agent 实例
+     * @throws IOException 如果输入读取失败
      */
     public static void startChat(Agent agent) throws IOException {
         System.out.println("=== Chat Started ===");
@@ -255,20 +258,20 @@ public class ExampleUtils {
     }
 
     /**
-     * Read a line from user input.
+     * 读取用户输入的一行文本。
      *
-     * @return user input
-     * @throws IOException if input fails
+     * @return 用户输入的字符串
+     * @throws IOException 如果输入读取失败
      */
     public static String readLine() throws IOException {
         return reader.readLine();
     }
 
     /**
-     * Print a welcome banner.
+     * 打印欢迎横幅信息。
      *
-     * @param title       example title
-     * @param description example description
+     * @param title       示例标题
+     * @param description 示例描述文字
      */
     public static void printWelcome(String title, String description) {
         System.out.println("=== " + title + " ===\n");
@@ -277,25 +280,25 @@ public class ExampleUtils {
     }
 
     /**
-     * Extract text content from a message.
+     * 从消息中提取文本内容（委托给 MsgUtils.getTextContent）。
      *
-     * @param msg message to extract text from
-     * @return extracted text
+     * @param msg 要提取文本的消息
+     * @return 提取的文本内容
      */
     public static String extractTextFromMsg(Msg msg) {
         return MsgUtils.getTextContent(msg);
     }
 
     /**
-     * Helper method to print streaming content.
+     * 打印流式内容的辅助方法，支持增量和累积两种模式。
      *
-     * @param content             content to print
-     * @param lastContentRef      reference to the last content for delta
-     *                            calculation
-     * @param hasPrintedHeaderRef reference to whether the header has been printed
-     * @param header              header to print
-     * @param prePrintAction      action to run before printing (e.g., adding
-     *                            separators)
+     * <p>自动检测内容是累积模式还是增量模式，并相应地打印新增部分。
+     *
+     * @param content             要打印的内容
+     * @param lastContentRef      上次内容的引用（用于计算增量）
+     * @param hasPrintedHeaderRef 是否已打印标题的引用
+     * @param header              首次打印时输出的标题
+     * @param prePrintAction      打印前执行的操作（例如添加分隔符）
      */
     private static void printStreamContent(
             String content,

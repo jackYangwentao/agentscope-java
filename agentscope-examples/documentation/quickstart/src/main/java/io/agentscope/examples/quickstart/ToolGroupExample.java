@@ -27,22 +27,24 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * ToolGroupExample - Demonstrates agent autonomously managing tool groups with meta-tool.
+ * ToolGroupExample —— 演示 Agent 使用元工具自主管理工具组的激活与切换。
+ *
+ * <p>Agent 通过 {@code reset_equipped_tools} 元工具，根据任务需求自主决定
+ * 激活哪些工具组，展示动态工具管理能力。
  */
 public class ToolGroupExample {
 
     public static void main(String[] args) throws Exception {
-        // Print welcome message
+        // 打印欢迎信息
         ExampleUtils.printWelcome(
-                "Tool Group Example - Meta Tool Demo",
-                "This example demonstrates agent autonomously managing tool groups.\n"
-                        + "The agent can activate tool groups using the reset_equipped_tools"
-                        + " meta-tool.");
+                "工具组示例 —— 元工具演示",
+                "本示例演示 Agent 自主管理工具组的能力。\n"
+                        + "Agent 可以使用 reset_equipped_tools 元工具激活工具组。");
 
-        // Get API key
+        // 获取 API 密钥
         String apiKey = ExampleUtils.getDashScopeApiKey();
 
-        // Configure tool groups
+        // 配置工具组
         Toolkit toolkit = configureToolGroups();
 
         System.out.println("\n=== Meta Tool Registered ===");

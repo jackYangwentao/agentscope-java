@@ -31,14 +31,13 @@ import java.util.Scanner;
 import java.util.Set;
 
 /**
- * AgentSkillExample - Demonstrates creating skills using the skill-creator skill.
+ * AgentSkillExample —— 演示 Agent 使用 skill-creator 技能创建新技能的完整工作流。
  *
- * <p>This example shows a complete skill creation workflow with:
- *
+ * <p>完整流程包括：
  * <ul>
- *   <li>Loading a skill from resources via FileSystemSkillRepository
- *   <li>Enabling code execution tools for writing new skills
- *   <li>Running a demo prompt that creates a new skill on disk
+ *   <li>通过 FileSystemSkillRepository 从资源目录加载技能</li>
+ *   <li>启用代码执行工具用于编写新技能文件</li>
+ *   <li>运行示例提示词，在磁盘上创建新的技能文件</li>
  * </ul>
  */
 public class AgentSkillExample {
@@ -50,12 +49,12 @@ public class AgentSkillExample {
 
     public static void main(String[] args) throws Exception {
         ExampleUtils.printWelcome(
-                "Agent Skill Example - Skill Creator",
-                "This example demonstrates a ReActAgent using the skill-creator skill.\n"
-                        + "The agent will:\n"
-                        + "  - Load skill-creator from resources\n"
-                        + "  - Use file tools to create a new skill\n"
-                        + "  - Write SKILL.md and references under a target folder");
+                "Agent 技能示例 —— Skill Creator",
+                "本示例演示 ReActAgent 使用 skill-creator 技能。\n"
+                        + "Agent 将：\n"
+                        + "  - 从资源目录加载 skill-creator 技能\n"
+                        + "  - 使用文件工具创建新技能\n"
+                        + "  - 在目标文件夹下编写 SKILL.md 和参考文件");
 
         String apiKey = ExampleUtils.getDashScopeApiKey();
 

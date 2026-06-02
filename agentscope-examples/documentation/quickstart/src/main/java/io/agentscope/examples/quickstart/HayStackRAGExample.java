@@ -25,18 +25,18 @@ import io.agentscope.core.rag.integration.haystack.HayStackKnowledge;
 import io.agentscope.core.rag.model.RetrieveConfig;
 
 /**
- * Example demonstrating how to use HayStack Knowledge Base for RAG.
+ * HayStackRAGExample —— 演示如何将 HayStack 知识库集成到 Agent 中实现 RAG 检索增强生成。
  */
 public class HayStackRAGExample {
 
     public static void main(String[] args) throws Exception {
-        // Check environment variables
+        // 检查环境变量
         String haystackBaseUrl = System.getenv("HAYSTACK_BASE_URL");
         String apiKey = ExampleUtils.getDashScopeApiKey();
 
         if (haystackBaseUrl == null) {
-            System.err.println("Error: Required environment variables not set.");
-            System.err.println("Please set the following environment variables:");
+            System.err.println("错误：未设置必要的环境变量。");
+            System.err.println("请设置以下环境变量：");
             System.err.println("  - HAYSTACK_BASE_URL");
             System.exit(1);
         }

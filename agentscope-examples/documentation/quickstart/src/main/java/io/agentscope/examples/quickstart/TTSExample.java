@@ -32,21 +32,21 @@ import io.agentscope.core.tool.Toolkit;
 import io.agentscope.core.tool.multimodal.DashScopeMultiModalTool;
 
 /**
- * Example demonstrating all three TTS usage patterns in AgentScope Java.
+ * TTSExample —— 演示 AgentScope Java 中三种 TTS 使用模式的完整示例。
  *
- * <p>This example covers:
+ * <p>本示例覆盖三种 TTS 集成方式：
  * <ul>
- *   <li>Example 1: ReActAgent with realtime TTS - Agent speaks while generating response</li>
- *   <li>Example 2: Standalone TTSModel - Use TTS independently without Agent</li>
- *   <li>Example 3: TTS as Agent Tool - Agent decides when to invoke TTS tool</li>
+ *   <li>示例 1：实时 TTS —— Agent 在生成回复的同时进行语音合成</li>
+ *   <li>示例 2：独立 TTSModel —— 不依赖 Agent，单独使用 TTS 能力</li>
+ *   <li>示例 3：TTS 作为 Agent 工具 —— Agent 自主决定何时调用 TTS 工具</li>
  * </ul>
  *
- * <p>Prerequisites:
+ * <p>前置条件：
  * <ul>
- *   <li>Set DASHSCOPE_API_KEY environment variable</li>
+ *   <li>设置 DASHSCOPE_API_KEY 环境变量</li>
  * </ul>
  *
- * <p>Usage:
+ * <p>运行方式：
  * <pre>
  * export DASHSCOPE_API_KEY=sk-xxx
  * mvn exec:java -pl agentscope-examples/quickstart \
@@ -56,7 +56,7 @@ import io.agentscope.core.tool.multimodal.DashScopeMultiModalTool;
 public class TTSExample {
 
     /**
-     * Main entry point.
+     * 主入口方法。
      *
      * @param args command line arguments
      */

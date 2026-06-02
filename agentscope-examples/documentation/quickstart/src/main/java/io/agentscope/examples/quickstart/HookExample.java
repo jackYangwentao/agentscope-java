@@ -40,22 +40,24 @@ import java.util.List;
 import reactor.core.publisher.Mono;
 
 /**
- * HookExample - Demonstrates event-driven Hook system for monitoring agent execution.
+ * HookExample —— 演示基于事件的 Hook 系统，用于监控 Agent 的执行过程。
+ *
+ * <p>展示了从 PreCall、PostCall、PreActing、PostActing 到 ReasoningChunk
+ * 等完整的 Hook 生命周期回调。
  */
 public class HookExample {
 
     public static void main(String[] args) throws Exception {
-        // Print welcome message
+        // 打印欢迎信息
         ExampleUtils.printWelcome(
-                "Hook Example",
-                "This example demonstrates the Hook system for monitoring agent execution.\n"
-                        + "You'll see detailed logs of all agent activities including reasoning and"
-                        + " tool calls.");
+                "Hook 示例",
+                "本示例演示用于监控 Agent 执行的 Hook 系统。\n"
+                        + "您将看到所有 Agent 活动的详细日志，包括推理过程和工具调用。");
 
-        // Get API key
+        // 获取 API 密钥
         String apiKey = ExampleUtils.getDashScopeApiKey();
 
-        // Create monitoring hook
+        // 创建监控 Hook
         Hook monitoringHook = new MonitoringHook();
 
         // Built-in JSONL trace exporter (local file, easy to attach to issues)

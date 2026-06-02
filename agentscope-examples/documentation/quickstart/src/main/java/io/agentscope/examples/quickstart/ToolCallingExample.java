@@ -27,30 +27,33 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
 /**
- * ToolCallingExample - Demonstrates how to equip an Agent with tools.
+ * ToolCallingExample —— 演示如何为 Agent 配备工具调用能力。
+ *
+ * <p>展示 @Tool 注解、Toolkit 注册以及 Agent 自动调用工具的完整流程。
+ * Agent 配备了时间查询、计算器和搜索三种工具。
  */
 public class ToolCallingExample {
 
     public static void main(String[] args) throws Exception {
-        // Print welcome message
+        // 打印欢迎信息
         ExampleUtils.printWelcome(
-                "Tool Calling Example",
-                "This example demonstrates how to equip an Agent with tools.\n"
-                        + "The agent has access to: time checking, calculator, and search.");
+                "工具调用示例",
+                "本示例演示如何为 Agent 配备工具。\n"
+                        + "Agent 可以访问：时间查询、计算器和搜索功能。");
 
-        // Get API key
+        // 获取 API 密钥
         String apiKey = ExampleUtils.getDashScopeApiKey();
 
-        // Create and register tools
+        // 创建并注册工具
         Toolkit toolkit = new Toolkit();
         toolkit.registerTool(new SimpleTools());
 
-        System.out.println("Registered tools:");
-        System.out.println("  - get_current_time: Get current time in a timezone");
-        System.out.println("  - calculate: Evaluate simple math expressions");
-        System.out.println("  - search: Simulate search functionality\n");
+        System.out.println("已注册的工具：");
+        System.out.println("  - get_current_time：获取指定时区的当前时间");
+        System.out.println("  - calculate：计算简单的数学表达式");
+        System.out.println("  - search：模拟搜索功能\n");
 
-        // Create Agent with tools
+        // 创建带有工具的 Agent
         ReActAgent agent =
                 ReActAgent.builder()
                         .name("ToolAgent")

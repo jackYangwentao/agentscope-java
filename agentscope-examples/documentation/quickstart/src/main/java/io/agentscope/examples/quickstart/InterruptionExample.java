@@ -41,22 +41,24 @@ import java.util.List;
 import reactor.core.publisher.Mono;
 
 /**
- * InterruptionExample - Demonstrates agent interruption mechanism.
+ * InterruptionExample —— 演示 Agent 执行中断机制，支持安全暂停与恢复。
+ *
+ * <p>Agent 启动一个长时间运行的任务，2 秒后通过中断机制中止执行，
+ * 展示中断的安全性——不损坏 Agent 状态，支持立即恢复和重定向。
  */
 public class InterruptionExample {
 
     public static void main(String[] args) throws Exception {
-        // Print welcome message
+        // 打印欢迎信息
         ExampleUtils.printWelcome(
-                "Interruption Example",
-                "This example demonstrates user-initiated interruption of agent execution.\n"
-                        + "The agent will start a long-running task and be interrupted after 2"
-                        + " seconds.");
+                "中断示例",
+                "本示例演示用户发起的 Agent 执行中断。\n"
+                        + "Agent 将启动一个长时间运行的任务，并在 2 秒后被中断。");
 
-        // Get API key
+        // 获取 API 密钥
         String apiKey = ExampleUtils.getDashScopeApiKey();
 
-        // Create toolkit with long-running tool
+        // 创建包含长时间运行工具的 Toolkit
         Toolkit toolkit = new Toolkit();
         toolkit.registerTool(new LongRunningTools());
 

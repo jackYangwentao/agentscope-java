@@ -25,34 +25,34 @@ import io.agentscope.extensions.higress.HigressMcpClientWrapper;
 import io.agentscope.extensions.higress.HigressToolkit;
 
 /**
- * HigressToolExample - Demonstrates Higress AI Gateway integration with AgentScope.
+ * HigressToolExample —— 演示 Higress AI 网关与 AgentScope 的集成。
  *
- * <p>Usage: Set DASHSCOPE_API_KEY environment variable before running.
+ * <p>运行前需要设置 DASHSCOPE_API_KEY 环境变量。
  */
 public class HigressToolExample {
 
-    // Higress endpoint - replace with your own
+    // Higress 端点地址——请替换为您自己的端点
     private static final String HIGRESS_ENDPOINT = "your higress endpoint";
 
     public static void main(String[] args) throws Exception {
         String apiKey = ExampleUtils.getDashScopeApiKey();
 
-        // 1. Create Higress MCP client
+        // 1. 创建 Higress MCP 客户端
         HigressMcpClientWrapper higressClient =
                 HigressMcpClientBuilder.create("higress")
                         .streamableHttpEndpoint(HIGRESS_ENDPOINT)
-                        // .sseEndpoint(HIGRESS_ENDPOINT + "/sse")  // Alternative: SSE transport
-                        // .header("Authorization", "Bearer xxx")   // Optional: Add auth header
-                        // .queryParam("queryKey", "queryValue")   // Optional: Add query param
-                        .toolSearch("your agent description", 5) // Optional: Enable tool search
+                        // .sseEndpoint(HIGRESS_ENDPOINT + "/sse")  // 可选：SSE 传输方式
+                        // .header("Authorization", "Bearer xxx")   // 可选：添加认证头
+                        // .queryParam("queryKey", "queryValue")   // 可选：添加查询参数
+                        .toolSearch("your agent description", 5) // 可选：启用工具搜索
                         .buildAsync()
                         .block();
 
-        // 2. Register with HigressToolkit
+        // 2. 使用 HigressToolkit 注册
         Toolkit toolkit = new HigressToolkit();
         toolkit.registerMcpClient(higressClient).block();
 
-        // 3. Create agent with toolkit
+        // 3. 创建带有 toolkit 的 Agent
         ReActAgent agent =
                 ReActAgent.builder()
                         .name("HigressAgent")

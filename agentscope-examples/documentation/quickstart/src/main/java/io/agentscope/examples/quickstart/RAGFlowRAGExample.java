@@ -24,20 +24,20 @@ import io.agentscope.core.rag.integration.ragflow.RAGFlowConfig;
 import io.agentscope.core.rag.integration.ragflow.RAGFlowKnowledge;
 
 /**
- * Example demonstrating how to use RAGFlow Knowledge Base for RAG.
+ * RAGFlowRAGExample —— 演示如何将 RAGFlow 知识库集成到 Agent 中实现 RAG 检索增强生成。
  */
 public class RAGFlowRAGExample {
 
     public static void main(String[] args) throws Exception {
-        // Check environment variables
+        // 检查环境变量
         String ragflowApiKey = System.getenv("RAGFLOW_API_KEY");
         String ragflowBaseUrl = System.getenv("RAGFLOW_BASE_URL");
         String datasetId = System.getenv("RAGFLOW_DATASET_ID");
         String apiKey = ExampleUtils.getDashScopeApiKey();
 
         if (ragflowApiKey == null || ragflowBaseUrl == null || datasetId == null) {
-            System.err.println("Error: Required environment variables not set.");
-            System.err.println("Please set the following environment variables:");
+            System.err.println("错误：未设置必要的环境变量。");
+            System.err.println("请设置以下环境变量：");
             System.err.println("  - RAGFLOW_API_KEY");
             System.err.println("  - RAGFLOW_BASE_URL");
             System.err.println("  - RAGFLOW_DATASET_ID");

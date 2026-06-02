@@ -35,7 +35,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 /**
- * SessionExample - Demonstrates persistent conversation sessions using agent's save/load.
+ * SessionExample —— 演示使用 JsonSession 实现持久化会话，支持跨运行保存/加载对话历史。
  */
 public class SessionExample {
 
@@ -44,22 +44,22 @@ public class SessionExample {
             new BufferedReader(new InputStreamReader(System.in));
 
     public static void main(String[] args) throws Exception {
-        // Print welcome message
+        // 打印欢迎信息
         ExampleUtils.printWelcome(
-                "Session Example",
-                "This example demonstrates persistent conversation sessions.\n"
-                        + "Your conversations are saved and can be resumed later.");
+                "会话持久化示例",
+                "本示例演示持久化对话会话。\n"
+                        + "您的对话将被保存，可以在之后恢复继续对话。");
 
-        // Get API key and session ID
+        // 获取 API 密钥和会话 ID
         String apiKey = ExampleUtils.getDashScopeApiKey();
         String sessionId = getSessionId();
 
-        // Set up session
+        // 设置会话存储路径
         Path sessionPath =
                 Paths.get(System.getProperty("user.home"), ".agentscope", "examples", "sessions");
         Session session = new JsonSession(sessionPath);
 
-        // Step 1: Create agent components
+        // 步骤 1：创建 Agent 组件
         InMemoryMemory memory = new InMemoryMemory();
         Toolkit toolkit = new Toolkit();
 
