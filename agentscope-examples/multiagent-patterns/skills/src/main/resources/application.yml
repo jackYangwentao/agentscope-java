@@ -12,9 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# ============================================================================
+# Skills（渐进式披露）SQL 助手示例 — 应用配置
+# ============================================================================
+# 演示 AgentScope 的 Skill 机制：Agent 按需加载技能内容（渐进式披露），
+# 避免在 System Prompt 中一次性加载所有技能的详细信息。
+# ============================================================================
+
 spring:
   application:
+    # 应用名称，用于 Spring 应用上下文标识
     name: skills-sql-assistant
 
-# Set to true to run the skills (progressive disclosure) demo on startup.
+# ============================================================================
+# Skills 演示运行器配置
+# ============================================================================
+# 设置为 true 时，应用启动后会自动运行一次演示：
+# 向 SQL 助手 Agent 发送预设查询，验证渐进式披露流程是否正常工作。
+# 默认值为 false，可通过命令行或环境变量覆盖：
+#   --skills.runner.enabled=true
+#   或设置环境变量 SKILLS_RUNNER_ENABLED=true
+# ============================================================================
 skills.runner.enabled: true

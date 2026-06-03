@@ -1,6 +1,43 @@
 # Skills (Progressive Disclosure) SQL Assistant Example
+# Skills（渐进式披露）SQL 助手示例
+
+<!--
+  本示例演示 AgentScope 框架的 Skills（技能）机制 —— 渐进式披露（Progressive Disclosure）模式。
+  Agent 通过 SkillBox 感知可用技能，仅在需要时按需加载完整的技能内容，从而优化 Token 利用。
+  中文说明已在代码中以 Javadoc 和内联注释形式提供。
+-->
 
 This example implements the **skills** (progressive disclosure) pattern using **AgentScope** (aligned with [AgentSkillExample](../../quickstart/src/main/java/io/agentscope/examples/quickstart/AgentSkillExample.java)). A single SQL assistant agent is aware of available skills via the SkillBox and loads full skill content on demand with the **read_skill** tool.
+
+## 概述（中文）
+
+**Skills（渐进式披露）模式**是 AgentScope 框架中一种优化 Token 利用的策略。其核心思想：
+
+1. **轻量初始上下文** — 在 Agent 的 System Prompt 中仅暴露技能的**简短描述**（名称 + 一句话说明）
+2. **按需加载** — 当用户问题涉及特定领域时，Agent 调用 `read_skill(skill_name)` 工具动态加载完整的 SKILL.md 内容
+3. **精确匹配** — Agent 根据问题内容智能判断需要加载哪个技能，避免加载不相关的信息
+
+### 本示例包含的技能
+
+| 技能名称 | 领域 | 包含内容 |
+|---------|------|---------|
+| `sales_analytics` | 销售分析 | 客户、订单、营收表结构 + 业务规则 + 示例查询 |
+| `inventory_management` | 库存管理 | 产品、仓库、库存表结构 + 业务规则 + 示例查询 |
+
+### 关键组件
+
+- **`SkillsConfig.java`** — Spring 配置类，组装 ClasspathSkillRepository、SkillBox 和 ReActAgent
+- **`SkillsApplication.java`** — Spring Boot 应用入口
+- **`SkillsRunner.java`** — 可选的演示运行器（通过 `skills.runner.enabled=true` 启用）
+- **`skills/sales_analytics/SKILL.md`** — 销售分析技能内容
+- **`skills/inventory_management/SKILL.md`** — 库存管理技能内容
+
+### 运行流程
+
+1. 用户提问："Write a SQL query to find all customers who made orders over $1000 in the last month."
+2. Agent 检查可用技能列表，发现 `sales_analytics` 的描述与问题相关
+3. Agent 调用 `read_skill("sales_analytics")` 加载完整的表结构、业务逻辑和示例查询
+4. Agent 根据加载的技能内容生成对应的 SQL 查询语句并返回给用户
 
 ## Architecture
 
