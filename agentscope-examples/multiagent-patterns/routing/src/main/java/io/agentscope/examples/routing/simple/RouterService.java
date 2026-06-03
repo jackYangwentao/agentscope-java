@@ -35,15 +35,31 @@ import org.springframework.ai.chat.messages.Message;
 import reactor.core.publisher.Flux;
 
 /**
- * Orchestrates the router workflow using LlmRoutingAgent: classify + parallel specialist agents,
- * then synthesizes results into a single answer using AgentScope Model.
+ * 路由服务，使用 AgentScopeRoutingAgent 编排路由工作流。
+ * <p>
+ * 职责：
+ * <ol>
+ *   <li>调用路由 Agent 对用户查询进行分类，分派到合适的专业子 Agent</li>
+ *   <li>并行执行子 Agent（GitHub、Notion、Slack）获取各自结果</li>
+ *   <li>使用 AgentScope Model 将所有子结果合成为统一的最终答案</li>
+ * </ol>
+ * </p>
  */
 public class RouterService {
 
     private static final Logger log = LoggerFactory.getLogger(RouterService.class);
 
+    /**
+     * 路由输出键集合，对应 AgentScopeRoutingAgent 中各子 Agent 的 outputKey 配置。
+     * 用于从路由 Agent 的最终状态中提取各子 Agent 的执行结果。
+     */
     private static final String[] OUTPUT_KEYS = {"github_key", "notion_key", "slack_key"};
 
+    /**
+     * 结果合成的 System Prompt 模板。
+     * 要求模型汇总多个来源的信息，去重并组织为简洁的最终答案。
+     * 包含原始用户查询，确保合成结果紧扣用户问题。
+     */
     private static final String SYNTHESIZE_SYSTEM_TEMPLATE =
             """
             Synthesize these search results to answer the original question: "%s"
@@ -54,7 +70,10 @@ public class RouterService {
             - Keep the response concise and well-organized
             """;
 
+    /** AgentScope 模型实例，用于结果合成阶段的 LLM 调用 */
     private final Model model;
+
+    /** AgentScope 路由 Agent，负责查询分类和并行子 Agent 分派 */
     private final AgentScopeRoutingAgent routerAgent;
 
     public RouterService(Model model, AgentScopeRoutingAgent routerAgent) {
@@ -63,7 +82,11 @@ public class RouterService {
     }
 
     /**
-     * Run the full router pipeline: classify + parallel agents (via LlmRoutingAgent) → synthesize.
+     * 执行完整的路由流水线：分类 → 并行子 Agent → 结果合成。
+     *
+     * @param query 用户原始查询
+     * @return 路由结果，包含原始查询、分类列表、子 Agent 输出和最终合成答案
+     * @throws GraphRunnerException 路由图执行失败时抛出
      */
     public RouterResult run(String query) throws GraphRunnerException {
         Optional<OverAllState> resultOpt = routerAgent.invoke(query);
@@ -87,6 +110,11 @@ public class RouterService {
         return new RouterResult(query, classifications, results, finalAnswer);
     }
 
+    /**
+     * 从路由 Agent 的最终状态中收集分类信息。
+     * 遍历 OUTPUT_KEYS，检查每个子 Agent 是否有输出，
+     * 若有则提取其对应的子查询内容构建 Classification 对象。
+     */
     private List<Classification> collectClassifications(OverAllState state) {
         List<Classification> list = new ArrayList<>();
         for (String outputKey : OUTPUT_KEYS) {
@@ -100,6 +128,10 @@ public class RouterService {
         return list;
     }
 
+    /**
+     * 从路由 Agent 的最终状态中收集各子 Agent 的输出结果。
+     * 使用 RoutingMergeNode.extractText 提取文本内容。
+     */
     private List<AgentOutput> collectAgentOutputs(OverAllState state) {
         List<AgentOutput> list = new ArrayList<>();
         for (String outputKey : OUTPUT_KEYS) {
@@ -113,6 +145,10 @@ public class RouterService {
         return list;
     }
 
+    /**
+     * 从路由 Agent 的输出对象中提取纯文本内容。
+     * 支持 Spring AI Message 类型和普通 Object 的 toString。
+     */
     private static String extractText(Object output) {
         if (output instanceof Message message) {
             return message.getText();
@@ -121,7 +157,19 @@ public class RouterService {
     }
 
     /**
-     * Synthesize collected results into a single coherent answer using AgentScope Model.
+     * 使用 AgentScope Model 将多个子 Agent 的结果合成为统一的答案。
+     * <p>
+     * 流程：
+     * <ol>
+     *   <li>将各子 Agent 结果拼接为带来源标记的文本</li>
+     *   <li>使用预设的合成模板构建 System Prompt</li>
+     *   <li>调用流式 API 获取模型合成结果</li>
+     * </ol>
+     * </p>
+     *
+     * @param query   原始用户查询
+     * @param results 各子 Agent 的输出列表
+     * @return 合成后的统一答案
      */
     public String synthesize(String query, List<AgentOutput> results) {
         if (results == null || results.isEmpty()) {
@@ -157,13 +205,22 @@ public class RouterService {
         return text.toString();
     }
 
+    /**
+     * 将字符串首字母大写，其余字母小写。
+     * 用于格式化来源名称（如 "github" → "Github"）。
+     */
     private static String capitalize(String s) {
         if (s == null || s.isEmpty()) return s;
         return s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase();
     }
 
     /**
-     * Result of a full router run: original query, classifications, agent outputs, and final answer.
+     * 路由执行的完整结果记录。
+     *
+     * @param query          原始用户查询
+     * @param classifications 路由分类结果列表（每个子 Agent 的目标和子查询）
+     * @param results         各子 Agent 的输出结果列表
+     * @param finalAnswer     LLM 合成后的最终答案
      */
     public record RouterResult(
             String query,

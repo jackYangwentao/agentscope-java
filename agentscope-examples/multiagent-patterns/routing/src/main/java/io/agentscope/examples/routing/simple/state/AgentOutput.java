@@ -19,7 +19,14 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Output from a single specialist agent (source name + result text).
+ * 单个专业子 Agent 的输出结果。
+ * <p>
+ * 记录子 Agent 的名称及其执行后返回的文本结果。
+ * 在结果合成阶段，RouterService 会收集所有 AgentOutput 并合成为统一答案。
+ * </p>
+ *
+ * @param source 子 Agent 名称（如 "github"、"notion"、"slack"）
+ * @param result 子 Agent 执行后返回的文本结果
  */
 public record AgentOutput(
         @JsonProperty("source") String source, @JsonProperty("result") String result) {

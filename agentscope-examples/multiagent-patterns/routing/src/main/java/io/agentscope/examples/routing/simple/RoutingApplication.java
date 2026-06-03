@@ -22,6 +22,13 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 
+/**
+ * Spring Boot 启动入口，启动路由（简单模式）示例应用。
+ * <p>
+ * 演示流程：用户查询 → LLM 路由分类 → 并行调用专业子 Agent → 结果汇总合成。
+ * 开启 {@code routing.runner.enabled=true} 即可在启动时自动运行演示查询。
+ * </p>
+ */
 @SpringBootApplication
 public class RoutingApplication {
 
@@ -29,6 +36,10 @@ public class RoutingApplication {
         SpringApplication.run(RoutingApplication.class, args);
     }
 
+    /**
+     * 注册应用启动完成事件监听器，在 Spring Boot 完全启动后打印欢迎信息。
+     * 用于提示用户路由（简单模式）示例已成功启动。
+     */
     @Bean
     public ApplicationListener<ApplicationReadyEvent> applicationReadyEventListener(
             Environment environment) {

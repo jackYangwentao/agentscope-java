@@ -30,16 +30,23 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Configures the router workflow using AgentScope Model (DashScopeChatModel) and AgentScopeRoutingAgent:
- * classifier + parallel specialist agents (GitHub, Notion, Slack) implemented as AgentScopeAgent.
- * RouterService wraps the agent and adds synthesis using the same AgentScope Model.
+ * 路由（简单模式）的 Spring 配置类。
+ * <p>
+ * 使用 AgentScope Model (DashScopeChatModel) 和 AgentScopeRoutingAgent 配置路由工作流。
+ * 定义了三个专业子 Agent（GitHub、Notion、Slack），均以 AgentScopeAgent 实现。
+ * RouterService 包装路由 Agent 并添加最终的结果合成步骤。
+ * </p>
  */
 @Configuration
 public class RoutingConfig {
 
     /**
-     * Sub-agent instruction. Placeholder {@code {github_input}} follows the fixed format
-     * {@code agentName + "_input"} and receives the sub-task description from the routing node.
+     * GitHub 子 Agent 的系统提示词。
+     * <p>
+     * 占位符 {@code {github_input}} 遵循固定的命名格式 {@code agentName + "_input"}，
+     * 路由节点会自动将子任务描述注入此处。AgentScopeRoutingAgent 在运行时
+     * 会替换此占位符为针对该子 Agent 的具体子查询。
+     * </p>
      */
     private static final String GITHUB_PROMPT =
             """
@@ -48,6 +55,10 @@ public class RoutingConfig {
             Please respond to the following request: {github_input}
             """;
 
+    /**
+     * Notion 子 Agent 的系统提示词。
+     * 占位符 {@code {notion_input}} 由路由节点替换为具体的文档搜索子查询。
+     */
     private static final String NOTION_INSTRUCTION =
             """
             You are a Notion expert. Answer questions about internal processes, policies, and team \
@@ -55,6 +66,10 @@ public class RoutingConfig {
             Please respond to the following request: {notion_input}
             """;
 
+    /**
+     * Slack 子 Agent 的系统提示词。
+     * 占位符 {@code {slack_input}} 由路由节点替换为具体的消息搜索子查询。
+     */
     private static final String SLACK_INSTRUCTION =
             """
             You are a Slack expert. Answer questions by searching relevant threads and discussions \
@@ -62,13 +77,26 @@ public class RoutingConfig {
             Please respond to the following request: {slack_input}
             """;
 
-    /** AgentScope DashScope model bean used by sub-agents, router, and synthesis. */
+    /**
+     * 创建 AgentScope DashScope 模型实例。
+     * 所有子 Agent、路由 Agent 和结果合成阶段共享此模型 Bean。
+     * API 密钥从环境变量 {@code AI_DASHSCOPE_API_KEY} 读取。
+     */
     @Bean
     public Model dashScopeChatModel() {
         String key = System.getenv("AI_DASHSCOPE_API_KEY");
         return DashScopeChatModel.builder().apiKey(key).modelName("qwen-plus").build();
     }
 
+    /**
+     * 创建 GitHub 专业子 Agent Bean。
+     * 注册了 search_code、search_issues、search_prs 三个 GitHub 工具，
+     * 使用 {@link AgentScopeAgent#fromBuilder} 包装 ReActAgent。
+     * <p>
+     * outputKey 设置为 "github_key"，路由 Agent 通过此键从状态中获取 GitHub 的输出。
+     * 指令中的 {@code {github_input}} 占位符会在运行时被路由节点替换。
+     * </p>
+     */
     @Bean
     public AgentScopeAgent githubAgent(Model dashScopeChatModel, GitHubStubTools githubStubTools) {
         Toolkit toolkit = new Toolkit();
@@ -89,6 +117,11 @@ public class RoutingConfig {
                 .build();
     }
 
+    /**
+     * 创建 Notion 专业子 Agent Bean。
+     * 注册了 search_notion、get_page 两个 Notion 工具。
+     * outputKey 设置为 "notion_key"。
+     */
     @Bean
     public AgentScopeAgent notionAgent(Model dashScopeChatModel, NotionStubTools notionStubTools) {
         Toolkit toolkit = new Toolkit();
@@ -109,6 +142,11 @@ public class RoutingConfig {
                 .build();
     }
 
+    /**
+     * 创建 Slack 专业子 Agent Bean。
+     * 注册了 search_slack、get_thread 两个 Slack 工具。
+     * outputKey 设置为 "slack_key"。
+     */
     @Bean
     public AgentScopeAgent slackAgent(Model dashScopeChatModel, SlackStubTools slackStubTools) {
         Toolkit toolkit = new Toolkit();
@@ -131,6 +169,11 @@ public class RoutingConfig {
                 .build();
     }
 
+    /**
+     * 创建 AgentScopeRoutingAgent Bean。
+     * 路由 Agent 接收用户查询后，通过 LLM 判断将查询路由到哪些子 Agent，
+     * 并生成每个子 Agent 对应的子查询。多个子 Agent 会并行执行。
+     */
     @Bean
     public AgentScopeRoutingAgent routerAgent(
             Model dashScopeChatModel,
@@ -147,6 +190,9 @@ public class RoutingConfig {
                 .build();
     }
 
+    /**
+     * 创建 RouterService Bean，对外提供路由服务的统一入口。
+     */
     @Bean
     public RouterService routerService(
             Model dashScopeChatModel, AgentScopeRoutingAgent routerAgent) {

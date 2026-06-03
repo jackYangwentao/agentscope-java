@@ -26,13 +26,26 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.messages.UserMessage;
 
 /**
- * Preprocessing node: query enrichment, validation, metadata.
- * Converts raw input to messages and adds trace metadata for the routing pipeline.
+ * 预处理节点：查询校验、增强、元数据注入。
+ * <p>
+ * 职责：
+ * <ul>
+ *   <li>校验查询不为空且长度 >= 3</li>
+ *   <li>截断超过 2000 字符的查询</li>
+ *   <li>生成 traceId 和 timestamp 用于可观测性追踪</li>
+ *   <li>将处理后的查询转换为 Spring AI UserMessage</li>
+ * </ul>
+ * 输出字段：input（增强后的查询）、messages（消息列表）、preprocess_metadata（元数据）。
+ * </p>
  */
 public class PreprocessNode implements NodeAction {
 
     private static final Logger log = LoggerFactory.getLogger(PreprocessNode.class);
 
+    /**
+     * 执行预处理逻辑。
+     * 从状态中读取 input 或 query 字段，进行校验、增强和元数据注入。
+     */
     @Override
     public Map<String, Object> apply(OverAllState state) throws Exception {
         String input =

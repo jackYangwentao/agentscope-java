@@ -20,12 +20,21 @@ import io.agentscope.core.tool.ToolParam;
 import org.springframework.stereotype.Component;
 
 /**
- * Stub tools for the Slack vertical (messages, threads) using AgentScope @Tool.
- * In production these would call real APIs. Register via {@link io.agentscope.core.tool.Toolkit#registerTool(Object)}.
+ * Slack 领域的桩工具类（消息搜索、线程获取）。
+ * <p>
+ * 使用 AgentScope {@code @Tool} 注解定义工具。
+ * 当前返回示例数据进行演示，生产环境中应替换为真实的 Slack API 调用。
+ * </p>
  */
 @Component
 public class SlackStubTools {
 
+    /**
+     * 搜索 Slack 消息和线程。
+     *
+     * @param query 搜索关键词
+     * @return 模拟的消息搜索结果
+     */
     @Tool(name = "search_slack", description = "Search Slack messages and threads.")
     public String searchSlack(
             @ToolParam(name = "query", description = "Search query") String query) {
@@ -33,6 +42,12 @@ public class SlackStubTools {
                 + " refresh flow'";
     }
 
+    /**
+     * 根据线程 ID 获取 Slack 线程的具体内容。
+     *
+     * @param threadId Slack 线程 ID
+     * @return 模拟的线程内容
+     */
     @Tool(name = "get_thread", description = "Get a specific Slack thread.")
     public String getThread(
             @ToolParam(name = "threadId", description = "Slack thread ID") String threadId) {

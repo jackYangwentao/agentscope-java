@@ -23,7 +23,12 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
- * Runs the routing-graph demo when {@code routing-graph.runner.enabled=true}.
+ * 路由图演示运行器。
+ * <p>
+ * 当 {@code routing-graph.runner.enabled=true} 时自动执行一次完整的图路由流程：
+ * 预处理 → 路由 Agent（含内部合成）→ 后处理格式输出。
+ * 演示查询为"如何认证 API 请求？"，展示带 traceId 的格式化输出。
+ * </p>
  */
 @Component
 @ConditionalOnProperty(name = "routing-graph.runner.enabled", havingValue = "true")
@@ -31,12 +36,17 @@ public class RoutingGraphRunner implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(RoutingGraphRunner.class);
 
+    /** 路由图服务，封装 preprocess → routing → postprocess 的调用 */
     private final RoutingGraphService routingGraphService;
 
     public RoutingGraphRunner(RoutingGraphService routingGraphService) {
         this.routingGraphService = routingGraphService;
     }
 
+    /**
+     * 应用启动后自动运行演示查询。
+     * 触发完整的图路由流水线并打印最终格式化答案。
+     */
     @Override
     public void run(ApplicationArguments args) throws Exception {
         String query = "How do I authenticate API requests?";

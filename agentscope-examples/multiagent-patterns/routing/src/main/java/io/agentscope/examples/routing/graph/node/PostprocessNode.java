@@ -24,13 +24,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Postprocessing node: formatting, logging, metadata.
- * Wraps the merged routing result with metadata and produces the final answer.
+ * 后处理节点：结果格式化、日志记录、元数据注入。
+ * <p>
+ * 从路由合并节点（RoutingMergeNode）的输出中提取 merged_result，
+ * 结合预处理阶段的 traceId，生成带元数据头部的最终格式化答案。
+ * 输出字段：final_answer（格式化后的答案）、postprocess_metadata（后处理元数据）。
+ * </p>
  */
 public class PostprocessNode implements NodeAction {
 
     private static final Logger log = LoggerFactory.getLogger(PostprocessNode.class);
 
+    /**
+     * 执行后处理逻辑。
+     * 从状态中获取合并结果和预处理元数据，生成带 traceId 的格式化答案。
+     */
     @Override
     public Map<String, Object> apply(OverAllState state) throws Exception {
         String mergedResult =

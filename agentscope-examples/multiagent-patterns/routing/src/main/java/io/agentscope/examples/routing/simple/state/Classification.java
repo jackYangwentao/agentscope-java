@@ -19,7 +19,14 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * A single routing decision: which agent to call with what sub-query.
+ * 路由分类结果记录。
+ * <p>
+ * 表示路由 Agent 的一个决策：将用户查询分配给哪个子 Agent，
+ * 以及分配给该 Agent 的具体子查询是什么。
+ * </p>
+ *
+ * @param source 目标子 Agent 名称（如 "github"、"notion"、"slack"）
+ * @param query  分配给该子 Agent 的子查询内容
  */
 public record Classification(
         @JsonProperty("source") String source, @JsonProperty("query") String query) {

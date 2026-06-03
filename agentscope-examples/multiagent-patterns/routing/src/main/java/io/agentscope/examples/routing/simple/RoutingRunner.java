@@ -23,8 +23,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
- * Runs the routing demo when {@code routing.runner.enabled=true}: one query through
- * classify → parallel agents → synthesize.
+ * 路由（简单模式）演示运行器。
+ * <p>
+ * 当 {@code routing.runner.enabled=true} 时自动执行一次完整的路由流程：
+ * 分类 → 并行子 Agent → 结果合成。演示查询为"如何认证 API 请求？"。
+ * </p>
  */
 @Component
 @ConditionalOnProperty(name = "routing.runner.enabled", havingValue = "true")
@@ -32,12 +35,18 @@ public class RoutingRunner implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(RoutingRunner.class);
 
+    /** 路由服务，封装了分类 → 并行子 Agent → 合成的完整流程 */
     private final RouterService routerService;
 
     public RoutingRunner(RouterService routerService) {
         this.routerService = routerService;
     }
 
+    /**
+     * 应用启动后自动运行的演示方法。
+     * 使用预设查询"如何认证 API 请求？"触发路由流程，
+     * 打印路由分类结果和最终合成答案。
+     */
     @Override
     public void run(ApplicationArguments args) throws Exception {
         String query = "How do I authenticate API requests?";

@@ -45,12 +45,20 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Configures the routing-graph workflow: preprocess → LlmRoutingAgent (as node) → postprocess.
- * LlmRoutingAgent includes routing + merge node internally. Sub-agents (GitHub, Notion, Slack) use AgentScopeAgent.
+ * 路由（图模式）的 Spring 配置类。
+ * <p>
+ * 配置 StateGraph 工作流：preprocess → LlmRoutingAgent（作为图节点）→ postprocess。
+ * LlmRoutingAgent 内部包含路由决策 + 并行子 Agent + 合并节点（RoutingMergeNode）。
+ * 子 Agent（GitHub、Notion、Slack）使用 AgentScopeAgent 实现。
+ * </p>
  */
 @Configuration
 public class RoutingGraphConfig {
 
+    /**
+     * GitHub 子 Agent 的系统提示词。
+     * 占位符 {@code {github_input}} 由路由节点替换为具体子查询。
+     */
     private static final String GITHUB_PROMPT =
             """
             You are a GitHub expert. Answer questions about code, API references, and implementation \
@@ -58,6 +66,10 @@ public class RoutingGraphConfig {
             Please respond to the following request: {github_input}
             """;
 
+    /**
+     * Notion 子 Agent 的系统提示词。
+     * 占位符 {@code {notion_input}} 由路由节点替换为具体子查询。
+     */
     private static final String NOTION_PROMPT =
             """
             You are a Notion expert. Answer questions about internal processes, policies, and team \
@@ -65,6 +77,10 @@ public class RoutingGraphConfig {
             Please respond to the following request: {notion_input}
             """;
 
+    /**
+     * Slack 子 Agent 的系统提示词。
+     * 占位符 {@code {slack_input}} 由路由节点替换为具体子查询。
+     */
     private static final String SLACK_PROMPT =
             """
             You are a Slack expert. Answer questions by searching relevant threads and discussions \
@@ -72,11 +88,19 @@ public class RoutingGraphConfig {
             Please respond to the following request: {slack_input}
             """;
 
+    /**
+     * 创建 AgentScope DashScope 模型实例。
+     * 所有子 Agent、路由 Agent 共享此模型，API 密钥从环境变量读取。
+     */
     private static Model dashScopeModel() {
         String key = System.getenv("AI_DASHSCOPE_API_KEY");
         return DashScopeChatModel.builder().apiKey(key).modelName("qwen-plus").build();
     }
 
+    /**
+     * 创建 GitHub 专业子 Agent Bean。
+     * 注册 search_code、search_issues、search_prs 工具，outputKey 为 "github_key"。
+     */
     @Bean
     public AgentScopeAgent githubAgent(GitHubStubTools githubStubTools) {
         Toolkit toolkit = new Toolkit();
@@ -97,6 +121,9 @@ public class RoutingGraphConfig {
                 .build();
     }
 
+    /**
+     * 创建 Notion 专业子 Agent Bean，outputKey 为 "notion_key"。
+     */
     @Bean
     public AgentScopeAgent notionAgent(NotionStubTools notionStubTools) {
         Toolkit toolkit = new Toolkit();
@@ -117,6 +144,9 @@ public class RoutingGraphConfig {
                 .build();
     }
 
+    /**
+     * 创建 Slack 专业子 Agent Bean，outputKey 为 "slack_key"。
+     */
     @Bean
     public AgentScopeAgent slackAgent(SlackStubTools slackStubTools) {
         Toolkit toolkit = new Toolkit();
@@ -137,6 +167,10 @@ public class RoutingGraphConfig {
                 .build();
     }
 
+    /**
+     * 创建 AgentScopeRoutingAgent Bean。
+     * 路由 Agent 的编译图（compiled graph）将作为 StateGraph 的一个子节点嵌入。
+     */
     @Bean
     public AgentScopeRoutingAgent routerAgent(
             AgentScopeAgent githubAgent, AgentScopeAgent notionAgent, AgentScopeAgent slackAgent) {
@@ -150,6 +184,21 @@ public class RoutingGraphConfig {
                 .build();
     }
 
+    /**
+     * 创建并编译路由 StateGraph。
+     * <p>
+     * 图结构：
+     * <pre>
+     * START → preprocess → routing (AgentScopeRoutingAgent 子图) → postprocess → END
+     * </pre>
+     * 状态管理策略：input/query 使用 ReplaceStrategy（覆盖），messages 使用 AppendStrategy（追加），
+     * 各子 Agent 输出和各元数据字段使用 ReplaceStrategy。
+     * </p>
+     * <p>
+     * 路由节点使用 {@code routerAgent.getAndCompileGraph()} 将 AgentScopeRoutingAgent
+     * 作为编译子图（CompiledGraph）嵌入主图中。
+     * </p>
+     */
     @Bean
     public CompiledGraph routingGraph(AgentScopeRoutingAgent routerAgent)
             throws GraphStateException {
@@ -182,6 +231,9 @@ public class RoutingGraphConfig {
         return graph.compile();
     }
 
+    /**
+     * 创建 RoutingGraphService Bean，对外提供路由图的调用入口。
+     */
     @Bean
     public RoutingGraphService routingGraphService(CompiledGraph routingGraph) {
         return new RoutingGraphService(routingGraph);

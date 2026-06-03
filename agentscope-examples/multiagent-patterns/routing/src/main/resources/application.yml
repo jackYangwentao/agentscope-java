@@ -16,5 +16,7 @@ spring:
   application:
     name: routing-knowledge-base
 
-# Set to true to run the routing (classify → parallel agents → synthesize) demo on startup.
+# 路由（简单模式）演示开关。
+# 设为 true 则在启动时自动运行一次完整路由流程（分类 → 并行子Agent → 合成）。
+# 路由（图模式）使用 routing-graph.runner.enabled 控制。
 routing.runner.enabled: true

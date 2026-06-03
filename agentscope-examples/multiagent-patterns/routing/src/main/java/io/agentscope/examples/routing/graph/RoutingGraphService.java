@@ -24,12 +24,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Service that invokes the routing graph: preprocess → routing (LlmRoutingAgent with merge) → postprocess.
+ * 路由图的服务类，封装 StateGraph 的调用逻辑。
+ * <p>
+ * 完整流程：preprocess → routing（AgentScopeRoutingAgent 内含合并节点）→ postprocess。
+ * 从图的最终状态中提取 final_answer，若不存在则回退到 merged_result。
+ * </p>
  */
 public class RoutingGraphService {
 
     private static final Logger log = LoggerFactory.getLogger(RoutingGraphService.class);
 
+    /** 编译后的路由 StateGraph，包含 preprocess → routing → postprocess 三个节点 */
     private final CompiledGraph routingGraph;
 
     public RoutingGraphService(CompiledGraph routingGraph) {
@@ -37,7 +42,11 @@ public class RoutingGraphService {
     }
 
     /**
-     * Run the full pipeline: preprocess → routing (with merge) → postprocess.
+     * 执行完整的图路由流水线：preprocess → routing（含内部合并）→ postprocess。
+     *
+     * @param query 用户原始查询
+     * @return 路由图执行结果，包含最终答案和完整状态
+     * @throws GraphRunnerException 图执行失败时抛出
      */
     public RoutingGraphResult run(String query) throws GraphRunnerException {
         Map<String, Object> inputs = Map.of("input", query);
@@ -61,5 +70,12 @@ public class RoutingGraphService {
         return new RoutingGraphResult(query, state, finalAnswer);
     }
 
+    /**
+     * 路由图执行结果记录。
+     *
+     * @param query      用户原始查询
+     * @param state      路由图的完整最终状态（含所有中间输出）
+     * @param finalAnswer 最终答案
+     */
     public record RoutingGraphResult(String query, OverAllState state, String finalAnswer) {}
 }
