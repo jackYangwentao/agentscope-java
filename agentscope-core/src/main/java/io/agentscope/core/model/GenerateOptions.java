@@ -29,30 +29,74 @@ import java.util.function.BiConsumer;
  * （apiKey、baseUrl、modelName、stream）。
  */
 public class GenerateOptions {
-    // Connection-level configuration
+    // ==================== 连接级别配置 ====================
+
+    /** 用于 LLM 提供商身份认证的 API 密钥。为 null 时使用 Model 级别的默认密钥。 */
     private final String apiKey;
+
+    /** LLM 提供商 API 的基础 URL（如 "https://api.openai.com"）。为 null 时使用 Model 默认值。 */
     private final String baseUrl;
+
+    /** API 请求的端点路径（如 "/v1/chat/completions"）。支持兼容 OpenAI 接口的自定义端点。 */
     private final String endpointPath;
+
+    /** 用于生成响应的模型名称（如 "gpt-4"、"qwen-plus"）。为 null 时使用 Model 默认值。 */
     private final String modelName;
+
+    /** 是否启用流式输出。为 true 时逐 token 返回，为 false 时等待完整响应后返回。为 null 时使用 Model 默认值。 */
     private final Boolean stream;
 
-    // Generation parameters
+    // ==================== 生成参数 ====================
+
+    /** 温度参数，控制输出的随机性。值越高（如 0.8）输出越随机，值越低（如 0.2）输出越确定。范围 0-2。 */
     private final Double temperature;
+
+    /** Top-P（核采样）参数。考虑累积概率超过该值的最小 token 集合，控制生成多样性。范围 0-1。 */
     private final Double topP;
+
+    /** 生成响应的最大 token 数上限。 */
     private final Integer maxTokens;
+
+    /** 补全 token 的最大数量限制（OpenAI 兼容接口的 max_completion_tokens 字段）。与 maxTokens 互斥或共存取决于提供商。 */
     private final Integer maxCompletionTokens;
+
+    /** 频率惩罚系数。根据 token 在已生成文本中出现频率进行惩罚，值越高重复越少。范围 -2 到 2。 */
     private final Double frequencyPenalty;
+
+    /** 存在惩罚系数。对已出现在文本中的 token 进行惩罚，值越高越倾向于讨论新主题。范围 -2 到 2。 */
     private final Double presencePenalty;
+
+    /** 思考预算（Thinking Budget），用于支持思考模式的模型（如 DashScope）。指定推理过程的最大 token 数。 */
     private final Integer thinkingBudget;
+
+    /** 推理努力级别（Reasoning Effort），用于 o1 系列模型。可选值："low"、"medium"、"high"。 */
     private final String reasoningEffort;
+
+    /** 模型调用的执行配置（超时、重试策略和错误过滤）。为 null 时不进行特殊配置。 */
     private final ExecutionConfig executionConfig;
+
+    /** 工具选择策略，控制模型如何使用工具。可选：auto（自动决策）/ none（禁止调用）/ required（强制调用）/ specific（指定工具）。 */
     private final ToolChoice toolChoice;
+
+    /** Top-K 采样参数。限制模型每一步只考虑概率最高的 K 个 token。值越小输出越聚焦。 */
     private final Integer topK;
+
+    /** 随机种子，用于确定性生成。设置后相同输入和种子可复现相同的输出结果。 */
     private final Long seed;
+
+    /** 是否启用提示缓存（Prompt Caching）。启用后，Formatter 会自动为 system 消息和最后一条消息添加 cache_control 标记。 */
     private final Boolean cacheControl;
+
+    /** 是否启用并行工具调用。启用后模型可同时调用多个工具。 */
     private final Boolean parallelToolCalls;
+
+    /** 附加 HTTP 请求头，会在 API 调用时合并到默认请求头中。用于自定义认证、链路追踪或提供商特定参数。 */
     private final Map<String, String> additionalHeaders;
+
+    /** 附加请求体参数，会合并到 API 请求体中，用于传递标准字段未覆盖的提供商特定选项。 */
     private final Map<String, Object> additionalBodyParams;
+
+    /** 附加 URL 查询参数，会追加到 API 请求 URL 的查询字符串中。 */
     private final Map<String, String> additionalQueryParams;
 
     /**
@@ -498,30 +542,74 @@ public class GenerateOptions {
     }
 
     public static class Builder {
-        // Connection-level configuration
+        // ==================== 连接级别配置 ====================
+
+        /** API 密钥。 */
         private String apiKey;
+
+        /** API 基础 URL。 */
         private String baseUrl;
+
+        /** API 请求端点路径。 */
         private String endpointPath;
+
+        /** 模型名称。 */
         private String modelName;
+
+        /** 是否启用流式输出。 */
         private Boolean stream;
 
-        // Generation parameters
+        // ==================== 生成参数 ====================
+
+        /** 温度参数 (0-2)。 */
         private Double temperature;
+
+        /** Top-P 核采样参数 (0-1)。 */
         private Double topP;
+
+        /** 最大生成 token 数。 */
         private Integer maxTokens;
+
+        /** 最大补全 token 数（OpenAI 兼容接口）。 */
         private Integer maxCompletionTokens;
+
+        /** 频率惩罚系数 (-2 到 2)。 */
         private Double frequencyPenalty;
+
+        /** 存在惩罚系数 (-2 到 2)。 */
         private Double presencePenalty;
+
+        /** 思考预算（推理过程 token 数）。 */
         private Integer thinkingBudget;
+
+        /** 推理努力级别（low/medium/high）。 */
         private String reasoningEffort;
+
+        /** 模型调用的执行配置（超时、重试）。 */
         private ExecutionConfig executionConfig;
+
+        /** 工具选择策略。 */
         private ToolChoice toolChoice;
+
+        /** Top-K 采样参数。 */
         private Integer topK;
+
+        /** 随机种子（确定性生成）。 */
         private Long seed;
+
+        /** 是否启用提示缓存。 */
         private Boolean cacheControl;
+
+        /** 是否启用并行工具调用。 */
         private Boolean parallelToolCalls;
+
+        /** 附加 HTTP 请求头。 */
         private Map<String, String> additionalHeaders;
+
+        /** 附加请求体参数。 */
         private Map<String, Object> additionalBodyParams;
+
+        /** 附加 URL 查询参数。 */
         private Map<String, String> additionalQueryParams;
 
         /**

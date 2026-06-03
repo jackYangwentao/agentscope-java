@@ -18,13 +18,19 @@ package io.agentscope.core.state;
 /**
  * 配置 ReActAgent 应为哪些组件管理状态持久化。
  *
- * <p>默认情况下，ReActAgent 为其所有组件（memory、toolkit、planNotebook、有状态工具）管理状态持久化。
- * 用户可以选择性地对特定组件禁用管理，以独立处理其状态。
+ * <p>ReActAgent 有四个可持久化的状态组件：
+ * <ul>
+ *   <li><b>memory（记忆）</b> — 对话历史与上下文</li>
+ *   <li><b>toolkit（工具包）</b> — 工具的激活组状态</li>
+ *   <li><b>planNotebook（计划笔记本）</b> — 当前计划和子任务进展</li>
+ *   <li><b>statefulTools（有状态工具）</b> — 有状态工具的内部状态</li>
+ * </ul>
+ * 用户可以通过此配置选择性地对特定组件启用或禁用自动状态管理。</p>
  *
- * <p>使用示例：
+ * <p>使用示例：</p>
  *
  * <pre>{@code
- * // Default: manage all components
+ * // Default: manage all components（默认：管理所有组件）
  * ReActAgent agent = ReActAgent.builder()
  *     .name("assistant")
  *     .model(model)
@@ -32,7 +38,7 @@ package io.agentscope.core.state;
  *     .planNotebook(planNotebook)
  *     .build();
  *
- * // Exclude PlanNotebook: user manages it independently
+ * // Exclude PlanNotebook: user manages it independently（排除 PlanNotebook，由用户自行管理）
  * ReActAgent agent = ReActAgent.builder()
  *     .name("assistant")
  *     .model(model)
@@ -43,7 +49,7 @@ package io.agentscope.core.state;
  *         .build())
  *     .build();
  *
- * // Only manage Memory
+ * // Only manage Memory（仅管理记忆组件）
  * ReActAgent agent = ReActAgent.builder()
  *     .name("assistant")
  *     .model(model)
@@ -51,7 +57,7 @@ package io.agentscope.core.state;
  *     .statePersistence(StatePersistence.memoryOnly())
  *     .build();
  *
- * // Don't manage any components (user fully controls)
+ * // Don't manage any components, user fully controls（完全由用户自行管理）
  * ReActAgent agent = ReActAgent.builder()
  *     .name("assistant")
  *     .model(model)
@@ -59,10 +65,10 @@ package io.agentscope.core.state;
  *     .build();
  * }</pre>
  *
- * @param memoryManaged whether to manage Memory component state
- * @param toolkitManaged whether to manage Toolkit activeGroups state
- * @param planNotebookManaged whether to manage PlanNotebook state
- * @param statefulToolsManaged whether to manage stateful Tool states
+ * @param memoryManaged 是否管理 Memory（记忆）组件的状态持久化
+ * @param toolkitManaged 是否管理 Toolkit（工具包）的 activeGroups 状态
+ * @param planNotebookManaged 是否管理 PlanNotebook（计划笔记本）的状态
+ * @param statefulToolsManaged 是否管理有状态工具的内部状态
  * @see StateModule
  * @see io.agentscope.core.ReActAgent
  */
@@ -72,43 +78,50 @@ public record StatePersistence(
         boolean planNotebookManaged,
         boolean statefulToolsManaged) {
 
-    /** Default configuration: manage all components. */
+    /** 默认配置：管理所有组件的状态持久化。 */
     public static StatePersistence all() {
         return new StatePersistence(true, true, true, true);
     }
 
-    /** Don't manage any components (user fully controls). */
+    /** 不管理任何组件的状态持久化，完全由用户自行控制。 */
     public static StatePersistence none() {
         return new StatePersistence(false, false, false, false);
     }
 
-    /** Only manage Memory component. */
+    /** 仅管理 Memory（记忆）组件的状态持久化。 */
     public static StatePersistence memoryOnly() {
         return new StatePersistence(true, false, false, false);
     }
 
     /**
-     * Creates a new builder for constructing StatePersistence instances.
+     * 创建 StatePersistence 构建器，所有组件默认启用。
      *
-     * @return A new builder instance with all components enabled by default
+     * @return 新的 Builder 实例，所有组件默认为 true（已管理）
      */
     public static Builder builder() {
         return new Builder();
     }
 
-    /** Builder for constructing StatePersistence instances with customizable settings. */
+    /** StatePersistence 构建器，支持选择性禁用特定组件的自动状态管理。 */
     public static class Builder {
 
+        /** 是否管理 Memory 状态，默认管理。 */
         private boolean memoryManaged = true;
+
+        /** 是否管理 Toolkit 状态，默认管理。 */
         private boolean toolkitManaged = true;
+
+        /** 是否管理 PlanNotebook 状态，默认管理。 */
         private boolean planNotebookManaged = true;
+
+        /** 是否管理有状态工具的状态，默认管理。 */
         private boolean statefulToolsManaged = true;
 
         /**
-         * Sets whether to manage Memory component state.
+         * 设置是否管理 Memory（记忆）组件的状态。
          *
-         * @param managed true to manage Memory state, false to let user manage
-         * @return This builder for method chaining
+         * @param managed true 由 ReActAgent 自动管理，false 由用户自行管理
+         * @return 当前构建器实例（链式调用）
          */
         public Builder memoryManaged(boolean managed) {
             this.memoryManaged = managed;
@@ -116,10 +129,10 @@ public record StatePersistence(
         }
 
         /**
-         * Sets whether to manage Toolkit activeGroups state.
+         * 设置是否管理 Toolkit（工具包）的 activeGroups 状态。
          *
-         * @param managed true to manage Toolkit state, false to let user manage
-         * @return This builder for method chaining
+         * @param managed true 由 ReActAgent 自动管理，false 由用户自行管理
+         * @return 当前构建器实例（链式调用）
          */
         public Builder toolkitManaged(boolean managed) {
             this.toolkitManaged = managed;
@@ -127,10 +140,10 @@ public record StatePersistence(
         }
 
         /**
-         * Sets whether to manage PlanNotebook state.
+         * 设置是否管理 PlanNotebook（计划笔记本）的状态。
          *
-         * @param managed true to manage PlanNotebook state, false to let user manage
-         * @return This builder for method chaining
+         * @param managed true 由 ReActAgent 自动管理，false 由用户自行管理
+         * @return 当前构建器实例（链式调用）
          */
         public Builder planNotebookManaged(boolean managed) {
             this.planNotebookManaged = managed;
@@ -138,10 +151,10 @@ public record StatePersistence(
         }
 
         /**
-         * Sets whether to manage stateful Tool states.
+         * 设置是否管理有状态工具的内部状态。
          *
-         * @param managed true to manage stateful Tool states, false to let user manage
-         * @return This builder for method chaining
+         * @param managed true 由 ReActAgent 自动管理，false 由用户自行管理
+         * @return 当前构建器实例（链式调用）
          */
         public Builder statefulToolsManaged(boolean managed) {
             this.statefulToolsManaged = managed;
@@ -149,9 +162,9 @@ public record StatePersistence(
         }
 
         /**
-         * Builds a new StatePersistence with the configured settings.
+         * 使用已配置的设置构建 StatePersistence 实例。
          *
-         * @return A new StatePersistence instance
+         * @return 新的 StatePersistence 实例
          */
         public StatePersistence build() {
             return new StatePersistence(

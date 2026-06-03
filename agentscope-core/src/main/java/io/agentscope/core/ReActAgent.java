@@ -144,16 +144,38 @@ public class ReActAgent extends StructuredOutputCapableAgent {
 
     // ==================== 核心依赖 ====================
 
+    /** 会话记忆管理器，负责存储和检索 Agent 的对话历史与状态信息。 */
     private final Memory memory;
+
+    /** 系统提示词（System Prompt），定义 Agent 的角色、行为规范和约束条件。 */
     private final String sysPrompt;
+
+    /** 底层 LLM 模型实例，用于生成推理结果和摘要。 */
     private final Model model;
+
+    /** 单次调用（call）允许的最大 ReAct 推理-行动迭代轮数，防止无限循环。 */
     private final int maxIters;
+
+    /** 模型调用（LLM 推理）的执行配置，如超时、重试策略和异常处理。 */
     private final ExecutionConfig modelExecutionConfig;
+
+    /** 工具调用（Tool Execution）的执行配置，如超时、重试策略和异常处理。 */
     private final ExecutionConfig toolExecutionConfig;
+
+    /** LLM 生成选项，如 temperature、top_p、max_tokens 等采样参数。 */
     private final GenerateOptions generateOptions;
+
+    /** 计划笔记本，用于复杂任务的结构化分解、追踪和管理（如子任务拆解、进度跟踪）。 */
     private final PlanNotebook planNotebook;
+
+    /** 工具执行上下文，提供工具运行时的环境信息、状态共享和资源管理。 */
     private final ToolExecutionContext toolExecutionContext;
+
+    /** 状态持久化策略，决定 Agent 执行过程中哪些状态需要持久化存储。 */
     private final StatePersistence statePersistence;
+
+    /** 待应用的运行时上下文，在每次 {@code call()} 执行前通过 {@code beforeAgentExecution()} 注入，
+     * 用于传递上一次执行遗留的状态或外部注入的上下文信息。 */
     private RuntimeContext pendingRuntimeContext;
 
     /**

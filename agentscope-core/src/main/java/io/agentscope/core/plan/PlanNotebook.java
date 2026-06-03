@@ -113,14 +113,25 @@ public class PlanNotebook implements StateModule {
                     + "current task, you need to confirm with the user and call the "
                     + "'finish_plan' function.";
 
+    /** 当前活动计划，为 null 表示无活跃计划。 */
     private Plan currentPlan;
+
+    /** 计划转提示策略，负责将当前计划状态转换为 Agent 可理解的提示信息。 */
     private final PlanToHint planToHint;
+
+    /** 计划持久化存储后端，用于保存和检索历史计划。 */
     private final PlanStorage storage;
+
+    /** 每个计划允许的最大子任务数，为 null 表示不限制。 */
     private final Integer maxSubtasks;
+
+    /** 执行前是否需要用户确认（默认为 true，Agent 需等待用户确认后才能执行计划）。 */
     private final boolean needUserConfirm;
+
+    /** 计划变更回调映射表，当计划发生增删改时通知注册的监听器。 */
     private final Map<String, BiConsumer<PlanNotebook, Plan>> changeHooks;
 
-    /** Key prefix for storage, allows multiple instances to coexist in the same session. */
+    /** 存储键前缀，允许多个 PlanNotebook 实例在同一会话中共存。 */
     private String keyPrefix = "planNotebook";
 
     private PlanNotebook(Builder builder) {
@@ -174,19 +185,29 @@ public class PlanNotebook implements StateModule {
                 .ifPresent(state -> this.currentPlan = state.currentPlan());
     }
 
-    /** Builder for constructing PlanNotebook instances with customizable settings. */
+    /** PlanNotebook 构建器，支持自定义配置。 */
     public static class Builder {
+
+        /** 计划转提示策略，默认使用 {@link DefaultPlanToHint}。 */
         private PlanToHint planToHint = new DefaultPlanToHint();
+
+        /** 计划持久化存储后端，默认使用内存存储 {@link InMemoryPlanStorage}。 */
         private PlanStorage storage = new InMemoryPlanStorage();
+
+        /** 最大子任务数，默认不限制。 */
         private Integer maxSubtasks = null;
+
+        /** 是否需要用户确认后才能执行计划，默认需要。 */
         private boolean needUserConfirm = true;
+
+        /** 存储键前缀，默认使用类级默认值 "planNotebook"。 */
         private String keyPrefix = null;
 
         /**
-         * Sets the strategy for converting plans to hints.
+         * 设置计划转提示的策略实现。
          *
-         * @param planToHint The plan-to-hint converter implementation
-         * @return This builder for method chaining
+         * @param planToHint 计划转提示转换器实现
+         * @return 当前构建器实例（链式调用）
          */
         public Builder planToHint(PlanToHint planToHint) {
             this.planToHint = planToHint;
@@ -194,10 +215,10 @@ public class PlanNotebook implements StateModule {
         }
 
         /**
-         * Sets the storage backend for persisting historical plans.
+         * 设置历史计划的持久化存储后端。
          *
-         * @param storage The plan storage implementation
-         * @return This builder for method chaining
+         * @param storage 计划存储实现
+         * @return 当前构建器实例（链式调用）
          */
         public Builder storage(PlanStorage storage) {
             this.storage = storage;
@@ -205,10 +226,10 @@ public class PlanNotebook implements StateModule {
         }
 
         /**
-         * Sets the maximum number of subtasks allowed per plan.
+         * 设置每个计划允许的最大子任务数。
          *
-         * @param maxSubtasks Maximum subtasks (null for unlimited)
-         * @return This builder for method chaining
+         * @param maxSubtasks 最大子任务数（null 表示不限制）
+         * @return 当前构建器实例（链式调用）
          */
         public Builder maxSubtasks(int maxSubtasks) {
             this.maxSubtasks = maxSubtasks;
@@ -216,15 +237,13 @@ public class PlanNotebook implements StateModule {
         }
 
         /**
-         * Sets whether to include "wait for user confirmation" rule in hints.
+         * 设置是否需要用户确认后才能执行计划。
          *
-         * <p>When enabled (default), hints will include a rule requiring the agent to wait for
-         * explicit user confirmation before executing plans. When disabled, the agent may proceed
-         * with execution immediately after creating a plan.
+         * <p>启用时（默认），提示中会包含一条规则，要求 Agent 在执行计划前等待用户明确确认。
+         * 禁用时，Agent 创建计划后可立即执行。
          *
-         * @param needUserConfirm true to require user confirmation, false to allow immediate
-         *     execution
-         * @return This builder for method chaining
+         * @param needUserConfirm true 需要用户确认，false 允许立即执行
+         * @return 当前构建器实例（链式调用）
          */
         public Builder needUserConfirm(boolean needUserConfirm) {
             this.needUserConfirm = needUserConfirm;
@@ -232,12 +251,12 @@ public class PlanNotebook implements StateModule {
         }
 
         /**
-         * Sets the key prefix for state storage.
+         * 设置状态存储的键前缀。
          *
-         * <p>Use this when multiple PlanNotebook instances need to coexist in the same session.
+         * <p>当多个 PlanNotebook 实例需要在同一会话中共存时使用此配置。
          *
-         * @param keyPrefix the prefix for storage keys (e.g., "mainPlan", "subPlan")
-         * @return This builder for method chaining
+         * @param keyPrefix 存储键前缀（如 "mainPlan"、"subPlan"）
+         * @return 当前构建器实例（链式调用）
          */
         public Builder keyPrefix(String keyPrefix) {
             this.keyPrefix = keyPrefix;
@@ -245,9 +264,9 @@ public class PlanNotebook implements StateModule {
         }
 
         /**
-         * Builds a new PlanNotebook with the configured settings.
+         * 使用已配置的设置构建 PlanNotebook 实例。
          *
-         * @return A new PlanNotebook instance
+         * @return 新的 PlanNotebook 实例
          */
         public PlanNotebook build() {
             return new PlanNotebook(this);
@@ -257,13 +276,15 @@ public class PlanNotebook implements StateModule {
     // ==================== Tool Functions ====================
 
     /**
-     * Create a plan by given name and sub-tasks.
+     * 根据给定的名称和子任务列表创建一个新计划。
      *
-     * @param name The plan name, should be concise, descriptive and not exceed 10 words
-     * @param description The plan description, including the constraints, target and outcome
-     * @param expectedOutcome The expected outcome of the plan
-     * @param subtasks A list of sequential sub-tasks that make up the plan
-     * @return Tool response message
+     * <p>如果当前已有活跃计划，新计划将替换旧计划。</p>
+     *
+     * @param name 计划名称，应简洁描述且不超过 10 个词
+     * @param description 计划描述，包含约束条件、目标和预期成果，应清晰具体且可衡量
+     * @param expectedOutcome 计划的预期成果，应具体、明确、可衡量
+     * @param subtasks 构成计划的顺序子任务列表。每个子任务包含：name（必填）、description、expected_outcome
+     * @return 工具响应消息
      */
     @Tool(name = "create_plan", description = "Create a plan by given name and sub-tasks")
     public Mono<String> createPlan(
@@ -299,13 +320,13 @@ public class PlanNotebook implements StateModule {
                                             + " \"Area value\"}]")
                     List<Map<String, Object>> subtasks) {
 
-        // Convert Map objects to SubTask objects
+        // 将 Map 对象转换为 SubTask 领域对象
         List<SubTask> subtaskList = new ArrayList<>();
         for (Map<String, Object> subtaskMap : subtasks) {
             subtaskList.add(mapToSubTask(subtaskMap));
         }
-        // Validate subtask count against maxSubtasks limit
-        // Check BEFORE creating the plan to enforce the configured limit
+        // 在创建计划前校验子任务数是否超过 maxSubtasks 上限
+        // 提前拦截，避免创建超限计划
         if (maxSubtasks != null && subtaskList.size() > maxSubtasks) {
             return Mono.just(
                     String.format(
@@ -315,6 +336,7 @@ public class PlanNotebook implements StateModule {
         }
         Plan plan = new Plan(name, description, expectedOutcome, subtaskList);
 
+        // 如果已有活跃计划，新计划会替换旧计划
         String message;
         if (currentPlan == null) {
             message = String.format("Plan '%s' created successfully.", name);
@@ -331,13 +353,14 @@ public class PlanNotebook implements StateModule {
     }
 
     /**
-     * Update the current plan's name, description, or expected outcome.
+     * 更新当前计划的名称、描述或预期成果。
      *
-     * @param name The new plan name (optional, pass null or empty to keep unchanged)
-     * @param description The new plan description (optional, pass null or empty to keep unchanged)
-     * @param expectedOutcome The new expected outcome (optional, pass null or empty to keep
-     *     unchanged)
-     * @return Tool response message
+     * <p>每个参数都是可选的，传入 null 或空字符串表示不修改该字段。</p>
+     *
+     * @param name 新的计划名称（可选，传 null 或空字符串表示不修改）
+     * @param description 新的计划描述（可选，传 null 或空字符串表示不修改）
+     * @param expectedOutcome 新的预期成果（可选，传 null 或空字符串表示不修改）
+     * @return 工具响应消息
      */
     @Tool(
             name = "update_plan_info",
@@ -457,12 +480,19 @@ public class PlanNotebook implements StateModule {
     }
 
     /**
-     * Revise the current plan by adding, revising or deleting a sub-task.
+     * 修订当前计划：添加、修改或删除一个子任务。
      *
-     * @param subtaskIdx The index of the sub-task to be revised, starting from 0
-     * @param action The action to be performed: add/revise/delete
-     * @param subtaskMap The sub-task to be added or revised (required for add/revise)
-     * @return Tool response message
+     * <p>支持三种操作：</p>
+     * <ul>
+     *   <li><b>add</b> — 在指定索引处插入新的子任务</li>
+     *   <li><b>revise</b> — 替换指定索引处的子任务</li>
+     *   <li><b>delete</b> — 删除指定索引处的子任务</li>
+     * </ul>
+     *
+     * @param subtaskIdx 要操作的子任务索引，从 0 开始
+     * @param action 操作类型：add（添加）/ revise（修改）/ delete（删除）
+     * @param subtaskMap 子任务数据（add 和 revise 操作必填，delete 操作忽略）
+     * @return 工具响应消息
      */
     @Tool(
             name = "revise_current_plan",
@@ -485,13 +515,13 @@ public class PlanNotebook implements StateModule {
 
         validateCurrentPlan();
 
-        // Convert Map to SubTask object if provided
+        // 将 Map 转换为 SubTask 对象（如果提供了子任务数据）
         SubTask subtask = null;
         if (subtaskMap != null && !subtaskMap.isEmpty()) {
             subtask = mapToSubTask(subtaskMap);
         }
 
-        // Validate action
+        // 校验操作类型是否合法
         if (!List.of("add", "revise", "delete").contains(action)) {
             return Mono.just(
                     String.format(
@@ -501,7 +531,7 @@ public class PlanNotebook implements StateModule {
 
         List<SubTask> subtasks = currentPlan.getSubtasks();
 
-        // Validate subtask_idx
+        // 校验索引范围：add 允许 0 到 size，其余操作允许 0 到 size-1
         if ("add".equals(action)) {
             if (subtaskIdx < 0 || subtaskIdx > subtasks.size()) {
                 return Mono.just(
@@ -510,8 +540,7 @@ public class PlanNotebook implements StateModule {
                                         + " %d.",
                                 subtaskIdx, subtasks.size()));
             }
-            // Validate subtask count against maxSubtasks limit BEFORE adding
-            // Use >= because we check before addition: if already at limit, cannot add more
+            // 添加前检查子任务数上限（>= 表示已达上限，不能再添加）
             if (maxSubtasks != null && subtasks.size() >= maxSubtasks) {
                 return Mono.just(
                         String.format(
@@ -530,7 +559,7 @@ public class PlanNotebook implements StateModule {
             }
         }
 
-        // Perform action
+        // 根据操作类型执行对应的增/删/改
         return switch (action) {
             case "delete" -> {
                 SubTask removed = subtasks.remove(subtaskIdx);
@@ -567,14 +596,13 @@ public class PlanNotebook implements StateModule {
     }
 
     /**
-     * Update the state of a subtask by given index and state.
+     * 更新指定索引子任务的状态。
      *
-     * <p>Note: To mark a subtask as done, you SHOULD call {@link #finishSubtask} instead with the
-     * specific outcome.
+     * <p>注意：标记子任务为"已完成"时，应使用 {@link #finishSubtask} 并提供具体成果，而非此方法。</p>
      *
-     * @param subtaskIdx The index of the subtask to be updated, starting from 0
-     * @param stateStr The new state: todo/in_progress/abandoned
-     * @return Tool response message
+     * @param subtaskIdx 要更新的子任务索引，从 0 开始
+     * @param stateStr 新状态：todo（待处理）/ in_progress（进行中）/ abandoned（已放弃）
+     * @return 工具响应消息
      */
     @Tool(
             name = "update_subtask_state",
@@ -591,7 +619,7 @@ public class PlanNotebook implements StateModule {
 
         List<SubTask> subtasks = currentPlan.getSubtasks();
 
-        // Validate subtask_idx
+        // 校验子任务索引是否合法
         if (subtaskIdx < 0 || subtaskIdx >= subtasks.size()) {
             return Mono.just(
                     String.format(
@@ -599,7 +627,7 @@ public class PlanNotebook implements StateModule {
                             subtaskIdx, subtasks.size() - 1));
         }
 
-        // Validate state
+        // 校验状态值是否合法，且不允许直接设置为 DONE
         SubTaskState state;
         try {
             state = SubTaskState.valueOf(stateStr.toUpperCase());
@@ -616,9 +644,9 @@ public class PlanNotebook implements StateModule {
                             stateStr));
         }
 
-        // Validate state transition rules for IN_PROGRESS
+        // 当设置为 IN_PROGRESS 时，校验状态转换规则
         if (state == SubTaskState.IN_PROGRESS) {
-            // Check all previous subtasks are done or abandoned
+            // 检查所有前置子任务是否已完成或已放弃
             for (int i = 0; i < subtaskIdx; i++) {
                 SubTask st = subtasks.get(i);
                 if (st.getState() != SubTaskState.DONE && st.getState() != SubTaskState.ABANDONED) {
@@ -630,7 +658,7 @@ public class PlanNotebook implements StateModule {
                 }
             }
 
-            // Check no other subtask is in_progress
+            // 检查是否已有其他子任务处于 IN_PROGRESS 状态
             for (int i = 0; i < subtasks.size(); i++) {
                 SubTask st = subtasks.get(i);
                 if (st.getState() == SubTaskState.IN_PROGRESS) {
@@ -653,11 +681,13 @@ public class PlanNotebook implements StateModule {
     }
 
     /**
-     * Label the subtask as done by given index and outcome.
+     * 标记指定索引的子任务为已完成，并记录具体成果。
      *
-     * @param subtaskIdx The index of the sub-task to be marked as done, starting from 0
-     * @param outcome The specific outcome of the sub-task
-     * @return Tool response message
+     * <p>完成子任务后，如果存在下一个子任务，会自动将其激活（状态设为 IN_PROGRESS）。</p>
+     *
+     * @param subtaskIdx 要标记为完成的子任务索引，从 0 开始
+     * @param outcome 子任务的具体成果，应与子任务描述中的预期成果一致。应为具体的数据、信息或文件路径，而非笼统的描述
+     * @return 工具响应消息
      */
     @Tool(
             name = "finish_subtask",
@@ -688,7 +718,7 @@ public class PlanNotebook implements StateModule {
 
         List<SubTask> subtasks = currentPlan.getSubtasks();
 
-        // Validate subtask_idx
+        // 校验子任务索引是否合法
         if (subtaskIdx < 0 || subtaskIdx >= subtasks.size()) {
             return Mono.just(
                     String.format(
@@ -696,7 +726,7 @@ public class PlanNotebook implements StateModule {
                             subtaskIdx, subtasks.size() - 1));
         }
 
-        // Check all previous subtasks are done or abandoned
+        // 检查所有前置子任务是否已完成或已放弃
         for (int i = 0; i < subtaskIdx; i++) {
             SubTask st = subtasks.get(i);
             if (st.getState() != SubTaskState.DONE && st.getState() != SubTaskState.ABANDONED) {
@@ -709,10 +739,10 @@ public class PlanNotebook implements StateModule {
             }
         }
 
-        // Finish the subtask
+        // 完成当前子任务并记录成果
         subtasks.get(subtaskIdx).finish(outcome);
 
-        // Auto activate next subtask if exists
+        // 如果存在下一个子任务，自动激活它
         String message;
         if (subtaskIdx + 1 < subtasks.size()) {
             SubTask nextSubtask = subtasks.get(subtaskIdx + 1);
@@ -736,10 +766,10 @@ public class PlanNotebook implements StateModule {
     }
 
     /**
-     * View the details of the sub-tasks by given indexes.
+     * 查看指定索引子任务的详细信息。
      *
-     * @param indexes The indexes of the sub-tasks to be viewed, starting from 0
-     * @return Tool response message with subtask details
+     * @param indexes 要查看的子任务索引列表，从 0 开始
+     * @return 包含子任务详细信息的工具响应消息
      */
     @Tool(
             name = "view_subtasks",
@@ -774,9 +804,9 @@ public class PlanNotebook implements StateModule {
     }
 
     /**
-     * Get the number of subtasks in the current plan.
+     * 获取当前计划的子任务数量和统计信息。
      *
-     * @return Tool response message with subtask count
+     * @return 包含子任务统计信息的工具响应消息（总数/已完成/进行中/待处理/已放弃）
      */
     @Tool(
             name = "get_subtask_count",
@@ -792,6 +822,7 @@ public class PlanNotebook implements StateModule {
                     String.format("Current plan '%s' has 0 subtask(s).", currentPlan.getName()));
         }
 
+        // 统计各状态的子任务数量
         int total = subtasks.size();
         int done = 0;
         int inProgress = 0;
@@ -815,11 +846,13 @@ public class PlanNotebook implements StateModule {
     }
 
     /**
-     * Finish the current plan by given outcome, or abandon it.
+     * 完成或放弃当前计划。
      *
-     * @param stateStr The state to finish the plan: done/abandoned
-     * @param outcome The specific outcome of the plan if done, or reason if abandoned
-     * @return Tool response message
+     * <p>完成后，计划会被保存到历史记录中，并从当前活跃状态中清除。</p>
+     *
+     * @param stateStr 计划结束状态：done（已完成）/ abandoned（已放弃）
+     * @param outcome 完成时的具体成果，或放弃时的原因说明
+     * @return 工具响应消息
      */
     @Tool(
             name = "finish_plan",
@@ -838,6 +871,7 @@ public class PlanNotebook implements StateModule {
             return Mono.just("There is no plan to finish.");
         }
 
+        // 校验计划结束状态：仅允许 done 或 abandoned
         PlanState state;
         try {
             state = PlanState.valueOf(stateStr.toUpperCase());
@@ -856,13 +890,18 @@ public class PlanNotebook implements StateModule {
         String message =
                 String.format("The current plan is finished successfully as '%s'.", stateStr);
 
+        // 保存到历史记录 → 触发变更回调 → 清除当前计划
         return storage.addPlan(currentPlan)
                 .then(triggerPlanChangeHooks())
                 .then(Mono.fromRunnable(() -> currentPlan = null))
                 .thenReturn(message);
     }
 
-    /** View the historical plans. */
+    /**
+     * 查看所有已完成的计划历史记录。
+     *
+     * @return 包含历史计划摘要的工具响应消息
+     */
     @Tool(name = "view_historical_plans", description = "View the historical plans")
     public Mono<String> viewHistoricalPlans() {
         return storage.getPlans()
@@ -889,10 +928,12 @@ public class PlanNotebook implements StateModule {
     }
 
     /**
-     * Recover a historical plan by given plan ID.
+     * 根据计划 ID 恢复一个历史计划，将其设为当前活跃计划。
      *
-     * @param planId The ID of the historical plan to be recovered
-     * @return Tool response message
+     * <p>如果当前已有活跃计划且未完成，会自动将其标记为"已放弃"并保存到历史记录中。</p>
+     *
+     * @param planId 要恢复的历史计划 ID
+     * @return 工具响应消息
      */
     @Tool(
             name = "recover_historical_plan",
@@ -912,6 +953,7 @@ public class PlanNotebook implements StateModule {
                                                 "Cannot find the plan with ID '%s'.", planId));
                             }
 
+                            // 如果当前有活跃计划且未完成，先将其保存为已放弃
                             Mono<Void> saveCurrent = Mono.empty();
                             if (currentPlan != null) {
                                 if (currentPlan.getState() != PlanState.DONE) {
@@ -956,16 +998,15 @@ public class PlanNotebook implements StateModule {
                         });
     }
 
-    // ==================== Helper Methods ====================
+    // ==================== 辅助方法 ====================
 
     /**
-     * Gets the current hint message based on plan state.
+     * 根据当前计划状态生成提示消息。
      *
-     * <p>This is called internally by the injected hook before each reasoning step to provide
-     * contextual guidance to the agent.
+     * <p>该方法由注入的 Hook 在每个推理步骤前自动调用，为 Agent 提供上下文引导。
+     * 提示内容通过 {@link PlanToHint#generateHint} 策略生成。</p>
      *
-     * @return A Mono emitting a USER role message containing the hint, or empty Mono if no hint is
-     *     applicable
+     * @return 包含提示内容的 USER 角色消息的 Mono；如果无适用提示则返回空的 Mono
      */
     public Mono<Msg> getCurrentHint() {
         String hintContent = planToHint.generateHint(currentPlan, this);
@@ -981,54 +1022,54 @@ public class PlanNotebook implements StateModule {
     }
 
     /**
-     * Gets the current active plan.
+     * 获取当前活跃计划。
      *
-     * @return The current plan, or null if no plan is active
+     * @return 当前计划对象，无活跃计划时返回 null
      */
     public Plan getCurrentPlan() {
         return currentPlan;
     }
 
     /**
-     * Checks if user confirmation is required before executing plans.
+     * 检查执行计划前是否需要用户确认。
      *
-     * @return true if user confirmation is required, false otherwise
+     * @return true 需要用户确认，false 可直接执行
      */
     public boolean isNeedUserConfirm() {
         return needUserConfirm;
     }
 
     /**
-     * Gets the maximum number of subtasks allowed per plan.
+     * 获取每个计划允许的最大子任务数。
      *
-     * @return maximum number of subtasks
+     * @return 最大子任务数，null 表示不限制
      */
     public Integer getMaxSubtasks() {
         return maxSubtasks;
     }
 
     /**
-     * Adds a change hook that will be triggered whenever the plan changes.
+     * 注册一个计划变更回调，当计划发生增删改时触发。
      *
-     * <p>The hook receives the PlanNotebook instance and the current plan (which may be null if the
-     * plan was finished or cleared).
+     * <p>回调接收 PlanNotebook 实例和当前计划（计划被完成或清除时可能为 null）。</p>
      *
-     * @param id unique identifier for the hook (used for removal)
-     * @param hook the callback to execute when plan changes
+     * @param id 回调的唯一标识符（用于后续移除）
+     * @param hook 计划变更时执行的回调
      */
     public void addChangeHook(String id, BiConsumer<PlanNotebook, Plan> hook) {
         changeHooks.put(id, hook);
     }
 
     /**
-     * Removes a previously registered change hook.
+     * 移除一个已注册的计划变更回调。
      *
-     * @param id the identifier of the hook to remove
+     * @param id 要移除的回调标识符
      */
     public void removeChangeHook(String id) {
         changeHooks.remove(id);
     }
 
+    /** 异步触发所有已注册的计划变更回调。 */
     private Mono<Void> triggerPlanChangeHooks() {
         return Flux.fromIterable(changeHooks.values())
                 .flatMap(hook -> Mono.fromRunnable(() -> hook.accept(this, currentPlan)))
@@ -1036,20 +1077,19 @@ public class PlanNotebook implements StateModule {
     }
 
     /**
-     * Converts a Map representation of a subtask to a SubTask object.
+     * 将 Map 形式的子任务数据转换为 SubTask 领域对象。
      *
-     * <p>Handles null values by providing defaults: empty strings for description and outcome,
-     * "Unnamed Subtask" for missing names.
+     * <p>对缺失的值提供默认处理：名称为空时使用 "Unnamed Subtask"，描述和预期成果为空字符串。</p>
      *
-     * @param subtaskMap Map containing "name", "description", and "expected_outcome" keys
-     * @return A SubTask object with validated fields
+     * @param subtaskMap 包含 "name"、"description" 和 "expected_outcome" 键的 Map
+     * @return 经过字段校验的 SubTask 对象
      */
     private SubTask mapToSubTask(Map<String, Object> subtaskMap) {
         String subtaskName = (String) subtaskMap.get("name");
         String subtaskDesc = (String) subtaskMap.get("description");
         String subtaskOutcome = (String) subtaskMap.get("expected_outcome");
 
-        // Validate and set defaults
+        // 校验并设置默认值
         if (subtaskName == null || subtaskName.trim().isEmpty()) {
             subtaskName = "Unnamed Subtask";
         }
@@ -1063,6 +1103,11 @@ public class PlanNotebook implements StateModule {
         return new SubTask(subtaskName, subtaskDesc, subtaskOutcome);
     }
 
+    /**
+     * 校验当前是否存在活跃计划，不存在则抛出异常。
+     *
+     * @throws IllegalStateException 如果当前计划为 null
+     */
     private void validateCurrentPlan() {
         if (currentPlan == null) {
             throw new IllegalStateException(
