@@ -22,6 +22,16 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 
+/**
+ * Spring Boot 应用入口，用于 supervisor 个人助手示例。
+ *
+ * <p>启动时，{@link #applicationReadyEventListener} 会打印确认消息。
+ * 如果 {@code supervisor.run-examples=true}，{@link SupervisorRunner}
+ * 将自动运行两个演示场景。
+ *
+ * @see io.agentscope.examples.supervisor.SupervisorConfig
+ * @see io.agentscope.examples.supervisor.SupervisorRunner
+ */
 @SpringBootApplication
 public class SupervisorApplication {
 

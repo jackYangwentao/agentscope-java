@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 /**
- * Default implementation of TaskRepository using a thread pool for background execution.
+ * TaskRepository 的默认实现，使用线程池进行后台执行。
  */
 public class DefaultTaskRepository implements TaskRepository {
 
@@ -35,7 +35,7 @@ public class DefaultTaskRepository implements TaskRepository {
     private final boolean ownsExecutor;
 
     /**
-     * Create a repository with a default cached thread pool executor.
+     * 使用默认的缓存线程池执行器创建仓库。
      */
     public DefaultTaskRepository() {
         this(
@@ -50,14 +50,14 @@ public class DefaultTaskRepository implements TaskRepository {
     }
 
     /**
-     * Create a repository with a custom executor service.
+     * 使用自定义的执行器服务创建仓库。
      */
     public DefaultTaskRepository(ExecutorService executor) {
         this(executor, false);
     }
 
     /**
-     * Internal constructor for specifying executor ownership.
+     * 内部构造函数，用于指定执行器所有权。
      */
     public DefaultTaskRepository(ExecutorService executor, boolean ownsExecutor) {
         this.executor = executor;
@@ -89,14 +89,14 @@ public class DefaultTaskRepository implements TaskRepository {
     }
 
     /**
-     * Remove completed tasks from the repository.
+     * 从仓库中移除已完成的任务。
      */
     public void clearCompletedTasks() {
         this.backgroundTasks.entrySet().removeIf(entry -> entry.getValue().isCompleted());
     }
 
     /**
-     * Shutdown the executor service if this repository owns it.
+     * 如果此仓库拥有执行器则关闭它。
      */
     public void shutdown() {
         if (this.ownsExecutor && this.executor != null) {

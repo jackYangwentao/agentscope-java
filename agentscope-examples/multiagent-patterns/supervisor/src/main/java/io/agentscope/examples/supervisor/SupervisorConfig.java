@@ -28,13 +28,22 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.util.StringUtils;
 
 /**
- * Configures the supervisor personal assistant using AgentScope: DashScopeChatModel,
- * calendar and email ReActAgents with stub tools (AgentScope @Tool), and a supervisor
- * ReActAgent that delegates to them via Toolkit.registration().subAgent().
+ * 使用 AgentScope 配置 supervisor 个人助手：DashScopeChatModel、
+ * 配备 stub 工具（AgentScope @Tool）的日历和邮件 ReActAgent，
+ * 以及通过 Toolkit.registration().subAgent() 委托给它们的 supervisor ReActAgent。
  */
 @Configuration
 public class SupervisorConfig {
 
+    /**
+     * 日历 agent 的系统提示词。指示 agent：
+     * <ul>
+     *   <li>解析自然语言调度请求（例如"下周二下午2点"）为 ISO 日期时间格式</li>
+     *   <li>需要时使用 get_available_time_slots 检查空闲时段</li>
+     *   <li>使用 create_calendar_event 安排事件</li>
+     *   <li>在最终响应中始终确认已安排的内容</li>
+     * </ul>
+     */
     private static final String CALENDAR_AGENT_PROMPT =
             """
             You are a calendar scheduling assistant. \
@@ -45,6 +54,15 @@ public class SupervisorConfig {
             Always confirm what was scheduled in your final response.
             """;
 
+    /**
+     * 邮件 agent 的系统提示词。指示 agent：
+     * <ul>
+     *   <li>根据自然语言请求撰写专业邮件</li>
+     *   <li>提取收件人信息并撰写合适的主题行和正文</li>
+     *   <li>使用 send_email 发送消息</li>
+     *   <li>在最终响应中始终确认已发送的内容</li>
+     * </ul>
+     */
     private static final String EMAIL_AGENT_PROMPT =
             """
             You are an email assistant. \
@@ -54,6 +72,15 @@ public class SupervisorConfig {
             Always confirm what was sent in your final response.
             """;
 
+    /**
+     * supervisor agent 的系统提示词。指示 agent：
+     * <ul>
+     *   <li>作为一个有用的个人助手</li>
+     *   <li>可以安排日历事件和发送邮件</li>
+     *   <li>将用户请求分解为适当的工具调用并协调结果</li>
+     *   <li>当请求涉及多个操作时，按顺序使用多个工具</li>
+     * </ul>
+     */
     private static final String SUPERVISOR_PROMPT =
             """
             You are a helpful personal assistant. \
@@ -62,22 +89,36 @@ public class SupervisorConfig {
             When a request involves multiple actions, use multiple tools in sequence.
             """;
 
+    /**
+     * 创建 DashScope 聊天模型（qwen-plus）。
+     * 从 {@code spring.ai.dashscope.api-key} 回退到 {@code AI_DASHSCOPE_API_KEY} 环境变量。
+     */
     @Bean
     public Model dashScopeChatModel(@Value("${spring.ai.dashscope.api-key:}") String apiKey) {
         String key = StringUtils.hasText(apiKey) ? apiKey : System.getenv("AI_DASHSCOPE_API_KEY");
         return DashScopeChatModel.builder().apiKey(key).modelName("qwen-plus").build();
     }
 
+    /**
+     * 创建日历 stub 工具的 Bean 实例。
+     */
     @Bean
     public CalendarStubTools calendarStubTools() {
         return new CalendarStubTools();
     }
 
+    /**
+     * 创建邮件 stub 工具的 Bean 实例。
+     */
     @Bean
     public EmailStubTools emailStubTools() {
         return new EmailStubTools();
     }
 
+    /**
+     * 创建日历 agent（ReActAgent）。配备 {@link CalendarStubTools}，
+     * 以子 agent 的形式注册到 supervisor 的 Toolkit 中。
+     */
     @Bean
     public ReActAgent calendarAgent(Model model, CalendarStubTools calendarStubTools) {
         Toolkit toolkit = new Toolkit();
@@ -92,6 +133,10 @@ public class SupervisorConfig {
                 .build();
     }
 
+    /**
+     * 创建邮件 agent（ReActAgent）。配备 {@link EmailStubTools}，
+     * 以子 agent 的形式注册到 supervisor 的 Toolkit 中。
+     */
     @Bean
     public ReActAgent emailAgent(Model model, EmailStubTools emailStubTools) {
         Toolkit toolkit = new Toolkit();
@@ -106,6 +151,11 @@ public class SupervisorConfig {
                 .build();
     }
 
+    /**
+     * 创建 supervisor 个人助手（ReActAgent）。通过
+     * {@code Toolkit.registration().subAgent()} 注册日历和邮件 agent
+     * 作为工具，以便 supervisor 可以根据用户请求动态调用它们。
+     */
     @Bean("supervisorAgent")
     public ReActAgent supervisorAgent(
             Model model, ReActAgent calendarAgent, ReActAgent emailAgent) {

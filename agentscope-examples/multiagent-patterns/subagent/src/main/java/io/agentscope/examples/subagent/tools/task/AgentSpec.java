@@ -18,10 +18,10 @@ package io.agentscope.examples.subagent.tools.task;
 import java.util.List;
 
 /**
- * Specification for a sub-agent, parsed from Markdown files with YAML front matter.
+ * 子 agent 的规范定义，从带有 YAML front matter 的 Markdown 文件解析而来。
  * <p>
- * Compatible with spring ai agent spec format. The markdown body becomes
- * the system prompt; front matter defines name, description, and optional tool filtering.
+ * 与 spring ai agent spec 格式兼容。Markdown 正文作为系统提示词；
+ * front matter 定义名称、描述和可选工具过滤。
  *
  */
 public record AgentSpec(
@@ -51,7 +51,7 @@ public record AgentSpec(
         String model) {
 
     /**
-     * Create a minimal spec with required fields only.
+     * 仅使用必填字段创建最小 spec。
      */
     public static AgentSpec of(String name, String description, String systemPrompt) {
         return new AgentSpec(name, description, systemPrompt, List.of(), null);

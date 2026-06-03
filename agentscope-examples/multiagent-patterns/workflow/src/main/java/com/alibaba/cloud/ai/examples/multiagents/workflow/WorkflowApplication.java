@@ -23,10 +23,24 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 
 /**
- * Multi-agent workflow examples: RAG agent and SQL agent.
- * Enable specific workflows via application.yml:
- * - workflow.rag.enabled=true for RAG agent
- * - workflow.sql.enabled=true for SQL agent
+ * 多 agent 工作流示例的 Spring Boot 应用。
+ *
+ * <p>提供两个独立的工作流示例，每个由属性控制：
+ * <ul>
+ *   <li>{@code workflow.rag.enabled=true} —— RAG agent（重写 → 检索 → agent）</li>
+ *   <li>{@code workflow.sql.enabled=true} —— SQL agent（列表 → 获取模式 → 生成查询）</li>
+ * </ul>
+ *
+ * <p>两个示例均使用 <b>Spring AI Alibaba StateGraph</b> 进行图编排，
+ * 以及 <b>AgentScope</b>（ReActAgent、AgentScopeAgent、Model、Knowledge、@Tool）
+ * 进行 agent 执行。详见 ragagent/ 和 sqlagent/ 包。
+ *
+ * <p>启动时，{@link #applicationReadyEventListener} 会打印确认消息。
+ * 如果 {@code workflow.runner.enabled=true}，活跃工作流的 runner
+ * 将自动执行一次一次性演示。
+ *
+ * @see com.alibaba.cloud.ai.examples.multiagents.workflow.ragagent.RagAgentConfig
+ * @see com.alibaba.cloud.ai.examples.multiagents.workflow.sqlagent.SqlAgentConfig
  */
 @SpringBootApplication
 public class WorkflowApplication {

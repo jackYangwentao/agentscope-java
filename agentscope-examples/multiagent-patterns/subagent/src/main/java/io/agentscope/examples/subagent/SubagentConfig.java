@@ -46,12 +46,11 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 /**
- * Configures the Tech Due Diligence Assistant using AgentScope. Sub-agents codebase-explorer,
- * web-researcher, and general-purpose are loaded from classpath resources (agents/*.md) via
- * {@link TaskToolsBuilder}; dependency-analyzer is the single programmatic ReActAgent.
- * Orchestrator uses Task and TaskOutput tools to delegate to sub-agents. Exposes
- * dependencyAnalyzerAgent and orchestratorAgent as AgentScopeAgent; orchestrator is invoked via
- * a single-node graph and {@link OrchestratorService}.
+ * 使用 AgentScope 配置技术尽职调查助手。
+ * sub-agent codebase-explorer、web-researcher 和 general-purpose 通过 {@link TaskToolsBuilder}
+ * 从类路径资源（agents/*.md）加载；dependency-analyzer 是唯一的编程式 ReActAgent。
+ * 编排器使用 Task 和 TaskOutput 工具将任务委托给子 agent。以 AgentScopeAgent 形式暴露
+ * dependencyAnalyzerAgent 和 orchestratorAgent；编排器通过单节点图和 {@link OrchestratorService} 调用。
  */
 @Configuration
 public class SubagentConfig {
@@ -119,7 +118,7 @@ public class SubagentConfig {
                         "grep_search", grepSearch,
                         "web_fetch", webFetch);
 
-        // dependency-analyzer (only programmatic sub-agent)
+        // dependency-analyzer（唯一的编程式子 agent）
         Toolkit depToolkit = new Toolkit();
         depToolkit.registerTool(globSearch);
         depToolkit.registerTool(grepSearch);
@@ -136,8 +135,7 @@ public class SubagentConfig {
                         .memory(new InMemoryMemory())
                         .build();
 
-        // Task tools: load codebase-explorer, web-researcher, general-purpose from
-        // classpath:agents/*.md
+        // Task 工具：从 classpath:agents/*.md 加载 codebase-explorer、web-researcher、general-purpose
         Resource[] agentResources =
                 new PathMatchingResourcePatternResolver().getResources("classpath:agents/*.md");
         TaskToolsBuilder builder =
@@ -153,7 +151,7 @@ public class SubagentConfig {
         }
         TaskToolsBuilder.TaskToolsResult taskToolsResult = builder.build();
 
-        // Orchestrator toolkit: default tools + Task + TaskOutput (no subAgent registration)
+        // 编排器工具包：默认工具 + Task + TaskOutput（不含 subAgent 注册）
         Toolkit orchestratorToolkit = new Toolkit();
         orchestratorToolkit.registerTool(globSearch);
         orchestratorToolkit.registerTool(grepSearch);

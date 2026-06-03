@@ -26,7 +26,14 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 
 /**
- * Service that invokes the SQL agent graph.
+ * 调用 SQL 工作流 StateGraph 的服务类。
+ *
+ * <p><b>流程：</b>接收用户问题 → 调用已编译的 SQL 图 →
+ * 从累积状态中提取最终的 {@link AssistantMessage}。
+ *
+ * <p><b>结果提取：</b>扫描 {@code "messages"} 列表中的最后一个
+ * {@link AssistantMessage} —— 即 SQL 生成的最终答案。
+ * 同时返回原始的 {@link OverAllState} 用于调试/检查。
  */
 public class SqlAgentService {
 
@@ -37,7 +44,7 @@ public class SqlAgentService {
     }
 
     /**
-     * Run the SQL agent with the given question.
+     * 使用给定的问题运行 SQL agent。
      */
     public SqlAgentResult run(String question) throws GraphRunnerException {
         Map<String, Object> inputs =

@@ -24,8 +24,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
- * AgentScope tool: search file contents by regex pattern under a workspace path.
- * Register via {@link io.agentscope.core.tool.Toolkit#registerTool(Object)}.
+ * AgentScope 工具：在工作区路径下按正则表达式搜索文件内容。
+ * 通过 {@link io.agentscope.core.tool.Toolkit#registerTool(Object)} 注册。
  */
 public class GrepSearchTool {
 

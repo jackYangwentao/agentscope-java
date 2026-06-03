@@ -25,8 +25,8 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
- * Interactive chat runner for the Tech Due Diligence Assistant (orchestrator invoked via graph).
- * Runs when {@code subagent.run-interactive=true}.
+ * 技术尽职调查助手的交互式聊天启动器（编排器通过图调用）。
+ * 当 {@code subagent.run-interactive=true} 时运行。
  */
 @Component
 @Order(1)
@@ -43,10 +43,8 @@ public class SubagentRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        log.info("Tech Due Diligence Assistant ready. Type your request (or 'quit' to exit).");
-        log.info(
-                "Example: Analyze this codebase for Spring usage and research Spring AI"
-                        + " alternatives.");
+        log.info("技术尽职调查助手已就绪。请输入您的请求（输入 'quit' 退出）。");
+        log.info("示例：分析此代码库中 Spring 的使用情况，并研究 Spring AI 的替代方案。");
         log.info("");
 
         try (Scanner scanner = new Scanner(System.in)) {
@@ -58,7 +56,7 @@ public class SubagentRunner implements ApplicationRunner {
                 }
                 if ("quit".equalsIgnoreCase(input.trim())
                         || "exit".equalsIgnoreCase(input.trim())) {
-                    log.info("Goodbye.");
+                    log.info("再见。");
                     break;
                 }
 

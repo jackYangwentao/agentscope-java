@@ -20,11 +20,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Manages the execution of a background task using CompletableFuture.
+ * 使用 CompletableFuture 管理后台任务的执行。
  * <p>
- * Provides thread-safe access to task status, results, and error information.
- * Tasks are automatically started upon construction. Callers can check completion
- * status, wait for completion, cancel tasks, and retrieve results or errors.
+ * 提供对任务状态、结果和错误信息的线程安全访问。
+ * 任务在构造时自动启动。调用者可以检查完成状态、等待完成、取消任务以及获取结果或错误。
  *
  */
 public class BackgroundTask {
@@ -34,9 +33,9 @@ public class BackgroundTask {
     private final CompletableFuture<String> future;
 
     /**
-     * Create a BackgroundTask with an existing future.
-     * @param taskId the task identifier
-     * @param future the completable future to wrap
+     * 使用已存在的 future 创建 BackgroundTask。
+     * @param taskId 任务标识符
+     * @param future 要包装的 CompletableFuture
      */
     public BackgroundTask(String taskId, CompletableFuture<String> future) {
         this.taskId = taskId;
@@ -44,15 +43,15 @@ public class BackgroundTask {
     }
 
     /**
-     * Check if the task has completed execution.
+     * 检查任务是否已完成执行。
      */
     public boolean isCompleted() {
         return this.future.isDone();
     }
 
     /**
-     * Get the result of the task execution (non-blocking).
-     * @return the task result, or null if not yet completed or if an error occurred
+     * 获取任务执行结果（非阻塞）。
+     * @return 任务结果，如果尚未完成或发生错误则返回 null
      */
     public String getResult() {
         try {
@@ -63,7 +62,7 @@ public class BackgroundTask {
     }
 
     /**
-     * Get the error that occurred during task execution, if any.
+     * 获取任务执行过程中发生的错误（如果有）。
      */
     public Exception getError() {
         if (this.future.isCompletedExceptionally()) {
@@ -80,7 +79,7 @@ public class BackgroundTask {
     }
 
     /**
-     * Get a human-readable status description of the task.
+     * 获取任务的人类可读状态描述。
      */
     public String getStatus() {
         if (this.future.isCompletedExceptionally()) {
@@ -91,9 +90,9 @@ public class BackgroundTask {
     }
 
     /**
-     * Wait for the task to complete within the specified timeout.
-     * @param timeoutMs the maximum time to wait in milliseconds
-     * @return true if the task completed within the timeout, false if it timed out
+     * 在指定超时时间内等待任务完成。
+     * @param timeoutMs 最大等待时间（毫秒）
+     * @return 如果任务在超时内完成则返回 true，超时返回 false
      */
     public boolean waitForCompletion(long timeoutMs) throws InterruptedException {
         if (this.future.isDone()) {
@@ -112,14 +111,14 @@ public class BackgroundTask {
     }
 
     /**
-     * Cancel the task if it hasn't completed yet.
+     * 如果任务尚未完成，则取消任务。
      */
     public boolean cancel(boolean mayInterruptIfRunning) {
         return this.future.cancel(mayInterruptIfRunning);
     }
 
     /**
-     * Get the task ID.
+     * 获取任务 ID。
      */
     public String getTaskId() {
         return this.taskId;

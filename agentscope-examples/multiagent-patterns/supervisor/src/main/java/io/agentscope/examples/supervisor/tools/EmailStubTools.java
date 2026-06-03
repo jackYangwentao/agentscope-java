@@ -20,8 +20,8 @@ import io.agentscope.core.tool.ToolParam;
 import java.util.List;
 
 /**
- * Stub email API tool for the supervisor personal assistant example.
- * In production this would call SendGrid, Gmail API, etc.
+ * supervisor 个人助手示例的邮件 API stub 工具。
+ * 生产环境中应替换为 SendGrid、Gmail API 等真实调用。
  */
 public class EmailStubTools {
 

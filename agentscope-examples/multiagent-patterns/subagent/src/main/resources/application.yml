@@ -16,8 +16,8 @@ spring:
   application:
     name: subagent-tech-due-diligence
 
-# Workspace path for codebase tools (glob_search, grep_search). Default: current working directory.
+# 代码库工具的 worksapce 路径（glob_search, grep_search）。默认：当前工作目录。
 subagent:
   workspace-path: ${user.dir:.}
-  # Set to true to run interactive chat on startup.
+  # 设为 true 以在启动时运行交互式聊天。
   run-interactive: false

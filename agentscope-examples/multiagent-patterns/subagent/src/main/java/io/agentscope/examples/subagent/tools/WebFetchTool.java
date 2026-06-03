@@ -24,8 +24,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 /**
- * AgentScope tool: fetch content from a URL and return as text.
- * Register via {@link io.agentscope.core.tool.Toolkit#registerTool(Object)}.
+ * AgentScope 工具：从 URL 抓取内容并以文本形式返回。
+ * 通过 {@link io.agentscope.core.tool.Toolkit#registerTool(Object)} 注册。
  */
 public class WebFetchTool {
 

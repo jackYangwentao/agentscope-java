@@ -22,6 +22,12 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 
+/**
+ * Subagent（技术尽职调查）示例应用的主入口。
+ * <p>
+ * 使用 Spring Boot 启动，演示 TaskTool 模式：主编排 agent 将复杂任务委托给专用的子 agent。
+ * 启动后可通过命令行交互或编程方式使用。
+ */
 @SpringBootApplication
 public class SubagentApplication {
 
@@ -34,7 +40,7 @@ public class SubagentApplication {
             Environment environment) {
         return event -> {
             System.out.println("\n🎉========================================🎉");
-            System.out.println("✅ Subagent (Tech Due Diligence) example has started!");
+            System.out.println("✅ Subagent（技术尽职调查）示例已启动！");
             System.out.println("🎉========================================🎉\n");
         };
     }

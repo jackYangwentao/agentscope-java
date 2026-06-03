@@ -25,9 +25,9 @@ import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
 /**
- * Builds AgentScope {@link ReActAgent} instances from {@link AgentSpec}.
- * Uses a shared {@link Model} and a map of default tools by name; each spec's
- * {@link AgentSpec#toolNames()} filters which tools the agent receives (empty = all).
+ * 从 {@link AgentSpec} 构建 AgentScope {@link ReActAgent} 实例。
+ * 使用共享的 {@link Model} 和按名称映射的默认工具；每个 spec 的
+ * {@link AgentSpec#toolNames()} 过滤 agent 可用的工具（空列表表示所有工具）。
  *
  * <pre>{@code
  * Map<String, Object> toolsByName = Map.of(
@@ -54,9 +54,9 @@ public final class AgentSpecReActAgentFactory {
     }
 
     /**
-     * Create a ReActAgent from the given spec.
-     * If {@link AgentSpec#toolNames()} is empty, the agent receives all default tools;
-     * otherwise only tools whose name is in the list are registered.
+     * 从给定的 spec 创建 ReActAgent。
+     * 如果 {@link AgentSpec#toolNames()} 为空，agent 获取所有默认工具；
+     * 否则仅注册名称在列表中的工具。
      */
     public ReActAgent create(AgentSpec spec) {
         Assert.notNull(spec, "spec must not be null");

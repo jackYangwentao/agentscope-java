@@ -34,9 +34,23 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 
 /**
- * Uses AgentScope Model to force a tool call for sql_db_schema. Builds a ReActAgent with
- * only getSchema tool, runs it with context from state (question + available tables),
- * then converts the response to Spring AI messages for graph state.
+ * 强制 LLM 调用 {@code sql_db_schema} 工具的图节点。
+ *
+ * <p><b>为什么存在此节点：</b>与可以确定性地列出表的 {@link ListTablesNode} 不同，
+ * 选择正确的表进行模式检查需要理解用户的问题。
+ * 此节点委托给 LLM（通过一个轻量级 ReActAgent，仅配备 {@code sql_db_schema} 工具）
+ * 来决定哪些表是相关的。
+ *
+ * <p><b>工作原理：</b>
+ * <ol>
+ *   <li>从图状态中读取累积的消息和用户问题</li>
+ *   <li>构建一个仅配备 {@code sql_db_schema} 工具的 ReActAgent（强制工具调用）</li>
+ *   <li>LLM 的响应（包含工具调用）被转换为 Spring AI 消息格式</li>
+ *   <li>同时将 {@code "messages"} 和 {@code "llm_response"} 写入图状态</li>
+ * </ol>
+ *
+ * <p><b>状态读取：</b>{@code "messages"}, {@code "question"}
+ * <br><b>状态写入：</b>{@code "messages"}, {@code "llm_response"}
  */
 public class CallGetSchemaNode implements NodeAction {
 
@@ -59,10 +73,16 @@ public class CallGetSchemaNode implements NodeAction {
     @Override
     @SuppressWarnings("unchecked")
     public Map<String, Object> apply(OverAllState state) throws Exception {
+        // 1. 读取累积的消息（包含 ListTablesNode 产生的表列表）
+        //    以及来自图状态的原始用户问题
         List<Message> messages = (List<Message>) state.value("messages").orElse(List.of());
         String question = (String) state.value("question").orElse("");
 
+        // 2. 从所有之前消息和问题构建上下文
         String userText = buildUserText(messages, question);
+
+        // 3. 创建一个仅配备 sql_db_schema 工具的 ReActAgent。
+        //    系统提示词强制它调用此工具而不做额外解释。
         Toolkit toolkit = new Toolkit();
         toolkit.registerTool(sqlTools);
         ReActAgent agent =
@@ -74,14 +94,17 @@ public class CallGetSchemaNode implements NodeAction {
                         .memory(new InMemoryMemory())
                         .build();
 
+        // 4. 调用 agent —— 它应该产生一个 sql_db_schema 的工具调用
         Msg userMsg = Msg.builder().role(MsgRole.USER).textContent(userText).build();
         Msg response = agent.call(userMsg).block();
         if (response == null) {
             return Map.of("messages", List.<Message>of());
         }
 
+        // 5. 从响应中提取工具调用并转换为 Spring AI 格式
         List<ToolUseBlock> toolUses = response.getContentBlocks(ToolUseBlock.class);
         if (toolUses.isEmpty()) {
+            // LLM 没有工具调用就响应了 —— 原样传递
             return Map.of(
                     "messages",
                     List.of(toAssistantMessage(response)),
@@ -89,6 +112,7 @@ public class CallGetSchemaNode implements NodeAction {
                     toAssistantMessage(response));
         }
 
+        // 6. 将 AgentScope 工具调用转换为 Spring AI AssistantMessage 格式
         AssistantMessage assistantMessage = toAssistantMessage(response, toolUses);
         return Map.of("messages", List.of(assistantMessage), "llm_response", assistantMessage);
     }

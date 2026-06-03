@@ -18,37 +18,37 @@ package io.agentscope.examples.subagent.tools.task;
 import java.util.function.Supplier;
 
 /**
- * Repository for managing background tasks.
+ * 用于管理后台任务的仓库。
  * <p>
- * Inspired by spring ai TaskRepository, enables the main agent to
- * launch sub-agents in the background and retrieve results later via TaskOutputTool.
+ * 受 spring ai TaskRepository 启发，使主 agent 能够在后台启动子 agent
+ * 并通过 TaskOutputTool 稍后检索结果。
  *
  */
 public interface TaskRepository {
 
     /**
-     * Get a background task by its ID.
-     * @param taskId the task identifier
-     * @return the background task, or null if not found
+     * 根据 ID 获取后台任务。
+     * @param taskId 任务标识符
+     * @return 后台任务，如果未找到则返回 null
      */
     BackgroundTask getTask(String taskId);
 
     /**
-     * Add a new background task to the repository.
-     * @param taskId the task identifier
-     * @param taskExecution the supplier that executes the task and returns its output
-     * @return the created background task
+     * 向仓库添加新的后台任务。
+     * @param taskId 任务标识符
+     * @param taskExecution 执行任务并返回输出的 Supplier
+     * @return 创建的后台任务
      */
     BackgroundTask putTask(String taskId, Supplier<String> taskExecution);
 
     /**
-     * Remove a background task from the repository.
-     * @param taskId the task identifier
+     * 从仓库中移除后台任务。
+     * @param taskId 任务标识符
      */
     void removeTask(String taskId);
 
     /**
-     * Clear all tasks from the repository.
+     * 清除仓库中的所有任务。
      */
     void clear();
 }

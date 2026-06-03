@@ -19,9 +19,8 @@ import io.agentscope.core.ReActAgent;
 import java.util.List;
 
 /**
- * Holds default AgentScope tools and the dependency-analyzer ReActAgent plus the
- * orchestrator ReActAgent builder for the subagent example. Used to build
- * AgentScopeAgent beans and the orchestrator graph.
+ * 保存 subagent 示例的默认 AgentScope 工具、dependency-analyzer ReActAgent
+ * 以及编排器 ReActAgent builder。用于构建 AgentScopeAgent bean 和编排器图。
  */
 public record SubagentTools(
         List<Object> defaultTools,

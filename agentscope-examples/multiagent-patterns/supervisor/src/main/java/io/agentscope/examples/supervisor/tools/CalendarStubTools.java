@@ -20,8 +20,8 @@ import io.agentscope.core.tool.ToolParam;
 import java.util.List;
 
 /**
- * Stub calendar API tools for the supervisor personal assistant example.
- * In production these would call Google Calendar API, Outlook API, etc.
+ * supervisor 个人助手示例的日历 API stub 工具。
+ * 生产环境中应替换为 Google Calendar API、Outlook API 等真实调用。
  */
 public class CalendarStubTools {
 

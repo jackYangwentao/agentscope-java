@@ -25,7 +25,7 @@ import java.util.Optional;
 import org.springframework.ai.chat.messages.Message;
 
 /**
- * Service that invokes the orchestrator graph (single node: AgentScopeAgent) and returns the response text.
+ * 服务类，用于调用编排器图（单节点：AgentScopeAgent）并返回响应文本。
  */
 public class OrchestratorService {
 

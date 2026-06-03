@@ -25,8 +25,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * AgentScope tool: search files by glob pattern under a workspace path.
- * Register via {@link io.agentscope.core.tool.Toolkit#registerTool(Object)}.
+ * AgentScope 工具：在工作区路径下按 glob 模式搜索文件。
+ * 通过 {@link io.agentscope.core.tool.Toolkit#registerTool(Object)} 注册。
  */
 public class GlobSearchTool {
 

@@ -45,17 +45,44 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.StringUtils;
 
 /**
- * SQL agent workflow using StateGraph and AgentScope.
- * Flow: START → list_tables → call_get_schema → get_schema (execute) → generate_query (ReActAgent) → END.
- * Uses DashScopeChatModel, AgentScope @Tool in SqlTools, and AgentScopeAgent for the generate_query node.
+ * 使用 Spring AI Alibaba StateGraph 和 AgentScope Agent 的 SQL agent 工作流。
+ *
+ * <p><b>图流程：</b>
+ * <pre>
+ * START → [list_tables] → [call_get_schema (LLM)] → [get_schema (执行)] → [generate_query (ReActAgent)] → END
+ * </pre>
+ *
+ * <p><b>节点类型：</b>
+ * <ul>
+ *   <li>{@code list_tables} —— 确定性节点：创建合成工具调用来列出数据库表</li>
+ *   <li>{@code call_get_schema} —— LLM 节点：强制模型调用 {@code sql_db_schema} 工具</li>
+ *   <li>{@code get_schema} —— 确定性节点：执行 schema 工具调用，追加结果</li>
+ *   <li>{@code generate_query} —— 完整 ReAct Agent：配备 {@code sql_db_query} 工具，生成并执行 SQL</li>
+ * </ul>
+ *
+ * <p><b>数据库：</b>H2 内存数据库，使用类似 Chinook 的模式（从 schema-chinook.sql 初始化）。
+ *
+ * @see SqlTools 将 JdbcTemplate 封装为 AgentScope 的 @Tool 方法
+ * @see SqlAgentService 调用已编译的图
  */
 @Configuration
 @ConditionalOnProperty(name = "workflow.sql.enabled", havingValue = "true")
 public class SqlAgentConfig {
 
+    /** SQL 方言，用于提示词生成（H2 语法接近 PostgreSQL）。 */
     private static final String DIALECT = "H2";
+    /** agent 默认返回的最大结果行数。 */
     private static final int TOP_K = 5;
 
+    /**
+     * generate_query ReActAgent 的系统提示词。指示 agent：
+     * <ul>
+     *   <li>根据问题和模式生成正确的 SQL</li>
+     *   <li>除非另有指定，否则将结果限制为 TOP_K 条</li>
+     *   <li>仅查询相关列（不使用 SELECT *）</li>
+     *   <li>绝不执行 DML 语句（INSERT/UPDATE/DELETE/DROP）</li>
+     * </ul>
+     */
     private static final String GENERATE_QUERY_PROMPT =
             """
             You are an agent designed to interact with a SQL database.
@@ -83,8 +110,19 @@ public class SqlAgentConfig {
         return DashScopeChatModel.builder().apiKey(key).modelName("qwen-plus").build();
     }
 
+    /**
+     * 构建并编译 SQL 工作流的 StateGraph。
+     *
+     * <p><b>状态键：</b>
+     * <ul>
+     *   <li>{@code "messages"} —— 累积的 Spring AI 消息（{@link AppendStrategy}）</li>
+     *   <li>{@code "llm_response"} —— 用于工具执行的最后一条 LLM 响应（{@link ReplaceStrategy}）</li>
+     *   <li>{@code "question"} —— 原始用户问题（{@link ReplaceStrategy}）</li>
+     * </ul>
+     */
     @Bean
     public CompiledGraph sqlGraph(Model model, SqlTools sqlTools) throws GraphStateException {
+        // --- 定义图状态模式 ---
         StateGraph graph =
                 new StateGraph(
                         "sql_workflow",
@@ -96,10 +134,12 @@ public class SqlAgentConfig {
                             return strategies;
                         });
 
+        // --- 实例化图节点 ---
         ListTablesNode listTablesNode = new ListTablesNode(sqlTools);
         CallGetSchemaNode callGetSchemaNode = new CallGetSchemaNode(model, sqlTools);
         ExecuteGetSchemaNode executeGetSchemaNode = new ExecuteGetSchemaNode(sqlTools);
 
+        // 构建配备 SQL 工具（list_tables, schema, query）的 generate_query ReActAgent
         Toolkit generateQueryToolkit = new Toolkit();
         generateQueryToolkit.registerTool(sqlTools);
         AgentScopeAgent generateQueryAgent =
@@ -112,13 +152,13 @@ public class SqlAgentConfig {
                                         .memory(new InMemoryMemory()))
                         .name("generate_query")
                         .description("Generate and run SQL query")
-                        // Either set includeContents to true, or use instruction with {input}
-                        // placeholder to pass the original user question to the agent, so it can
-                        // generate relevant SQL.
+                        // includeContents=true 将累积消息作为上下文传递，
+                        // 使 agent 无需 {input} 占位符即可了解模式和问题
                         .includeContents(true)
                         .returnReasoningContents(false)
                         .build();
 
+        // --- 连接图拓扑：线性管道 ---
         graph.addNode("list_tables", node_async(listTablesNode))
                 .addNode("call_get_schema", node_async(callGetSchemaNode))
                 .addNode("get_schema", node_async(executeGetSchemaNode))

@@ -32,16 +32,16 @@ import org.springframework.util.StringUtils;
 import org.yaml.snakeyaml.Yaml;
 
 /**
- * Loads agent specs from Markdown files with YAML front matter.
+ * 从带有 YAML front matter 的 Markdown 文件加载 agent spec。
  * <p>
- * File format (compatible with spring ai):
+ * 文件格式（与 spring ai 兼容）：
  *
  * <pre>
  * ---
  * name: Explore
  * description: Fast agent for exploring codebases...
- * tools: Read, Grep, Glob   # optional, comma-separated
- * model: sonnet            # optional
+ * tools: Read, Grep, Glob   # 可选，逗号分隔
+ * model: sonnet            # 可选
  * ---
  *
  * # System prompt (markdown body)
@@ -58,9 +58,9 @@ public final class AgentSpecLoader {
     private AgentSpecLoader() {}
 
     /**
-     * Load agent specs from a directory (recursively scans for .md files).
-     * @param directoryPath path to directory containing agent spec files
-     * @return list of parsed specs
+     * 从目录加载 agent spec（递归扫描 .md 文件）。
+     * @param directoryPath 包含 agent spec 文件的目录路径
+     * @return 解析后的 spec 列表
      */
     public static List<AgentSpec> loadFromDirectory(String directoryPath) throws IOException {
         if (!StringUtils.hasText(directoryPath)) {
@@ -70,7 +70,7 @@ public final class AgentSpecLoader {
     }
 
     /**
-     * Load agent specs from a directory (recursively scans for .md files).
+     * 从目录加载 agent spec（递归扫描 .md 文件）。
      */
     public static List<AgentSpec> loadFromDirectory(Path rootPath) throws IOException {
         if (rootPath == null || !Files.exists(rootPath)) {
@@ -106,7 +106,7 @@ public final class AgentSpecLoader {
     }
 
     /**
-     * Load a single agent spec from a file.
+     * 从文件加载单个 agent spec。
      */
     public static AgentSpec loadFromFile(Path filePath) throws IOException {
         String content = Files.readString(filePath, StandardCharsets.UTF_8);
@@ -114,7 +114,7 @@ public final class AgentSpecLoader {
     }
 
     /**
-     * Load agent spec from a Spring Resource.
+     * 从 Spring Resource 加载 agent spec。
      */
     public static AgentSpec loadFromResource(Resource resource) throws IOException {
         String content = resource.getContentAsString(StandardCharsets.UTF_8);
@@ -122,7 +122,7 @@ public final class AgentSpecLoader {
     }
 
     /**
-     * Parse markdown content with YAML front matter into AgentSpec.
+     * 将带有 YAML front matter 的 Markdown 内容解析为 AgentSpec。
      */
     public static AgentSpec parse(String markdown) {
         if (!StringUtils.hasText(markdown)) {

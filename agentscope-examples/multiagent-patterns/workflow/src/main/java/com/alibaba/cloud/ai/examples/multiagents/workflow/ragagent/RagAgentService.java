@@ -25,7 +25,14 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 
 /**
- * Service that invokes the RAG workflow graph (rewrite → retrieve → agent).
+ * 调用 RAG 工作流 StateGraph 的服务类。
+ *
+ * <p><b>流程：</b>接收用户问题 → 调用已编译的 RAG 图 →
+ * 从累积状态中提取最终的 {@link AssistantMessage}。
+ *
+ * <p><b>结果提取：</b>图执行完成后，扫描 {@code "messages"}
+ * 列表中的最后一个 {@link AssistantMessage} —— 即 agent 的最终回答。
+ * 同时返回原始的 {@link OverAllState} 用于调试/检查。
  */
 public class RagAgentService {
 
@@ -36,7 +43,11 @@ public class RagAgentService {
     }
 
     /**
-     * Run the RAG pipeline with the given question.
+     * 使用给定的问题运行 RAG 管道。
+     *
+     * @param question 用户关于 WNBA 数据的自然语言问题。
+     * @return 包含问题、最终答案和完整图状态的 {@link RagAgentResult}。
+     * @throws GraphRunnerException 如果图执行失败。
      */
     public RagAgentResult run(String question) throws GraphRunnerException {
         Map<String, Object> inputs = Map.of("question", question);

@@ -23,7 +23,20 @@ import java.util.stream.Collectors;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * SQL tools for the SQL agent: list tables, get schema, run query. AgentScope @Tool API.
+ * AgentScope {@link io.agentscope.core.tool.Tool @Tool} 注解定义的 SQL 数据库操作工具集。
+ *
+ * <p><b>提供的工具：</b>
+ * <ul>
+ *   <li>{@code sql_db_list_tables} —— 列出 PUBLIC schema 中的所有基表</li>
+ *   <li>{@code sql_db_schema} —— 返回给定表的 CREATE TABLE 语法 + 3 条样本行</li>
+ *   <li>{@code sql_db_query} —— 执行 SELECT 查询（出于安全考虑拒绝 DML）</li>
+ * </ul>
+ *
+ * <p>这些工具封装了 {@link JdbcTemplate}，并注册到 {@code generate_query}
+ * ReActAgent 中，使其能够自主发现、检查和查询数据库。
+ *
+ * <p><b>安全：</b>{@code sql_db_query} 阻止 INSERT/UPDATE/DELETE/DROP 操作以防止
+ * 意外的数据修改。仅允许 SELECT 查询。
  */
 public final class SqlTools {
 
@@ -41,6 +54,7 @@ public final class SqlTools {
     public String listTables(
             @ToolParam(name = "ignored", description = "Empty string", required = false)
                     String ignored) {
+        // 查询 H2 INFORMATION_SCHEMA 获取所有基表（非系统表）
         List<String> tables =
                 jdbcTemplate.queryForList(
                         "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA ="
@@ -99,6 +113,8 @@ public final class SqlTools {
                             + " result.")
     public String runQuery(
             @ToolParam(name = "query", description = "SQL query to execute") String query) {
+        // 安全守卫：拒绝任何 DML/DDL 语句以防止数据损坏。
+        // 此示例中仅允许 SELECT 查询。
         if (query.toUpperCase().contains("INSERT")
                 || query.toUpperCase().contains("UPDATE")
                 || query.toUpperCase().contains("DELETE")
@@ -106,6 +122,7 @@ public final class SqlTools {
             return "Error: Only SELECT queries are allowed.";
         }
         try {
+            // 执行查询并以字符串形式返回结果
             List<Map<String, Object>> rows = jdbcTemplate.queryForList(query);
             return rows.toString();
         } catch (Exception e) {

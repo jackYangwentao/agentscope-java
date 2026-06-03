@@ -15,10 +15,13 @@
 spring:
   application:
     name: multi-agent-workflow
+
+  # DashScope LLM 配置 —— API 密钥来自环境变量或直接在应用配置中设置
   ai:
     dashscope:
       api-key: ${AI_DASHSCOPE_API_KEY:}
 
+  # SQL agent 示例使用的 H2 内存数据库（类似 Chinook 的模式）
   datasource:
     url: jdbc:h2:mem:chinook;DB_CLOSE_DELAY=-1
     driver-class-name: org.h2.Driver
@@ -26,14 +29,15 @@ spring:
     password:
   sql:
     init:
-      mode: always
+      mode: always                    # 每次启动时初始化模式
       schema-locations: classpath:schema-chinook.sql
 
-# Enable RAG agent example (ragagent package)
+# --- 工作流开关 ---
+# 启用 RAG agent 示例（ragagent 包）：重写 → 检索 → agent
 workflow.rag.enabled: false
 
-# Enable SQL agent example (sqlagent package)
+# 启用 SQL agent 示例（sqlagent 包）：列表 → 获取模式 → 生成查询
 workflow.sql.enabled: true
 
-# Run demo on startup (set one of workflow.rag.enabled or workflow.sql.enabled to true first)
+# 启动时运行一次性演示（需要启用上述工作流之一）
 workflow.runner.enabled: true

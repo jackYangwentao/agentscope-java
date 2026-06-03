@@ -20,9 +20,9 @@ import io.agentscope.core.tool.ToolParam;
 import org.springframework.util.Assert;
 
 /**
- * AgentScope tool for retrieving output from running or completed background tasks.
- * Use when TaskTool was invoked with run_in_background=true; provides the task_id
- * to check status and retrieve results.
+ * AgentScope 工具，用于获取运行中或已完成的后台任务的输出。
+ * 当 TaskTool 以 run_in_background=true 调用时使用；
+ * 提供 task_id 用于检查状态和获取结果。
  */
 public class TaskOutputTool {
 

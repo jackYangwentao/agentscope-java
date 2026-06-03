@@ -27,9 +27,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
 /**
- * AgentScope tool that invokes sub-agents to handle complex, isolated tasks.
- * Supports both synchronous and background execution; use {@link TaskOutputTool}
- * to retrieve results when {@code run_in_background=true}.
+ * AgentScope 工具，用于调用子 agent 处理复杂、独立的任务。
+ * 支持同步和后台两种执行方式；当 {@code run_in_background=true} 时，
+ * 使用 {@link TaskOutputTool} 获取结果。
  */
 public class TaskTool {
 

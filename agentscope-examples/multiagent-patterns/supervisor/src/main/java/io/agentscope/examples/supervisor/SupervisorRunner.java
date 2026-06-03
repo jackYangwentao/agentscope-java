@@ -29,8 +29,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 /**
- * Runs the supervisor personal assistant demo when {@code supervisor.run-examples=true}.
- * Executes the same two scenarios: single-domain (calendar only) and multi-domain (calendar + email).
+ * 在 {@code supervisor.run-examples=true} 时运行 supervisor 个人助手演示。
+ * 执行两个场景：单领域（仅日历）和多领域（日历 + 邮件）。
  */
 @Component
 @Order(1)
@@ -47,22 +47,22 @@ public class SupervisorRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        // Example 1: Simple single-domain request (calendar only)
+        // 示例 1：简单的单领域请求（仅日历）
         String query1 = "Schedule a team standup for tomorrow at 9am";
-        log.info("User request: {}", query1);
+        log.info("用户请求：{}", query1);
         log.info("---");
         Msg response1 = supervisorAgent.call(buildUserMsg(query1)).block();
-        log.info("Assistant: {}", getText(response1));
+        log.info("助手回复：{}", getText(response1));
         log.info("");
 
-        // Example 2: Complex multi-domain request (calendar + email)
+        // 示例 2：复杂的多领域请求（日历 + 邮件）
         String query2 =
                 "Schedule a meeting with the design team next Tuesday at 2pm for 1 hour, "
                         + "and send them an email reminder about reviewing the new mockups.";
-        log.info("User request: {}", query2);
+        log.info("用户请求：{}", query2);
         log.info("---");
         Msg response2 = supervisorAgent.call(buildUserMsg(query2)).block();
-        log.info("Assistant: {}", getText(response2));
+        log.info("助手回复：{}", getText(response2));
     }
 
     private static Msg buildUserMsg(String text) {
@@ -72,6 +72,6 @@ public class SupervisorRunner implements ApplicationRunner {
     private static String getText(Msg msg) {
         return msg != null && StringUtils.hasText(msg.getTextContent())
                 ? msg.getTextContent()
-                : "(No response)";
+                : "（无响应）";
     }
 }
